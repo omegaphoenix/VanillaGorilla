@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../.resources/report.gif" type="image/gif"/><title>Analyzer.java</title><link rel="stylesheet" href="../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../.sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">JaCoCo</a> &gt; <a href="../index.html" class="el_bundle">org.jacoco.core</a> &gt; <a href="index.source.html" class="el_package">org.jacoco.core.analysis</a> &gt; <span class="el_source">Analyzer.java</span></div><h1>Analyzer.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2009, 2014 Mountainminds GmbH &amp; Co. KG and Contributors
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Marc R. Hoffmann - initial API and implementation
+ *    
+ *******************************************************************************/
+package org.jacoco.core.analysis;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.StringTokenizer;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import org.jacoco.core.data.ExecutionData;
+import org.jacoco.core.data.ExecutionDataStore;
+import org.jacoco.core.internal.ContentTypeDetector;
+import org.jacoco.core.internal.Pack200Streams;
+import org.jacoco.core.internal.analysis.ClassAnalyzer;
+import org.jacoco.core.internal.analysis.StringPool;
+import org.jacoco.core.internal.data.CRC64;
+import org.jacoco.core.internal.flow.ClassProbesAdapter;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+
+/**
+ * An {@link Analyzer} instance processes a set of Java class files and
+ * calculates coverage data for them. For each class file the result is reported
+ * to a given {@link ICoverageVisitor} instance. In addition the
+ * {@link Analyzer} requires a {@link ExecutionDataStore} instance that holds
+ * the execution data for the classes to analyze. The {@link Analyzer} offers
+ * several methods to analyze classes from a variety of sources.
+ */
+public class Analyzer {
+
+	private final ExecutionDataStore executionData;
+
+	private final ICoverageVisitor coverageVisitor;
+
+	private final StringPool stringPool;
+
+	/**
+	 * Creates a new analyzer reporting to the given output.
+	 * 
+	 * @param executionData
+	 *            execution data
+	 * @param coverageVisitor
+	 *            the output instance that will coverage data for every analyzed
+	 *            class
+	 */
+	public Analyzer(final ExecutionDataStore executionData,
+<span class="fc" id="L60">			final ICoverageVisitor coverageVisitor) {</span>
+<span class="fc" id="L61">		this.executionData = executionData;</span>
+<span class="fc" id="L62">		this.coverageVisitor = coverageVisitor;</span>
+<span class="fc" id="L63">		this.stringPool = new StringPool();</span>
+<span class="fc" id="L64">	}</span>
+
+	/**
+	 * Creates an ASM class visitor for analysis.
+	 * 
+	 * @param classid
+	 *            id of the class calculated with {@link CRC64}
+	 * @param className
+	 *            VM name of the class
+	 * @return ASM visitor to write class definition to
+	 */
+	private ClassVisitor createAnalyzingVisitor(final long classid,
+			final String className) {
+<span class="fc" id="L77">		final ExecutionData data = executionData.get(classid);</span>
+		final boolean[] probes;
+		final boolean noMatch;
+<span class="fc bfc" id="L80" title="All 2 branches covered.">		if (data == null) {</span>
+<span class="fc" id="L81">			probes = null;</span>
+<span class="fc" id="L82">			noMatch = executionData.contains(className);</span>
+		} else {
+<span class="fc" id="L84">			probes = data.getProbes();</span>
+<span class="fc" id="L85">			noMatch = false;</span>
+		}
+<span class="fc" id="L87">		final ClassAnalyzer analyzer = new ClassAnalyzer(classid, noMatch,</span>
+<span class="fc" id="L88">				probes, stringPool) {</span>
+			@Override
+			public void visitEnd() {
+<span class="fc" id="L91">				super.visitEnd();</span>
+<span class="fc" id="L92">				coverageVisitor.visitCoverage(getCoverage());</span>
+<span class="fc" id="L93">			}</span>
+		};
+<span class="fc" id="L95">		return new ClassProbesAdapter(analyzer, false);</span>
+	}
+
+	/**
+	 * Analyzes the class given as a ASM reader.
+	 * 
+	 * @param reader
+	 *            reader with class definitions
+	 */
+	public void analyzeClass(final ClassReader reader) {
+<span class="fc" id="L105">		final ClassVisitor visitor = createAnalyzingVisitor(</span>
+				CRC64.checksum(reader.b), reader.getClassName());
+<span class="fc" id="L107">		reader.accept(visitor, 0);</span>
+<span class="fc" id="L108">	}</span>
+
+	/**
+	 * Analyzes the class definition from a given in-memory buffer.
+	 * 
+	 * @param buffer
+	 *            class definitions
+	 * @param name
+	 *            a name used for exception messages
+	 * @throws IOException
+	 *             if the class can't be analyzed
+	 */
+	public void analyzeClass(final byte[] buffer, final String name)
+			throws IOException {
+		try {
+<span class="fc" id="L123">			analyzeClass(new ClassReader(buffer));</span>
+<span class="fc" id="L124">		} catch (final RuntimeException cause) {</span>
+<span class="fc" id="L125">			throw analyzerError(name, cause);</span>
+<span class="fc" id="L126">		}</span>
+<span class="fc" id="L127">	}</span>
+
+	/**
+	 * Analyzes the class definition from a given input stream.
+	 * 
+	 * @param input
+	 *            stream to read class definition from
+	 * @param name
+	 *            a name used for exception messages
+	 * @throws IOException
+	 *             if the stream can't be read or the class can't be analyzed
+	 */
+	public void analyzeClass(final InputStream input, final String name)
+			throws IOException {
+		try {
+<span class="fc" id="L142">			analyzeClass(new ClassReader(input));</span>
+<span class="fc" id="L143">		} catch (final RuntimeException e) {</span>
+<span class="fc" id="L144">			throw analyzerError(name, e);</span>
+<span class="fc" id="L145">		}</span>
+<span class="fc" id="L146">	}</span>
+
+	private IOException analyzerError(final String name,
+			final RuntimeException cause) {
+<span class="fc" id="L150">		final IOException ex = new IOException(String.format(</span>
+				&quot;Error while analyzing class %s.&quot;, name));
+<span class="fc" id="L152">		ex.initCause(cause);</span>
+<span class="fc" id="L153">		return ex;</span>
+	}
+
+	/**
+	 * Analyzes all classes found in the given input stream. The input stream
+	 * may either represent a single class file, a ZIP archive, a Pack200
+	 * archive or a gzip stream that is searched recursively for class files.
+	 * All other content types are ignored.
+	 * 
+	 * @param input
+	 *            input data
+	 * @param name
+	 *            a name used for exception messages
+	 * @return number of class files found
+	 * @throws IOException
+	 *             if the stream can't be read or a class can't be analyzed
+	 */
+	public int analyzeAll(final InputStream input, final String name)
+			throws IOException {
+<span class="fc" id="L172">		final ContentTypeDetector detector = new ContentTypeDetector(input);</span>
+<span class="fc bfc" id="L173" title="All 5 branches covered.">		switch (detector.getType()) {</span>
+		case ContentTypeDetector.CLASSFILE:
+<span class="fc" id="L175">			analyzeClass(detector.getInputStream(), name);</span>
+<span class="fc" id="L176">			return 1;</span>
+		case ContentTypeDetector.ZIPFILE:
+<span class="fc" id="L178">			return analyzeZip(detector.getInputStream(), name);</span>
+		case ContentTypeDetector.GZFILE:
+<span class="fc" id="L180">			return analyzeGzip(detector.getInputStream(), name);</span>
+		case ContentTypeDetector.PACK200FILE:
+<span class="fc" id="L182">			return analyzePack200(detector.getInputStream(), name);</span>
+		default:
+<span class="fc" id="L184">			return 0;</span>
+		}
+	}
+
+	/**
+	 * Analyzes all class files contained in the given file or folder. Class
+	 * files as well as ZIP files are considered. Folders are searched
+	 * recursively.
+	 * 
+	 * @param file
+	 *            file or folder to look for class files
+	 * @return number of class files found
+	 * @throws IOException
+	 *             if the file can't be read or a class can't be analyzed
+	 */
+	public int analyzeAll(final File file) throws IOException {
+<span class="fc" id="L200">		int count = 0;</span>
+<span class="fc bfc" id="L201" title="All 2 branches covered.">		if (file.isDirectory()) {</span>
+<span class="fc bfc" id="L202" title="All 2 branches covered.">			for (final File f : file.listFiles()) {</span>
+<span class="fc" id="L203">				count += analyzeAll(f);</span>
+			}
+		} else {
+<span class="fc" id="L206">			final InputStream in = new FileInputStream(file);</span>
+			try {
+<span class="fc" id="L208">				count += analyzeAll(in, file.getPath());</span>
+			} finally {
+<span class="fc" id="L210">				in.close();</span>
+<span class="fc" id="L211">			}</span>
+		}
+<span class="fc" id="L213">		return count;</span>
+	}
+
+	/**
+	 * Analyzes all classes from the given class path. Directories containing
+	 * class files as well as archive files are considered.
+	 * 
+	 * @param path
+	 *            path definition
+	 * @param basedir
+	 *            optional base directory, if &lt;code&gt;null&lt;/code&gt; the current
+	 *            working directory is used as the base for relative path
+	 *            entries
+	 * @return number of class files found
+	 * @throws IOException
+	 *             if a file can't be read or a class can't be analyzed
+	 */
+	public int analyzeAll(final String path, final File basedir)
+			throws IOException {
+<span class="fc" id="L232">		int count = 0;</span>
+<span class="fc" id="L233">		final StringTokenizer st = new StringTokenizer(path, File.pathSeparator);</span>
+<span class="fc bfc" id="L234" title="All 2 branches covered.">		while (st.hasMoreTokens()) {</span>
+<span class="fc" id="L235">			count += analyzeAll(new File(basedir, st.nextToken()));</span>
+		}
+<span class="fc" id="L237">		return count;</span>
+	}
+
+	private int analyzeZip(final InputStream input, final String name)
+			throws IOException {
+<span class="fc" id="L242">		final ZipInputStream zip = new ZipInputStream(input);</span>
+		ZipEntry entry;
+<span class="fc" id="L244">		int count = 0;</span>
+<span class="fc bfc" id="L245" title="All 2 branches covered.">		while ((entry = zip.getNextEntry()) != null) {</span>
+<span class="fc" id="L246">			count += analyzeAll(zip, name + &quot;@&quot; + entry.getName());</span>
+		}
+<span class="fc" id="L248">		return count;</span>
+	}
+
+	private int analyzeGzip(final InputStream input, final String name)
+			throws IOException {
+<span class="fc" id="L253">		return analyzeAll(new GZIPInputStream(input), name);</span>
+	}
+
+	private int analyzePack200(final InputStream input, final String name)
+			throws IOException {
+<span class="fc" id="L258">		return analyzeAll(Pack200Streams.unpack(input), name);</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.3.201410101205</span>Code Coverage Report for JaCoCo 0.7.3-SNAPSHOT</div></body></html>

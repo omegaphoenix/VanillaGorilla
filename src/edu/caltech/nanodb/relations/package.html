@@ -1,0 +1,33 @@
+<html>
+<body>
+This package contains the basic data-types for representing relations in NanoDB.
+Relations can be many different things - tables, views, external tables, or
+results of subqueries in a particular SQL query, for example.  All of the common
+classes are in this package.
+
+<h3>Type Information</h3>
+
+One of the major aspects of this package is the collection of classes that
+represent type information in the database.  The classes are as follows:
+
+<ul>
+  <li>
+    Data-types are defined by the
+    {@link edu.caltech.nanodb.relations.SQLDataType} enumeration, which
+    contains both the enumerated types and predefined type-ID byte-values.
+  </li>
+  <li>
+    Column-types are defined by the
+    {@link edu.caltech.nanodb.relations.ColumnType} class, which contains the
+    SQL data-type for the column (using the
+    {@link edu.caltech.nanodb.relations.SQLDataType} enum), and any
+    additional information about the column's type that might need to be
+    specified.  For example, a <code>CHAR(100)</code> column has a base-type of
+    <code>SQLDataType.CHAR</code>, but it must also specify its length as 100
+    characters.  This additional information is also included in the
+    <code>ColumnType</code> class.
+  </li>
+</ul>
+
+</body>
+</html>

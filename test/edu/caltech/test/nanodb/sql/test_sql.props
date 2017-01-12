@@ -1,0 +1,417 @@
+#================================================================================
+# SIMPLE SELECTS AND PROJECTS
+#
+
+# This setup SQL is used for the simple-selects test case
+setup_testSimpleSelects = \
+    CREATE TABLE test_simple_selects ( \
+        a INTEGER, \
+        b INTEGER \
+    ); \
+    INSERT INTO test_simple_selects VALUES ( 0, NULL ); \
+    INSERT INTO test_simple_selects VALUES ( 1, 10 ); \
+    INSERT INTO test_simple_selects VALUES ( 2, 20 ); \
+    INSERT INTO test_simple_selects VALUES ( 3, 30 ); \
+    INSERT INTO test_simple_selects VALUES ( 4, NULL );
+
+# This setup SQL is used for the select/project test case
+setup_testSelectProject = \
+    CREATE TABLE test_select_project ( \
+        a INTEGER, \
+        b VARCHAR(20), \
+        c INTEGER \
+    ); \
+    INSERT INTO test_select_project VALUES ( 1,    'red',   10 ); \
+    INSERT INTO test_select_project VALUES ( 2, 'orange',   20 ); \
+    INSERT INTO test_select_project VALUES ( 3,     NULL,   30 ); \
+    INSERT INTO test_select_project VALUES ( 4,  'green', NULL ); \
+    INSERT INTO test_select_project VALUES ( 5, 'yellow',   40 ); \
+    INSERT INTO test_select_project VALUES ( 6,   'blue',   50 );
+
+#================================================================================
+# GROUPING AND AGGREGATION
+#
+
+# This setup SQL is used for grouping by one or more columns
+setup_testGroupBy = \
+    CREATE TABLE test_group_by_a ( \
+        a INTEGER, \
+        b INTEGER, \
+        c INTEGER \
+    ); \
+    INSERT INTO test_group_by_a VALUES ( 1, 4, 2 ); \
+    INSERT INTO test_group_by_a VALUES ( 1, 4, 6 ); \
+    INSERT INTO test_group_by_a VALUES ( 1, 2, 5 ); \
+    INSERT INTO test_group_by_a VALUES ( 2, 6, 4 ); \
+    INSERT INTO test_group_by_a VALUES ( 7, 6, 2 ); \
+    INSERT INTO test_group_by_a VALUES ( 3, 7, 2 ); \
+    INSERT INTO test_group_by_a VALUES ( 1, 6, 3 ); \
+    INSERT INTO test_group_by_a VALUES ( 7, 7, 1 ); \
+    INSERT INTO test_group_by_a VALUES ( 2, 6, 3 ); \
+    INSERT INTO test_group_by_a VALUES ( 2, 4, 7 ); \
+    INSERT INTO test_group_by_a VALUES ( 1, 6, 9 ); \
+    CREATE TABLE test_group_by_b ( \
+        a INTEGER, \
+        b VARCHAR(20), \
+        c INTEGER \
+    ); \
+    INSERT INTO test_group_by_b VALUES ( 1, 'okay', 40 ); \
+    INSERT INTO test_group_by_b VALUES ( 5, 'four', 40 ); \
+    INSERT INTO test_group_by_b VALUES ( 5, NULL, 293 ); \
+    INSERT INTO test_group_by_b VALUES ( 5, 'spam', 65 ); \
+    INSERT INTO test_group_by_b VALUES ( 1, 'blah', 123 ); \
+    INSERT INTO test_group_by_b VALUES ( 5, 'okay', 65 ); \
+    INSERT INTO test_group_by_b VALUES ( 6, 'five', 123 ); \
+    INSERT INTO test_group_by_b VALUES ( 1, NULL, 65 ); \
+    INSERT INTO test_group_by_b VALUES ( 6, 'asdf', 5723 ); \
+    INSERT INTO test_group_by_b VALUES ( 2, 'okay', 1235 ); \
+    INSERT INTO test_group_by_b VALUES ( 73, 'spam', 29 ); \
+    CREATE TABLE test_group_by_c ( \
+        name VARCHAR(15), \
+        street VARCHAR(12), \
+        city VARCHAR(15) \
+    ); \
+    INSERT INTO test_group_by_c VALUES ( 'Jones', 'Main', 'Harrison' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Smith', 'Main', 'Rye' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Hayes', 'Main', 'Harrison' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Curry', 'North', 'Rye' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Lindsay', 'Park', 'Pittsfield' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Turner', 'Putnam', 'Stamford' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Williams','Nassau', 'Princeton' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Adams', 'Spring', 'Pittsfield' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Johnson', 'Alma', 'Palo Alto' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Glenn', 'Sand Hill', 'Woodside' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Brooks', 'Senator', 'Brooklyn' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Green', 'Walnut', 'Stamford' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Jackson', 'University', 'Salt Lake' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Majeris', 'First', 'Rye' ); \
+    INSERT INTO test_group_by_c VALUES ( 'McBride', 'Safety', 'Rye' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Brown', 'South', 'Rye' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Davis', 'Ember', 'Stamford' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Miller', 'Willow', 'Brooklyn' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Wilson', 'Second', 'Orangeford' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Moore', 'Green', 'Princeton' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Taylor', 'Shady Cove', 'Palo Alto' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Anderson', 'Coolidge', 'Springfield' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Thomas', 'Smithton', 'Salt Lake' ); \
+    INSERT INTO test_group_by_c VALUES ( 'White', 'Washington', 'Rye' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Harris', 'Broad', 'Rye' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Martin', 'First', 'Orangeford' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Thompson', 'Wilson', 'Stamford' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Garcia', 'Coolidge', 'Hampton' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Martinez', 'East',  'Allentown' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Robinson', 'Main',  'Concord' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Clark', 'Grant', 'Brooklyn' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Rodriguez', 'First', 'Palo Alto' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Lewis', 'Elmer', 'Lakewood' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Lee',  'Bluff', 'Concord' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Walker', 'Garden', 'Hampton' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Hall', 'Hidden Hills', 'Allentown' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Allen', 'Willow', 'Salt Lake' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Young', 'Shady Cove', 'Palo Alto' ); \
+    INSERT INTO test_group_by_c VALUES ( 'Hernandez', 'Grant', 'Salt Lake' ); \
+    INSERT INTO test_group_by_c VALUES ( 'King', 'Leslie', 'Orangeford' ); \
+    CREATE TABLE test_group_by_d ( \
+        a INTEGER, \
+        b FLOAT, \
+        c VARCHAR(10), \
+        d INTEGER, \
+        e INTEGER \
+    ); \
+    INSERT INTO test_group_by_d VALUES ( 1, 23.5, 'bool', 1, 6); \
+    INSERT INTO test_group_by_d VALUES ( 3, 67.7, 'float', 45, 45); \
+    INSERT INTO test_group_by_d VALUES ( 1, 23.5, 'nope', 2, 6); \
+    INSERT INTO test_group_by_d VALUES ( 2, 23.8, 'short', 1, 5); \
+    INSERT INTO test_group_by_d VALUES ( 3, 67.7, 'float', 45, 67); \
+    INSERT INTO test_group_by_d VALUES ( 1, 56.2, 'bool', 2, 5); \
+    INSERT INTO test_group_by_d VALUES ( 2, 56.3, 'long', 34, 65); \
+    INSERT INTO test_group_by_d VALUES ( 1, 56.2, 'nope', 5, 7); \
+    INSERT INTO test_group_by_d VALUES ( 3, 23.5, 'int', 7, 3); \
+    INSERT INTO test_group_by_d VALUES ( 1, 56.2, 'nope', 3, 7); \
+    INSERT INTO test_group_by_d VALUES ( 2, 56.3, 'long', 1, 3); \
+    INSERT INTO test_group_by_d VALUES ( 2, 23.8, 'short', 34, 6); \
+    INSERT INTO test_group_by_d VALUES ( 1, 23.5, 'bool', 1, 4); \
+    INSERT INTO test_group_by_d VALUES ( 2, 56.3, 'long', 1, 5); \
+    INSERT INTO test_group_by_d VALUES ( 2, 56.3, 'double', 4, 5); \
+    INSERT INTO test_group_by_d VALUES ( 3, 23.5, 'int', 3, 4); \
+    INSERT INTO test_group_by_d VALUES ( 3, 67.7, 'long', 2, 5);
+
+# This setup SQL is used for testing aggregation functions
+setup_testAggregation = \
+    CREATE TABLE test_aggregate ( \
+        branch_name VARCHAR(15), \
+        city VARCHAR(15), \
+        balance INTEGER \
+    ); \
+    INSERT INTO test_aggregate VALUES ( 'Downtown', 'Brooklyn',  900000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Redwood', 'Palo Alto', 2100000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Perryridge', 'Horseneck', 1700000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Mianus', 'Horseneck',  400200 ); \
+    INSERT INTO test_aggregate VALUES ( 'Round Hill', 'Horseneck', 8000000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Pownal', 'Bennington',  400000 ); \
+    INSERT INTO test_aggregate VALUES ( 'North Town', 'Rye',  3700000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Brighton', 'Brooklyn', 7000000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Central', 'Rye',   400280 ); \
+    INSERT INTO test_aggregate VALUES ( 'Deer Park', 'Salt Lake', 1200000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Rock Ridge', 'Woodside',  700000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Markham', 'Orangeford',  625000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Belldale', 'Orangeford',  900000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Stonewell', 'Woodside',  775000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Greenfield', 'Salt Lake', 2050000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Marks', 'Palo Alto', 1300000 ); \
+    INSERT INTO test_aggregate VALUES ( 'Bretton', 'Stamford', 4550000 );
+
+# This setup SQL is used for testing grouping and aggregation functions together
+setup_testGroupingAndAggregation = \
+    CREATE TABLE test_group_aggregate ( \
+        number VARCHAR(15), \
+        branch_name VARCHAR(15), \
+        amount INTEGER \
+    ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-634', 'North Town', 16000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-168', 'Stonewell', 53000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-440', 'North Town', 8800 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-379', 'Central', 9900 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-722', 'Pownal', 13000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-493', 'Perryridge', 8300 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-378', 'Redwood', 1800 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-795', 'Stonewell', 42000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-992', 'Stonewell', 82000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-626', 'Round Hill', 780000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-263', 'Deer Park', 140000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-421', 'Downtown', 780000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-624', 'Stonewell', 1000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-803', 'Bretton', 2500 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-547', 'Deer Park', 10000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-109', 'Central', 550000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-112', 'Greenfield', 400 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-475', 'Mianus', 220000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-623', 'North Town', 23000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-279', 'Markham', 730000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-729', 'Pownal', 820000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-246', 'Stonewell', 73000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-654', 'North Town', 3000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-579', 'Greenfield', 3200 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-737', 'Mianus', 750000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-556', 'Stonewell', 1900 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-138', 'Brighton', 31000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-511', 'Marks', 40000 ); \
+    INSERT INTO test_group_aggregate VALUES ( 'L-285', 'Stonewell', 3100 ); \
+    CREATE TABLE test_group_aggregate_b ( \
+        number VARCHAR(15), \
+        branch_name VARCHAR(15), \
+        balance INTEGER \
+    ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-233', 'Perryridge', 520 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-106', 'North Town', 2500 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-664', 'Redwood', 790 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-151', 'Greenfield', 92000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-274', 'Pownal', 470 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-730', 'Pownal', 91000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-568', 'North Town', 380 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-758', 'Bretton', 59000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-506', 'Greenfield', 88000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-890', 'Central', 340 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-123', 'Bretton', 410 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-335', 'Belldale', 60 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-739', 'Redwood', 1000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-216', 'Deer Park', 640 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-313', 'Rock Ridge', 7800 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-790', 'North Town', 37000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-777', 'Pownal', 380 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-468', 'Stonewell', 43000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-751', 'Marks', 2800 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-656', 'Brighton', 5800 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-624', 'Marks', 31000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-185', 'Perryridge', 82000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-485', 'Central', 2000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-638', 'Rock Ridge', 50 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-460', 'Redwood', 560 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-598', 'Mianus', 300 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-959', 'Mianus', 74000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-855', 'Mianus', 60 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-154', 'Brighton', 1700 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-866', 'Stonewell', 54000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-931', 'Downtown', 200 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-340', 'Central', 300 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-470', 'Marks', 870 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-917', 'Redwood', 8200 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-752', 'Deer Park', 5900 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-795', 'Rock Ridge', 50000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-671', 'Pownal', 10 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-446', 'Bretton', 27000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-559', 'Marks', 1100 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-595', 'Marks', 620 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-131', 'Round Hill', 34000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-666', 'Stonewell', 580 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-369', 'Perryridge', 3800 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-840', 'Deer Park', 19000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-240', 'Stonewell', 28000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-297', 'Rock Ridge', 9500 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-375', 'Perryridge', 870 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-577', 'Bretton', 91000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-276', 'Greenfield', 190 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-261', 'Brighton', 3700 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-149', 'Pownal', 64000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-903', 'Rock Ridge', 910 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-587', 'Stonewell', 66000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-816', 'North Town', 420 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-181', 'Belldale', 67000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-310', 'Brighton', 24000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-306', 'Marks', 69000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-591', 'Greenfield', 90000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-210', 'Belldale', 9000 ); \
+    INSERT INTO test_group_aggregate_b VALUES ( 'A-314', 'Redwood', 340); \
+    CREATE TABLE test_complicated_group_aggregation ( \
+        a INTEGER, \
+        b FLOAT, \
+        c VARCHAR(10), \
+        d INTEGER, \
+        e INTEGER \
+    ); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 1, 23.5, 'bool', 1, 6); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 3, 67.7, 'float', 45, 45); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 1, 23.5, 'nope', 2, 6); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 2, 23.8, 'short', 1, 5); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 3, 67.7, 'float', 45, 67); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 1, 56.2, 'bool', 2, 5); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 2, 56.3, 'long', 34, 65); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 1, 56.2, 'nope', 5, 7); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 3, 23.5, 'int', 7, 3); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 1, 56.2, 'nope', 3, 7); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 2, 56.3, 'long', 1, 3); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 2, 23.8, 'short', 34, 6); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 1, 23.5, 'bool', 1, 4); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 2, 56.3, 'long', 1, 5); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 2, 56.3, 'double', 4, 5); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 3, 23.5, 'int', 3, 4); \
+    INSERT INTO test_complicated_group_aggregation VALUES ( 3, 67.7, 'long', 2, 5);
+
+# This setup SQL is used for the having test case
+setup_testHaving = \
+    CREATE TABLE test_having ( \
+        a INTEGER, \
+        b INTEGER, \
+        c INTEGER, \
+        d DOUBLE \
+    ); \
+    INSERT INTO test_having VALUES (54, 3700, 14509, 53.37081165742028); \
+    INSERT INTO test_having VALUES (36, 9910, 15331, 22.90678202096156); \
+    INSERT INTO test_having VALUES (75, 5280, 7261, 81.540804457543); \
+    INSERT INTO test_having VALUES (13, 9690, 9209, 79.67992395147218); \
+    INSERT INTO test_having VALUES (69, 8360, 23049, 44.56826222001171); \
+    INSERT INTO test_having VALUES (21, 8830, 488, 3.959288729127975); \
+    INSERT INTO test_having VALUES (82, 2910, 4357, 13.609984164151946); \
+    INSERT INTO test_having VALUES (40, 5510, 15330, 57.290652162595954); \
+    INSERT INTO test_having VALUES (35, 270, 13659, 55.96144259869629); \
+    INSERT INTO test_having VALUES (67, 7620, 20646, 41.64343351052828); \
+    INSERT INTO test_having VALUES (76, 3380, 10632, 84.0192992963771); \
+    INSERT INTO test_having VALUES (11, 980, 10540, 71.66348698663147); \
+    INSERT INTO test_having VALUES (1, 3060, 15413, 73.07979054189764); \
+    INSERT INTO test_having VALUES (59, 2860, 21388, 58.1474270838791); \
+    INSERT INTO test_having VALUES (54, 9600, 11517, 90.49817678868477); \
+    INSERT INTO test_having VALUES (22, 6710, 14793, 53.931181439296246); \
+    INSERT INTO test_having VALUES (26, 40, 17056, 24.130634043724953); \
+    INSERT INTO test_having VALUES (56, 5590, 10428, 20.111472186361755); \
+    INSERT INTO test_having VALUES (10, 3260, 21739, 82.95753797478432); \
+    INSERT INTO test_having VALUES (31, 4600, 20401, 9.894385799954437); \
+    INSERT INTO test_having VALUES (33, 4850, 22821, 75.29061728494453); \
+    INSERT INTO test_having VALUES (12, 2440, 4159, 32.045216605985814); \
+    INSERT INTO test_having VALUES (89, 5760, 14032, 82.29933729707994); \
+    INSERT INTO test_having VALUES (99, 6890, 2499, 71.28812040648805); \
+    INSERT INTO test_having VALUES (92, 7730, 9887, 85.16752875612198); \
+    INSERT INTO test_having VALUES (91, 3750, 13294, 87.94671428632576); \
+    INSERT INTO test_having VALUES (48, 1170, 12256, 3.281907226938298); \
+    INSERT INTO test_having VALUES (67, 6570, 7690, 53.73608089408287); \
+    INSERT INTO test_having VALUES (67, 8770, 17715, 92.34172488202334); \
+    INSERT INTO test_having VALUES (89, 1120, 5449, 87.00545770757294); \
+    INSERT INTO test_having VALUES (82, 1050, 16342, 65.40445207667443); \
+    INSERT INTO test_having VALUES (74, 4100, 8276, 12.71623732610386); \
+    INSERT INTO test_having VALUES (17, 5240, 3917, 75.99687609279805); \
+    INSERT INTO test_having VALUES (78, 2200, 20382, 62.33353013084938); \
+    INSERT INTO test_having VALUES (79, 660, 12755, 69.73397209114911); \
+    INSERT INTO test_having VALUES (1, 9410, 10992, 16.15707562515924); \
+    INSERT INTO test_having VALUES (93, 9930, 6833, 46.21908284037678); \
+    INSERT INTO test_having VALUES (14, 4110, 21955, 53.949209297518166); \
+    INSERT INTO test_having VALUES (14, 5360, 10537, 18.526675735251338); \
+    INSERT INTO test_having VALUES (79, 740, 13688, 10.298489953112572); \
+    INSERT INTO test_having VALUES (9, 3010, 10238, 95.58155784391973); \
+    INSERT INTO test_having VALUES (16, 8690, 1994, 64.73638464448655); \
+    INSERT INTO test_having VALUES (1, 4070, 3877, 6.393341487571598); \
+    INSERT INTO test_having VALUES (9, 7370, 18722, 37.18471805289001); \
+    INSERT INTO test_having VALUES (43, 6280, 20564, 20.138823633373676); \
+    INSERT INTO test_having VALUES (1, 7900, 1427, 1.820923604589582); \
+    INSERT INTO test_having VALUES (17, 5620, 17634, 55.62431543863012); \
+    INSERT INTO test_having VALUES (61, 5280, 7106, 38.6088829619034); \
+    INSERT INTO test_having VALUES (94, 5710, 9306, 89.93003956516414); \
+    INSERT INTO test_having VALUES (29, 2620, 20993, 98.74164205849245); \
+    INSERT INTO test_having VALUES (10, 4250, 1447, 11.12480823900477); \
+    INSERT INTO test_having VALUES (21, 1380, 2840, 22.499570998226407); \
+    INSERT INTO test_having VALUES (82, 9600, 8406, 2.535359291416995); \
+    INSERT INTO test_having VALUES (52, 7870, 16565, 75.94878768944054); \
+    INSERT INTO test_having VALUES (50, 6750, 20655, 9.214869696458102); \
+    INSERT INTO test_having VALUES (3, 6710, 12330, 28.629561424377627); \
+    INSERT INTO test_having VALUES (40, 7210, 227, 6.142314050954633); \
+    INSERT INTO test_having VALUES (66, 9830, 18374, 29.537027278372992); \
+    INSERT INTO test_having VALUES (59, 9670, 13458, 23.320816998736635); \
+    INSERT INTO test_having VALUES (14, 7210, 13573, 61.135183138614494); \
+    INSERT INTO test_having VALUES (34, 4470, 20163, 98.96107486019831); \
+    INSERT INTO test_having VALUES (79, 8100, 3166, 19.71262153258634); \
+    INSERT INTO test_having VALUES (58, 8030, 12692, 92.32622097622325); \
+    INSERT INTO test_having VALUES (20, 5330, 9936, 84.66197187888692); \
+    INSERT INTO test_having VALUES (20, 970, 5255, 96.67798510299245); \
+    INSERT INTO test_having VALUES (7, 990, 18169, 44.30605858277549); \
+    INSERT INTO test_having VALUES (25, 5760, 4173, 65.06038472850987); \
+    INSERT INTO test_having VALUES (44, 850, 15182, 1.9981208934390449); \
+    INSERT INTO test_having VALUES (18, 7260, 12266, 62.95617035383691); \
+    INSERT INTO test_having VALUES (78, 5010, 11030, 5.671675578216299); \
+    INSERT INTO test_having VALUES (31, 3890, 3001, 36.08105829087171); \
+    INSERT INTO test_having VALUES (31, 750, 15638, 35.82196715440919); \
+    INSERT INTO test_having VALUES (70, 7140, 16082, 88.78001767435983); \
+    INSERT INTO test_having VALUES (17, 4440, 12181, 14.564793242760498); \
+    INSERT INTO test_having VALUES (13, 9640, 1976, 5.555554482039331); \
+    INSERT INTO test_having VALUES (95, 2980, 10062, 56.67307696464134); \
+    INSERT INTO test_having VALUES (14, 6350, 22376, 90.69724680268467); \
+    INSERT INTO test_having VALUES (92, 6530, 21636, 71.05468278421856); \
+    INSERT INTO test_having VALUES (44, 4730, 3359, 64.66063135287257); \
+    INSERT INTO test_having VALUES (76, 7070, 7500, 53.458657722409185); \
+    INSERT INTO test_having VALUES (73, 410, 14460, 17.73781065719157); \
+    INSERT INTO test_having VALUES (60, 4220, 4465, 67.2182471970941); \
+    INSERT INTO test_having VALUES (87, 4420, 10123, 93.5064916473999); \
+    INSERT INTO test_having VALUES (81, 5080, 8624, 63.72795142790173); \
+    INSERT INTO test_having VALUES (10, 9500, 22595, 96.98324121567161); \
+    INSERT INTO test_having VALUES (28, 1870, 1083, 31.264473390719555); \
+    INSERT INTO test_having VALUES (18, 3060, 14671, 65.14394563245011); \
+    INSERT INTO test_having VALUES (71, 5210, 14117, 31.586886478382475); \
+    INSERT INTO test_having VALUES (51, 1650, 2731, 3.423135359163233); \
+    INSERT INTO test_having VALUES (38, 2380, 8070, 42.863835535853376); \
+    INSERT INTO test_having VALUES (66, 9370, 19088, 62.736277587453834); \
+    INSERT INTO test_having VALUES (73, 3820, 19599, 24.483671819665993); \
+    INSERT INTO test_having VALUES (61, 4970, 7932, 60.86728614157137); \
+    INSERT INTO test_having VALUES (74, 1970, 1069, 86.79955097635661); \
+    INSERT INTO test_having VALUES (26, 4860, 18060, 66.46846819570409); \
+    INSERT INTO test_having VALUES (93, 2540, 8684, 6.173152591361481); \
+    INSERT INTO test_having VALUES (26, 9750, 12115, 36.28257749660539); \
+    INSERT INTO test_having VALUES (26, 4190, 3180, 98.61913223134815); \
+    INSERT INTO test_having VALUES (39, 6470, 16604, 86.22655630090722); \
+    INSERT INTO test_having VALUES (8, 4930, 11387, 89.96368130774295);
+
+setup_testStringMatch = \
+    CREATE TABLE test_string_match ( s VARCHAR(30) ); \
+    INSERT INTO test_string_match VALUES ('apple'); \
+    INSERT INTO test_string_match VALUES ('banana'); \
+    INSERT INTO test_string_match VALUES ('blueberry'); \
+    INSERT INTO test_string_match VALUES ('cherry'); \
+    INSERT INTO test_string_match VALUES ('grape'); \
+    INSERT INTO test_string_match VALUES ('mango'); \
+    INSERT INTO test_string_match VALUES ('mandarine'); \
+    INSERT INTO test_string_match VALUES ('nectarine'); \
+    INSERT INTO test_string_match VALUES ('orange'); \
+    INSERT INTO test_string_match VALUES ('papaya'); \
+    INSERT INTO test_string_match VALUES ('peach'); \
+    INSERT INTO test_string_match VALUES ('pear'); \
+    INSERT INTO test_string_match VALUES ('plum'); \
+    INSERT INTO test_string_match VALUES ('raspberry'); \
+    INSERT INTO test_string_match VALUES ('strawberry'); \
+    INSERT INTO test_string_match VALUES ('tangerine');
+

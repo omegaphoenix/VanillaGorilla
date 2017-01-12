@@ -1,0 +1,340 @@
+<project name="nanodb" default="full" basedir="."
+    xmlns:if="ant:if" xmlns:jacoco="antlib:org.jacoco.ant">
+
+    <description>
+    NanoDB - SQL Relational Database for Pedagogy
+
+    Default build properties are for a debug build.  These properties are set
+    up by the "debug" target, which is a dependency of the "compile" target.
+
+    To override and build a release build, run "ant release ..." where "..."
+    is the desired build target, e.g. "compile" or "test" or "jar".
+    </description>
+
+    <!-- Global Properties -->
+
+    <property name="java.version" value="1.7" />
+
+    <property name="srcDir"  location="src"/>
+    <property name="libDir"  location="lib"/>
+    <property name="resDir"  location="res"/>
+
+    <property name="findbugsHomeDir" location="findbugs-3.0.0" />
+    <property name="findbugsLibDir"  location="${findbugsHomeDir}/lib" />
+
+    <!--
+      Relative path to SQL parser code (and in Javadocs, it's the relative path
+      to the docs for the classes).
+      -->
+    <property name="sqlParserRelDir" value="edu/caltech/nanodb/sqlparse" />
+    <property name="sqlParserDir" location="${srcDir}/${sqlParserRelDir}" />
+    <property name="sqlParserDocDir" location="${sqlParserDir}/doc" />
+
+    <property name="buildDir" location="build" />
+    <property name="buildClassesDir" location="${buildDir}/classes" />
+    <property name="buildResDir"     location="${buildDir}/res" />
+
+    <property name="javaDocDir" location="${buildDir}/javadoc" />
+    <property name="javaDocSqlParserDocDir" location="${javaDocDir}/${sqlParserRelDir}/doc" />
+
+    <property name="testSrcDir" location="test" />
+    <property name="testBuildDir" location="${buildDir}/tests" />
+    <property name="testResultsDir" location="${buildDir}/testresults" />
+
+    <!-- This is the temporary directory that storage-related test cases use. -->
+    <property name="testTempDir" location="test_datafiles" />
+
+    <property name="jacocoHomeDir" location="jacoco-0.7.3-20141010.162345-3" />
+    <property name="jacocoLibDir"  location="${jacocoHomeDir}/lib" />
+    <property name="jacocoResultsDir" location="${buildDir}/coverage" />
+
+    <property name="distJarFile" value="nanodb.jar" />
+    <property name="mainClassName" value="edu.caltech.nanodb.client.ExclusiveClient" />
+
+    <!-- Library Paths -->
+
+    <path id="libs.path">
+        <fileset dir="${libDir}">
+            <include name="antlr-3.2.jar" />
+            <include name="log4j-1.2.13.jar" />
+            <!-- DEPRECATED:  <include name="bsh-2.0b4.jar" /> -->
+            <include name="commons-lang-2.4.jar" />
+            <!-- NEW:  <include name="commons-lang3-3.1.jar" /> -->
+            <include name="commons-io-2.1.jar" />
+            <include name="jcip-annotations.jar" />
+        </fileset>
+    </path>
+
+    <path id="test.path">
+        <path refid="libs.path" />
+
+        <pathelement location="${buildClassesDir}" />
+        <fileset dir="${libDir}">
+            <include name="testng-5.8-jdk15.jar" />
+        </fileset>
+    </path>
+
+    <!-- Path for findbugs static code analysis tool -->
+    <path id="findbugs.path">
+        <path refid="libs.path" />
+
+        <fileset dir="${findbugsLibDir}">
+            <include name="findbugs.jar" />
+            <include name="findbugs-ant.jar" />
+        </fileset>
+    </path>
+
+    <!-- Path for JaCoCo test coverage tool -->
+    <path id="jacoco.path">
+        <path refid="test.path" />
+
+        <fileset dir="${jacocoLibDir}">
+            <include name="jacocoant.jar" />
+        </fileset>
+    </path>
+
+    <!-- Custom Task Definitions -->
+
+    <taskdef resource="testngtasks" classpathref="test.path" />
+
+    <taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask"
+             classpathref="findbugs.path" />
+
+    <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml"
+             classpathref="jacoco.path" />
+
+    <!-- Build Tasks -->
+
+    <target name="full" depends="test,jar,javadoc"
+            description="Runs test, jar, and javadoc targets in that order." />
+
+    <target name="fullest" depends="test,jar,javadoc,findbugs"
+            description="Runs test, jar, javadoc, and findbugs targets in that order." />
+
+    <target name="-init">
+        <tstamp/>
+        <mkdir dir="${buildDir}" />
+        <copy file="${resDir}/build-index.html" tofile="${buildDir}/index.html" />
+    </target>
+
+    <target name="debug"
+            description="Set properties for a debug build.">
+        <property name="java.debug" value="on" />
+        <property name="java.opt"   value="off" />
+    </target>
+
+    <target name="release"
+          description="Set properties for a release build.">
+        <property name="java.debug" value="off" />
+        <property name="java.opt"   value="on" />
+    </target>
+
+    <target name="remote-debug"
+            description="Set up for a remote-debugger to attach for tests.">
+        <property name="remoteDebug"
+                  value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005" />
+    </target>
+
+    <target name="clean-parser"
+            description="Deletes the generated parser files.">
+
+        <property name="sqlParserDir"
+                  location="${srcDir}/edu/caltech/nanodb/sqlparse" />
+
+        <delete>
+            <fileset dir="${sqlParserDir}">
+                <include name="NanoSqlLexer.java" />
+                <include name="NanoSqlParser.java" />
+                <include name="NanoSqlParserTokenTypes.java" />
+                <include name="*.smap" />
+                <include name="NanoSqlParserTokenTypes.txt" />
+
+                <include name="doc" />
+            </fileset>
+        </delete>
+    </target>
+
+
+    <target name="gen-parser"
+            description="Generates the Java source code for the SQL parser.">
+        <!--
+          HACK HACK HACK
+
+          Antlr doesn't really put things into the right directories for Java
+          package declarations.  So we do the extra legwork.  Unfortunately it
+          means we have to keep this in sync with the codebase, which isn't good.
+          -->
+
+        <!-- Generate the SQL parser and lexer sources. -->
+        <antlr target="${resDir}/nanosql.g" outputdirectory="${sqlParserDir}">
+            <classpath>
+                <path refid="libs.path" />
+            </classpath>
+        </antlr>
+
+        <!-- Generate HTML files describing the grammar. -->
+        <mkdir dir="${sqlParserDocDir}" />
+        <antlr target="${resDir}/nanosql.g" outputdirectory="${sqlParserDocDir}" html="yes">
+            <classpath>
+                <path refid="libs.path" />
+            </classpath>
+        </antlr>
+    </target>
+
+    <target name="compile" depends="debug,-init"
+            description="Compiles the source code for NanoDB.">
+
+        <mkdir dir="${buildClassesDir}" />
+
+        <javac destdir="${buildClassesDir}" classpathref="libs.path"
+               includeantruntime="no"
+               debug="${java.debug}" optimize="${java.opt}" deprecation="on">
+               <!-- source="${java.version}" target="${java.version}" -->
+
+            <compilerarg value="-Xlint:unchecked,cast" />
+
+            <src path="${srcDir}" />
+
+            <!-- How to exclude packages...
+            <exclude name="**/indexes/**" />
+            -->
+            <exclude name="${srcDir}/**/BTreeFileOptimizer.java" />
+            <exclude name="${srcDir}/**/DatabaseConstraintEnforcer.java" />
+        </javac>
+    </target>
+
+
+    <target name="compiletests" depends="compile"
+            description="Compiles the test code for NanoDB.">
+        <mkdir dir="${testBuildDir}" />
+
+        <javac destdir="${testBuildDir}" classpathref="test.path"
+               includeantruntime="no"
+               debug="on" optimize="off" deprecation="on">
+               <!-- source="${java.version}" target="${java.version}" -->
+
+            <src path="${testSrcDir}" />
+        </javac>
+
+        <!--
+          We have some resources in the test directories that we need to move
+          across to the test-build directory.
+          -->
+        <copy todir="${testBuildDir}">
+            <fileset dir="${testSrcDir}" includes="**/*.props" />
+        </copy>
+
+        <copy file="./logging.conf" todir="${testBuildDir}" />
+
+    </target>
+
+
+    <target name="test" depends="compiletests"
+            description="Runs all tests against NanoDB.">
+        <delete dir="${testTempDir}" />
+        <mkdir dir="${testResultsDir}" />
+
+        <!-- To disable test coverage calculation, comment this tag and its
+             matching close-tag out.
+        -->
+        <jacoco:coverage destfile="${buildDir}/jacoco.exec">
+
+        <testng suitename="nanodb-tests" outputdir="${testResultsDir}" verbose="2">
+            <jvmarg value="-Dlog4j.configuration=logging.conf" />
+
+            <!-- The remoteDebug variable will be undefined unless
+                 the remote-debug target is run first. -->
+            <jvmarg if:set="remoteDebug" value="${remoteDebug}" />
+
+            <xmlfileset dir="." includes="testng.xml" />
+
+            <classpath>
+                <pathelement path="${testBuildDir}" />
+                <path refid="test.path" />
+            </classpath>
+        </testng>
+
+        </jacoco:coverage>
+
+        <jacoco:report>
+            <executiondata>
+                <file file="${buildDir}/jacoco.exec" />
+            </executiondata>
+
+            <structure name="NanoDB">
+                <classfiles>
+                    <fileset dir="${buildDir}/classes" />
+                </classfiles>
+                <sourcefiles encoding="UTF-8">
+                    <fileset dir="${srcDir}" />
+                </sourcefiles>
+            </structure>
+
+            <html destdir="${jacocoResultsDir}" />
+        </jacoco:report>
+    </target>
+
+
+    <target name="jar" depends="compile"
+            description="Create a distribution jar-file.">
+
+        <!-- Put all of the classes into an appropriately-named JAR file. -->
+        <jar jarfile="${buildDir}/${distJarFile}" basedir="${buildClassesDir}">
+            <manifest>
+                <attribute name="Main-Class" value="${mainClassName}" />
+            </manifest>
+        </jar>
+    </target>
+
+
+    <target name="javadoc" depends="-init" description="Generates JavaDocs.">
+        <mkdir dir="${javaDocDir}" />
+
+        <javadoc packagenames="*" destdir="${javaDocDir}" classpathref="libs.path"
+                 windowtitle="NanoDB" overview="${srcDir}/overview.html"
+                 access="private" useexternalfile="yes" linksource="yes">
+
+            <sourcepath>
+                <pathelement location="${srcDir}" />
+            </sourcepath>
+
+            <tag name="design" scope="all" description="Design note:" />
+            <tag name="review" scope="all" description="Review:" />
+            <tag name="todo" scope="all" description="To Do:" />
+
+            <link href="http://docs.oracle.com/javase/7/docs/api/"
+                  offline="true" packagelistLoc="${resDir}/jdk" />
+
+            <link href="http://logging.apache.org/log4j/1.2/apidocs/"
+                  offline="true" packagelistloc="${resDir}/log4j" />
+        </javadoc>
+
+        <copy todir="${javaDocSqlParserDocDir}">
+            <fileset dir="${sqlParserDocDir}" includes="*" />
+        </copy>
+    </target>
+
+    <target name="clean" description="Cleans up all build artifacts.">
+        <delete dir="${buildDir}"/>
+    </target>
+
+
+    <target name="findbugs" depends="jar"
+            description="Run FindBugs static code-analysis tool.">
+        <findbugs home="${findbugsHomeDir}" effort="max"
+                  output="html" outputFile="${buildDir}/nanodb-fb.html"
+                  excludefilter="fb-excl.xml">
+            <auxclasspath>
+                <fileset dir="${libDir}">
+                    <include name="antlr-3.2.jar" />
+                    <include name="log4j-1.2.13.jar" />
+                    <include name="commons-lang-2.4.jar" />
+                    <include name="commons-io-2.1.jar" />
+                </fileset>
+            </auxclasspath>
+
+            <sourcepath path="${srcDir}" />
+            <class location="${buildDir}/${distJarFile}" />
+        </findbugs>
+    </target>
+</project>

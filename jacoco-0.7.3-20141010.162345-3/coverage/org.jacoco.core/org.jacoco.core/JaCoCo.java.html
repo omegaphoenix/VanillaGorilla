@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../.resources/report.gif" type="image/gif"/><title>JaCoCo.java</title><link rel="stylesheet" href="../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../.sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">JaCoCo</a> &gt; <a href="../index.html" class="el_bundle">org.jacoco.core</a> &gt; <a href="index.source.html" class="el_package">org.jacoco.core</a> &gt; <span class="el_source">JaCoCo.java</span></div><h1>JaCoCo.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2009, 2014 Mountainminds GmbH &amp; Co. KG and Contributors
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Marc R. Hoffmann - initial API and implementation
+ *    
+ *******************************************************************************/
+package org.jacoco.core;
+
+import java.util.ResourceBundle;
+
+import org.objectweb.asm.Opcodes;
+
+/**
+ * Static Meta information about JaCoCo.
+ */
+public final class JaCoCo {
+
+	/** Qualified build version of the JaCoCo core library. */
+	public static final String VERSION;
+
+	/** Absolute URL of the current JaCoCo home page */
+	public static final String HOMEURL;
+
+	/** Name of the runtime package of this build */
+	public static final String RUNTIMEPACKAGE;
+
+	/** ASM API version */
+	public static final int ASM_API_VERSION = Opcodes.ASM5;
+
+	static {
+<span class="fc" id="L36">		final ResourceBundle bundle = ResourceBundle</span>
+				.getBundle(&quot;org.jacoco.core.jacoco&quot;);
+<span class="fc" id="L38">		VERSION = bundle.getString(&quot;VERSION&quot;);</span>
+<span class="fc" id="L39">		HOMEURL = bundle.getString(&quot;HOMEURL&quot;);</span>
+<span class="fc" id="L40">		RUNTIMEPACKAGE = bundle.getString(&quot;RUNTIMEPACKAGE&quot;);</span>
+<span class="fc" id="L41">	}</span>
+
+<span class="nc" id="L43">	private JaCoCo() {</span>
+<span class="nc" id="L44">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.3.201410101205</span>Code Coverage Report for JaCoCo 0.7.3-SNAPSHOT</div></body></html>

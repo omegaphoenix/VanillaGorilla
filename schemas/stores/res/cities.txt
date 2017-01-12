@@ -1,0 +1,254 @@
+1 	New York 	New York 	8,143,197
+2 	Los Angeles 	California 	3,844,829
+3 	Chicago 	Illinois 	2,842,518
+4 	Houston 	Texas 	2,016,582
+5 	Philadelphia 	Pennsylvania 	1,463,281
+6 	Phoenix 	Arizona 	1,461,575
+7 	San Antonio 	Texas 	1,256,509
+8 	San Diego 	California 	1,255,540
+9 	Dallas 	Texas 	1,213,825
+10 	San Jose 	California 	912,332
+11 	Detroit 	Michigan 	886,671
+12 	Indianapolis 	Indiana 	784,118
+13 	Jacksonville 	Florida 	782,623
+14 	San Francisco 	California 	739,426
+15 	Columbus 	Ohio 	730,657
+16 	Austin 	Texas 	690,252
+17 	Memphis 	Tennessee 	672,277
+18 	Baltimore 	Maryland 	635,815
+19 	Fort Worth 	Texas 	624,067
+20 	Charlotte 	North Carolina 	610,949
+21 	El Paso 	Texas 	598,590
+22 	Milwaukee 	Wisconsin 	578,887
+23 	Seattle 	Washington 	573,911
+24 	Boston 	Massachusetts 	559,034
+25 	Denver 	Colorado 	557,917
+26 	Louisville 	Kentucky 	556,429
+27 	Washington 	District of Columbia 	550,521
+28 	Nashville 	Tennessee 	549,110
+29 	Las Vegas 	Nevada 	545,147
+30 	Portland 	Oregon 	533,427
+31 	Oklahoma City 	Oklahoma 	531,324
+32 	Tucson 	Arizona 	515,526
+33 	Albuquerque 	New Mexico 	494,236
+34 	Long Beach 	California 	474,014
+35 	Atlanta 	Georgia 	470,688
+36 	Fresno 	California 	461,116
+37 	Sacramento 	California 	456,441
+38 	New Orleans 	Louisiana 	454,863
+39 	Cleveland 	Ohio 	452,208
+40 	Kansas City 	Missouri 	444,965
+41 	Mesa 	Arizona 	442,780
+42 	Virginia Beach 	Virginia 	438,415
+43 	Omaha 	Nebraska 	414,521
+44 	Oakland 	California 	395,274
+45 	Miami 	Florida 	386,417
+46 	Tulsa 	Oklahoma 	382,457
+47 	Honolulu 	Hawaii 	377,379
+48 	Minneapolis 	Minnesota 	372,811
+49 	Colorado Springs 	Colorado 	369,815
+50 	Arlington 	Texas 	362,805
+51 	Wichita 	Kansas 	354,865
+52 	St. Louis 	Missouri 	344,362
+53 	Raleigh 	North Carolina 	341,530
+54 	Santa Ana 	California 	340,368
+55 	Anaheim 	California 	331,804
+56 	Tampa 	Florida 	325,989
+57 	Pittsburgh 	Pennsylvania 	316,718
+58 	Cincinnati 	Ohio 	308,728
+59 	Toledo 	Ohio 	301,285
+60 	Aurora 	Colorado 	297,235
+61 	Bakersfield 	California 	295,536
+62 	Riverside 	California 	290,086
+63 	Stockton 	California 	286,926
+64 	Corpus Christi 	Texas 	283,474
+65 	Newark 	New Jersey 	280,666
+66 	Buffalo 	New York 	279,745
+67 	St. Paul 	Minnesota 	275,150
+68 	Anchorage 	Alaska 	275,043
+69 	Lexington 	Kentucky 	268,080
+70 	Plano 	Texas 	250,096
+71 	St. Petersburg 	Florida 	249,079
+72 	Jersey City 	New Jersey 	239,614
+73 	Glendale 	Arizona 	239,435
+74 	Lincoln 	Nebraska 	239,213
+75 	Chandler 	Arizona 	234,939
+76 	Henderson 	Nevada 	232,146
+77 	Greensboro 	North Carolina 	231,962
+78 	Norfolk 	Virginia 	231,954
+79 	Birmingham 	Alabama 	231,483
+80 	Scottsdale 	Arizona 	226,013
+81 	Fort Wayne 	Indiana 	223,341
+82 	Baton Rouge 	Louisiana 	222,064
+83 	Madison 	Wisconsin 	221,551
+84 	Hialeah 	Florida 	220,485
+85 	Chesapeake 	Virginia 	218,968
+86 	Garland 	Texas 	216,346
+87 	Orlando 	Florida 	213,223
+88 	Rochester 	New York 	211,091
+89 	Akron 	Ohio 	210,795
+90 	Chula Vista 	California 	210,497
+91 	Lubbock 	Texas 	209,737
+92 	Laredo 	Texas 	208,754
+93 	Modesto 	California 	207,011
+94 	Durham 	North Carolina 	204,845
+95 	Reno 	Nevada 	203,550
+96 	Fremont 	California 	200,468
+97 	Montgomery 	Alabama 	200,127
+98 	Glendale 	California 	200,065
+99 	Shreveport 	Louisiana 	198,874
+100 	San Bernardino 	California 	198,550
+101 	Spokane 	Washington 	196,818
+102 	Yonkers 	New York 	196,425
+103 	Arlington 	Virginia 	195,965
+104 	Tacoma 	Washington 	195,898
+105 	Huntington Beach 	California 	194,457
+106 	Des Moines 	Iowa 	194,163
+107 	Grand Rapids 	Michigan 	193,780
+108 	Richmond 	Virginia 	193,777
+109 	Winston 	North Carolina 	193,755
+110 	Irving 	Texas 	193,649
+111 	Boise City 	Idaho 	193,161
+112 	Mobile 	Alabama 	191,544
+113 	Augusta 	Georgia 	190,782
+114 	Irvine 	California 	186,852
+115 	Columbus 	Georgia 	185,271
+116 	Little Rock 	Arkansas 	184,564
+117 	Oxnard 	California 	183,628
+118 	Amarillo 	Texas 	183,021
+119 	Knoxville 	Tennessee 	180,130
+120 	Newport News 	Virginia 	179,899
+121 	Moreno Valley 	California 	178,367
+122 	Salt Lake City 	Utah 	178,097
+123 	Jackson 	Mississippi 	177,977
+124 	Providence 	Rhode Island 	176,862
+125 	North Las Vegas 	Nevada 	176,635
+126 	Worcester 	Massachusetts 	175,898
+127 	Gilbert 	Arizona 	173,989
+128 	Ontario 	California 	172,679
+129 	Rancho Cucamonga 	California 	169,353
+130 	Santa Clarita 	California 	168,253
+131 	Aurora 	Illinois 	168,181
+132 	Brownsville 	Texas 	167,493
+133 	Fort Lauderdale 	Florida 	167,380
+134 	Huntsville 	Alabama 	166,313
+135 	Oceanside 	California 	166,108
+136 	Garden Grove 	California 	166,075
+137 	Overland Park 	Kansas 	164,811
+138 	Fontana 	California 	163,860
+139 	Tempe 	Arizona 	161,143
+140 	Dayton 	Ohio 	158,873
+141 	Tallahassee 	Florida 	158,500
+142 	Vancouver 	Washington 	157,493
+143 	Chattanooga 	Tennessee 	154,762
+144 	Pomona 	California 	153,787
+145 	Santa Rosa 	California 	153,158
+146 	Rockford 	Illinois 	152,916
+147 	Springfield 	Massachusetts 	151,732
+148 	Pembroke Pines 	Florida 	150,380
+149 	Springfield 	Missouri 	150,298
+150 	Paterson 	New Jersey 	149,843
+151 	Corona 	California 	149,387
+152 	Salem 	Oregon 	148,751
+153 	Salinas 	California 	146,431
+154 	Hollywood 	Florida 	145,629
+155 	Hampton 	Virginia 	145,579
+156 	Eugene 	Oregon 	144,515
+157 	Grand Prairie 	Texas 	144,337
+158 	Kansas City 	Kansas 	144,210
+159 	Pasadena 	Texas 	143,852
+160 	Pasadena 	California 	143,731
+161 	Torrance 	California 	142,384
+162 	Syracuse 	New York 	141,683
+163 	Naperville 	Illinois 	141,579
+164 	Lakewood 	Colorado 	140,671
+165 	Hayward 	California 	140,293
+166 	Cape Coral 	Florida 	140,010
+167 	Sioux Falls 	South Dakota 	139,517
+168 	Bridgeport 	Connecticut 	139,008
+169 	Peoria 	Arizona 	138,200
+170 	Joliet 	Illinois 	136,208
+171 	Alexandria 	Virginia 	135,337
+172 	Warren 	Michigan 	135,311
+173 	Orange 	California 	134,950
+174 	Palmdale 	California 	134,570
+175 	Escondido 	California 	134,085
+176 	Lancaster 	California 	134,032
+177 	Fullerton 	California 	132,787
+178 	Port St. Lucie 	Florida 	131,692
+179 	Fayetteville 	North Carolina 	129,928
+180 	Mesquite 	Texas 	129,902
+181 	Sunnyvale 	California 	128,902
+182 	Coral Springs 	Florida 	128,804
+183 	Savannah 	Georgia 	128,453
+184 	Sterling Heights 	Michigan 	128,034
+185 	Fort Collins 	Colorado 	128,026
+186 	Elizabeth 	New Jersey 	125,809
+187 	New Haven 	Connecticut 	124,791
+188 	Hartford 	Connecticut 	124,397
+189 	Thousand Oaks 	California 	124,359
+190 	McAllen 	Texas 	123,622
+191 	Concord 	California 	123,252
+192 	Cedar Rapids 	Iowa 	123,119
+193 	El Monte 	California 	122,513
+194 	Topeka 	Kansas 	121,946
+195 	Waco 	Texas 	120,465
+196 	Stamford 	Connecticut 	120,045
+197 	Carrollton 	Texas 	118,870
+198 	Simi Valley 	California 	118,687
+199 	Flint 	Michigan 	118,551
+200 	Vallejo 	California 	117,483
+201 	Bellevue 	Washington 	117,137
+202 	Columbia 	South Carolina 	117,088
+203 	Evansville 	Indiana 	115,918
+204 	Springfield 	Illinois 	115,668
+205 	Lansing 	Michigan 	115,518
+206 	Abilene 	Texas 	114,757
+207 	Inglewood 	California 	114,467
+208 	Provo 	Utah 	113,459
+209 	West Valley City 	Utah 	113,300
+210 	Ann Arbor 	Michigan 	113,271
+211 	Clarksville 	Tennessee 	112,878
+212 	Peoria 	Illinois 	112,685
+213 	Elk Grove 	California 	112,338
+214 	Lafayette 	Louisiana 	112,030
+215 	Beaumont 	Texas 	111,799
+216 	Olathe 	Kansas 	111,334
+217 	Independence 	Missouri 	110,208
+218 	Costa Mesa 	California 	109,830
+219 	Downey 	California 	109,718
+220 	Manchester 	New Hampshire 	109,691
+221 	Clearwater 	Florida 	108,687
+222 	Visalia 	California 	108,669
+223 	West Covina 	California 	108,185
+224 	Gainesville 	Florida 	108,184
+225 	Waterbury 	Connecticut 	107,902
+226 	Allentown 	Pennsylvania 	106,992
+227 	Charleston 	South Carolina 	106,712
+228 	Miramar 	Florida 	106,623
+229 	Cary 	North Carolina 	106,439
+230 	Roseville 	California 	105,940
+231 	Norwalk 	California 	105,834
+232 	Santa Clara 	California 	105,402
+233 	South Bend 	Indiana 	105,262
+234 	Thornton 	Colorado 	105,182
+235 	Westminster 	Colorado 	105,084
+236 	Fairfield 	California 	104,476
+237 	Pompano Beach 	Florida 	104,179
+238 	Denton 	Texas 	104,153
+239 	Burbank 	California 	104,108
+240 	San Buenaventura 	California 	104,017
+241 	Arvada 	Colorado 	103,966
+242 	Pueblo 	Colorado 	103,495
+243 	Athens 	Georgia 	103,238
+244 	Lowell 	Massachusetts 	103,111
+245 	Erie 	Pennsylvania 	102,612
+246 	Richmond 	California 	102,186
+247 	Norman 	Oklahoma 	101,719
+248 	Green Bay 	Wisconsin 	101,203
+249 	Berkeley 	California 	100,744
+250 	Antioch 	California 	100,631
+251 	Daly City 	California 	100,339
+252 	Killeen 	Texas 	100,233
+253 	Portsmouth 	Virginia 	100,169
+254 	Cambridge 	Massachusetts 	100,135

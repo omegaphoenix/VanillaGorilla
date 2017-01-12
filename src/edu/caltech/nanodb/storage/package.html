@@ -1,0 +1,65 @@
+<html>
+<body>
+<p>
+This package contains the classes for the Storage Manager, which is responsible
+for how data is stored in and retrieved from database files.
+</p>
+
+<h2>Startup Sequence</h2>
+
+<p>
+The start-up sequence for the storage layer is as follows:
+</p>
+
+<ul>
+    <li>
+        <p>The Storage Manager is initialized first.</p>
+        <ol>
+            <li>The {@link edu.caltech.nanodb.storage.StorageManager#init}
+                method is invoked first.</li>
+            <li>The directory for NanoDB's data files is determined.</li>
+            <li>The {@link edu.caltech.nanodb.storage.StorageManager}
+                constructor is invoked.</li>
+            <li>The {@link edu.caltech.nanodb.storage.FileManager} is
+                initialized, with the appropriate data directory.</li>
+            <li>The {@link edu.caltech.nanodb.storage.BufferManager} is
+                initialized, wrapping the {@code FileManager}.</li>
+            <li>File-managers for table-files and index-files are initialized
+                at this point.  Generally they don't need to do anything at
+                initialization time; it's just a convenient time to initialize
+                them.</li>
+        </ol>
+    </li>
+</ul>
+
+<h2>Implementing New Tuple-File Formats</h2>
+
+<p>
+Adding new tuple-file formats to NanoDB should be reasonably straightforward,
+but there are several interfaces that must all be implemented for the tuple
+file to be operational inside NanoDB.
+</p>
+
+<ul>
+    <li>
+        The core implementation of the tuple-file format must be provided as
+        an implementation of the {@link TupleFile} interface, or one of its
+        sub-interfaces.  Depending on what the tuple-file format can provide,
+        it may be appropriate to implement {@link SequentialTupleFile} for a
+        format that maintains a logical ordering over all tuples, or
+        {@link HashedTupleFile} for a format that supports constant-time tuple
+        lookups using a subset of the tuple's columns.  If none of these
+        guarantees can be provided, then the {@link TupleFile} interface is
+        the correct one to implement.
+    </li>
+    <li>
+        Certain operations on tuple files can't be provided on the
+        {@link TupleFile} implementation itself, so they are provided by the
+        {@link TupleFileManager} interface.
+    </li>
+</ul>
+
+
+
+</body>
+</html>

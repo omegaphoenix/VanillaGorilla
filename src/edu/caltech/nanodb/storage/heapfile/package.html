@@ -1,0 +1,115 @@
+<html>
+<body>
+<p>
+    This package provides an implementation of the heap file organization for
+    NanoDB.  All heap files in nanodb are accessed by pages, as is the case
+    with virtually all NanoDB files.  Following is a description of the
+    storage format for heap files:
+</p>
+
+<h2>Overview</h2>
+
+<p>
+    Page 0 is the header page, containing the table's schema and statistics
+    information.  All other pages are data pages, storing tuples using a
+    slotted-page structure in each page.  Relevant classes are:
+</p>
+
+<ul>
+    <li>
+        The {@link edu.caltech.nanodb.storage.heapfile.HeapFileTableManager}
+        class implements higher-level operations such as storing a table's
+        schema into a table file.  It also manages the process of scanning
+        through a table file, and inserting/deleting/modifying tuples.
+    </li>
+    <li>
+        The {@link edu.caltech.nanodb.storage.heapfile.HeaderPage} class
+        provides lower-level access to values stored in the header page, as
+        well as constants for accessing various parts of the header page.
+    </li>
+    <li>
+        Similarly, the {@link edu.caltech.nanodb.storage.heapfile.DataPage}
+        class provides lower-level access to values stored in the header page,
+        as well as constants for accessing various parts of the header page.
+    </li>
+    <li>
+        The {@link edu.caltech.nanodb.storage.heapfile.HeapFilePageTuple}
+        class implements the {@link edu.caltech.nanodb.relations.Tuple}
+        interface for access and manipulation of tuple data stored in the
+        slotted page format.
+    </li>
+</ul>
+
+<h2>The Header Page</h2>
+
+<p>The header page has the following structural layout:</p>
+
+<table>
+    <tr><th>Offset in Page</th><th>Type</th><th>Description</th></tr>
+    <tr>
+        <td>0</td>
+        <td>unsigned byte</td>
+        <td>
+            <b>File type</b>, set to {@link edu.caltech.nanodb.storage.DBFileType#HEAP_DATA_FILE}.
+            (See the {@link edu.caltech.nanodb.storage.FileManagerImpl} for code
+            that accesses and manipulates this value.)
+        </td>
+
+        <td>1</td>
+        <td>unsigned byte</td>
+        <td>
+            Encoded page size <em>p</em>, where the actual page size is
+            2<sup>p</sup>.
+            (See the {@link edu.caltech.nanodb.storage.FileManagerImpl} for code
+            that accesses and manipulates this value.)
+        </td>
+
+        <td>2 ({@link edu.caltech.nanodb.storage.heapfile.HeaderPage#OFFSET_SCHEMA_SIZE})</td>
+        <td>unsigned short</td>
+        <td>
+            <p>
+            The number of bytes in the header page occupied by the table
+            schema.  This value should not be 0, although the API allows it
+            to be.
+            </p>
+            <p>
+            (See {@link edu.caltech.nanodb.storage.heapfile.HeaderPage#getSchemaSize}
+            and {@link edu.caltech.nanodb.storage.heapfile.HeaderPage#setSchemaSize}
+            for accessing and manipulating this value.)
+            </p>
+        </td>
+
+        <td>4 ({@link edu.caltech.nanodb.storage.heapfile.HeaderPage#OFFSET_STATS_SIZE})</td>
+        <td>unsigned short</td>
+        <td>
+            <p>
+            The number of bytes in the header page occupied by table statistics.
+            This value may be 0 if the table currently has no statistics.
+            </p>
+            <p>
+            (See {@link edu.caltech.nanodb.storage.heapfile.HeaderPage#getStatsSize}
+            and {@link edu.caltech.nanodb.storage.heapfile.HeaderPage#setStatsSize}
+            for accessing and manipulating this value.)
+            </p>
+        </td>
+
+        <td>6 ({@link edu.caltech.nanodb.storage.heapfile.HeaderPage#OFFSET_SCHEMA_START})</td>
+        <td><em>[table schema]</em></td>
+        <td>
+            The schema of the table, as written by the
+            {@link edu.caltech.nanodb.storage.SchemaWriter} helper class.
+        </td>
+
+        <td><em>[after table schema]</em></td>
+        <td><em>[table statistics]</em></td>
+        <td>
+            The table's statistics, as written by the
+            {@link edu.caltech.nanodb.storage.StatsWriter} helper class.
+        </td>
+    </tr>
+
+</table>
+
+
+</body>
+</html>

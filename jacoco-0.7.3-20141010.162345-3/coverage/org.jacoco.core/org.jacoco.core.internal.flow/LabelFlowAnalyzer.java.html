@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../.resources/report.gif" type="image/gif"/><title>LabelFlowAnalyzer.java</title><link rel="stylesheet" href="../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../.sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">JaCoCo</a> &gt; <a href="../index.html" class="el_bundle">org.jacoco.core</a> &gt; <a href="index.source.html" class="el_package">org.jacoco.core.internal.flow</a> &gt; <span class="el_source">LabelFlowAnalyzer.java</span></div><h1>LabelFlowAnalyzer.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2009, 2014 Mountainminds GmbH &amp; Co. KG and Contributors
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Marc R. Hoffmann - initial API and implementation
+ *    
+ *******************************************************************************/
+package org.jacoco.core.internal.flow;
+
+import org.jacoco.core.JaCoCo;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.MethodNode;
+
+/**
+ * Method visitor to collect flow related information about the {@link Label}s
+ * within a class. It calculates the properties &quot;multitarget&quot; and &quot;successor&quot;
+ * that can afterwards be obtained via {@link LabelInfo}.
+ */
+public final class LabelFlowAnalyzer extends MethodVisitor {
+
+	/**
+	 * Marks all labels of the method with control flow information.
+	 * 
+	 * @param method
+	 *            Method to mark labels
+	 */
+	public static void markLabels(final MethodNode method) {
+		// We do not use the accept() method as ASM resets labels after every
+		// call to accept()
+<span class="fc" id="L37">		final MethodVisitor lfa = new LabelFlowAnalyzer();</span>
+<span class="fc bfc" id="L38" title="All 2 branches covered.">		for (int i = method.tryCatchBlocks.size(); --i &gt;= 0;) {</span>
+<span class="fc" id="L39">			method.tryCatchBlocks.get(i).accept(lfa);</span>
+		}
+<span class="fc" id="L41">		method.instructions.accept(lfa);</span>
+<span class="fc" id="L42">	}</span>
+
+	/**
+	 * &lt;code&gt;true&lt;/code&gt; if the current instruction is a potential successor of
+	 * the previous instruction. Accessible for testing.
+	 */
+<span class="fc" id="L48">	boolean successor = false;</span>
+
+	/**
+	 * &lt;code&gt;true&lt;/code&gt; for the very first instruction only. Accessible for
+	 * testing.
+	 */
+<span class="fc" id="L54">	boolean first = true;</span>
+
+	/**
+	 * Create new instance.
+	 */
+	public LabelFlowAnalyzer() {
+<span class="fc" id="L60">		super(JaCoCo.ASM_API_VERSION);</span>
+<span class="fc" id="L61">	}</span>
+
+	@Override
+	public void visitTryCatchBlock(final Label start, final Label end,
+			final Label handler, final String type) {
+		// Enforce probes at the beginning and end of the block:
+<span class="fc" id="L67">		LabelInfo.setTarget(start);</span>
+<span class="fc" id="L68">		LabelInfo.setTarget(handler);</span>
+<span class="fc" id="L69">	}</span>
+
+	@Override
+	public void visitJumpInsn(final int opcode, final Label label) {
+<span class="fc" id="L73">		LabelInfo.setTarget(label);</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">		if (opcode == Opcodes.JSR) {</span>
+<span class="fc" id="L75">			throw new AssertionError(&quot;Subroutines not supported.&quot;);</span>
+		}
+<span class="fc bfc" id="L77" title="All 2 branches covered.">		successor = opcode != Opcodes.GOTO;</span>
+<span class="fc" id="L78">		first = false;</span>
+<span class="fc" id="L79">	}</span>
+
+	@Override
+	public void visitLabel(final Label label) {
+<span class="fc bfc" id="L83" title="All 2 branches covered.">		if (first) {</span>
+<span class="fc" id="L84">			LabelInfo.setTarget(label);</span>
+		}
+<span class="fc bfc" id="L86" title="All 2 branches covered.">		if (successor) {</span>
+<span class="fc" id="L87">			LabelInfo.setSuccessor(label);</span>
+		}
+<span class="fc" id="L89">	}</span>
+
+	@Override
+	public void visitTableSwitchInsn(final int min, final int max,
+			final Label dflt, final Label... labels) {
+<span class="fc" id="L94">		visitSwitchInsn(dflt, labels);</span>
+<span class="fc" id="L95">	}</span>
+
+	@Override
+	public void visitLookupSwitchInsn(final Label dflt, final int[] keys,
+			final Label[] labels) {
+<span class="fc" id="L100">		visitSwitchInsn(dflt, labels);</span>
+<span class="fc" id="L101">	}</span>
+
+	private void visitSwitchInsn(final Label dflt, final Label[] labels) {
+<span class="fc" id="L104">		LabelInfo.resetDone(dflt);</span>
+<span class="fc" id="L105">		LabelInfo.resetDone(labels);</span>
+<span class="fc" id="L106">		setTargetIfNotDone(dflt);</span>
+<span class="fc bfc" id="L107" title="All 2 branches covered.">		for (final Label l : labels) {</span>
+<span class="fc" id="L108">			setTargetIfNotDone(l);</span>
+		}
+<span class="fc" id="L110">		successor = false;</span>
+<span class="fc" id="L111">		first = false;</span>
+<span class="fc" id="L112">	}</span>
+
+	private static void setTargetIfNotDone(final Label label) {
+<span class="fc bfc" id="L115" title="All 2 branches covered.">		if (!LabelInfo.isDone(label)) {</span>
+<span class="fc" id="L116">			LabelInfo.setTarget(label);</span>
+<span class="fc" id="L117">			LabelInfo.setDone(label);</span>
+		}
+<span class="fc" id="L119">	}</span>
+
+	@Override
+	public void visitInsn(final int opcode) {
+<span class="fc bfc" id="L123" title="All 3 branches covered.">		switch (opcode) {</span>
+		case Opcodes.RET:
+<span class="fc" id="L125">			throw new AssertionError(&quot;Subroutines not supported.&quot;);</span>
+		case Opcodes.IRETURN:
+		case Opcodes.LRETURN:
+		case Opcodes.FRETURN:
+		case Opcodes.DRETURN:
+		case Opcodes.ARETURN:
+		case Opcodes.RETURN:
+		case Opcodes.ATHROW:
+<span class="fc" id="L133">			successor = false;</span>
+<span class="fc" id="L134">			break;</span>
+		default:
+<span class="fc" id="L136">			successor = true;</span>
+			break;
+		}
+<span class="fc" id="L139">		first = false;</span>
+<span class="fc" id="L140">	}</span>
+
+	@Override
+	public void visitIntInsn(final int opcode, final int operand) {
+<span class="fc" id="L144">		successor = true;</span>
+<span class="fc" id="L145">		first = false;</span>
+<span class="fc" id="L146">	}</span>
+
+	@Override
+	public void visitVarInsn(final int opcode, final int var) {
+<span class="fc" id="L150">		successor = true;</span>
+<span class="fc" id="L151">		first = false;</span>
+<span class="fc" id="L152">	}</span>
+
+	@Override
+	public void visitTypeInsn(final int opcode, final String type) {
+<span class="fc" id="L156">		successor = true;</span>
+<span class="fc" id="L157">		first = false;</span>
+<span class="fc" id="L158">	}</span>
+
+	@Override
+	public void visitFieldInsn(final int opcode, final String owner,
+			final String name, final String desc) {
+<span class="fc" id="L163">		successor = true;</span>
+<span class="fc" id="L164">		first = false;</span>
+<span class="fc" id="L165">	}</span>
+
+	@Override
+	public void visitMethodInsn(final int opcode, final String owner,
+			final String name, final String desc, final boolean itf) {
+<span class="fc" id="L170">		successor = true;</span>
+<span class="fc" id="L171">		first = false;</span>
+<span class="fc" id="L172">	}</span>
+
+	@Override
+	public void visitInvokeDynamicInsn(final String name, final String desc,
+			final Handle bsm, final Object... bsmArgs) {
+<span class="fc" id="L177">		successor = true;</span>
+<span class="fc" id="L178">		first = false;</span>
+<span class="fc" id="L179">	}</span>
+
+	@Override
+	public void visitLdcInsn(final Object cst) {
+<span class="fc" id="L183">		successor = true;</span>
+<span class="fc" id="L184">		first = false;</span>
+<span class="fc" id="L185">	}</span>
+
+	@Override
+	public void visitIincInsn(final int var, final int increment) {
+<span class="fc" id="L189">		successor = true;</span>
+<span class="fc" id="L190">		first = false;</span>
+<span class="fc" id="L191">	}</span>
+
+	@Override
+	public void visitMultiANewArrayInsn(final String desc, final int dims) {
+<span class="fc" id="L195">		successor = true;</span>
+<span class="fc" id="L196">		first = false;</span>
+<span class="fc" id="L197">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.3.201410101205</span>Code Coverage Report for JaCoCo 0.7.3-SNAPSHOT</div></body></html>

@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../.resources/report.gif" type="image/gif"/><title>AbstractReportMojo.java</title><link rel="stylesheet" href="../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../.sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">JaCoCo</a> &gt; <a href="../index.html" class="el_bundle">jacoco-maven-plugin</a> &gt; <a href="index.source.html" class="el_package">org.jacoco.maven</a> &gt; <span class="el_source">AbstractReportMojo.java</span></div><h1>AbstractReportMojo.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2009, 2014 Mountainminds GmbH &amp; Co. KG and Contributors
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Evgeny Mandrikov - initial API and implementation
+ *
+ *******************************************************************************/
+package org.jacoco.maven;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import org.apache.maven.doxia.siterenderer.Renderer;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.reporting.AbstractMavenReport;
+import org.apache.maven.reporting.MavenReportException;
+import org.jacoco.core.analysis.IBundleCoverage;
+import org.jacoco.core.analysis.ICoverageNode;
+import org.jacoco.core.data.ExecutionDataStore;
+import org.jacoco.core.data.SessionInfoStore;
+import org.jacoco.core.tools.ExecFileLoader;
+import org.jacoco.report.FileMultiReportOutput;
+import org.jacoco.report.IReportGroupVisitor;
+import org.jacoco.report.IReportVisitor;
+import org.jacoco.report.ISourceFileLocator;
+import org.jacoco.report.MultiReportVisitor;
+import org.jacoco.report.csv.CSVFormatter;
+import org.jacoco.report.html.HTMLFormatter;
+import org.jacoco.report.xml.XMLFormatter;
+
+/**
+ * Base class for creating a code coverage report for tests of a single project
+ * in multiple formats (HTML, XML, and CSV).
+ */
+<span class="fc" id="L47">public abstract class AbstractReportMojo extends AbstractMavenReport {</span>
+
+	/**
+	 * Encoding of the generated reports.
+	 * 
+	 * @parameter property=&quot;project.reporting.outputEncoding&quot;
+	 *            default-value=&quot;UTF-8&quot;
+	 */
+	String outputEncoding;
+	/**
+	 * Encoding of the source files.
+	 * 
+	 * @parameter property=&quot;project.build.sourceEncoding&quot;
+	 *            default-value=&quot;UTF-8&quot;
+	 */
+	String sourceEncoding;
+	/**
+	 * A list of class files to include in the report. May use wildcard
+	 * characters (* and ?). When not specified everything will be included.
+	 * 
+	 * @parameter
+	 */
+	List&lt;String&gt; includes;
+	/**
+	 * A list of class files to exclude from the report. May use wildcard
+	 * characters (* and ?). When not specified nothing will be excluded.
+	 * 
+	 * @parameter
+	 */
+	List&lt;String&gt; excludes;
+	/**
+	 * Flag used to suppress execution.
+	 * 
+	 * @parameter property=&quot;jacoco.skip&quot; default-value=&quot;false&quot;
+	 */
+	boolean skip;
+	/**
+	 * Maven project.
+	 * 
+	 * @parameter property=&quot;project&quot;
+	 * @readonly
+	 */
+	MavenProject project;
+	/**
+	 * Doxia Site Renderer.
+	 * 
+	 * @component
+	 */
+	Renderer siteRenderer;
+	SessionInfoStore sessionInfoStore;
+	ExecutionDataStore executionDataStore;
+
+	public abstract String getOutputName();
+
+	public abstract String getName(final Locale locale);
+
+	public String getDescription(final Locale locale) {
+<span class="fc" id="L104">		return getName(locale) + &quot; Coverage Report.&quot;;</span>
+	}
+
+	@Override
+	public boolean isExternalReport() {
+<span class="fc" id="L109">		return true;</span>
+	}
+
+	@Override
+	protected MavenProject getProject() {
+<span class="fc" id="L114">		return project;</span>
+	}
+
+	@Override
+	protected Renderer getSiteRenderer() {
+<span class="nc" id="L119">		return siteRenderer;</span>
+	}
+
+	/**
+	 * Returns the list of class files to include in the report.
+	 * 
+	 * @return class files to include, may contain wildcard characters
+	 */
+	List&lt;String&gt; getIncludes() {
+<span class="fc" id="L128">		return includes;</span>
+	}
+
+	/**
+	 * Returns the list of class files to exclude from the report.
+	 * 
+	 * @return class files to exclude, may contain wildcard characters
+	 */
+	List&lt;String&gt; getExcludes() {
+<span class="fc" id="L137">		return excludes;</span>
+	}
+
+	@Override
+	public abstract void setReportOutputDirectory(
+			final File reportOutputDirectory);
+
+	@Override
+	public boolean canGenerateReport() {
+<span class="fc bfc" id="L146" title="All 2 branches covered.">		if (skip) {</span>
+<span class="fc" id="L147">			getLog().info(</span>
+					&quot;Skipping JaCoCo execution because property jacoco.skip is set.&quot;);
+<span class="fc" id="L149">			return false;</span>
+		}
+<span class="fc bfc" id="L151" title="All 2 branches covered.">		if (!getDataFile().exists()) {</span>
+<span class="fc" id="L152">			getLog().info(</span>
+					&quot;Skipping JaCoCo execution due to missing execution data file:&quot;
+							+ getDataFile());
+<span class="fc" id="L155">			return false;</span>
+		}
+<span class="fc" id="L157">		final File classesDirectory = new File(getProject().getBuild()</span>
+				.getOutputDirectory());
+<span class="fc bfc" id="L159" title="All 2 branches covered.">		if (!classesDirectory.exists()) {</span>
+<span class="fc" id="L160">			getLog().info(</span>
+					&quot;Skipping JaCoCo execution due to missing classes directory:&quot;
+							+ classesDirectory);
+<span class="fc" id="L163">			return false;</span>
+		}
+<span class="fc" id="L165">		return true;</span>
+	}
+
+	/**
+	 * This method is called when the report generation is invoked directly as a
+	 * standalone Mojo.
+	 */
+	@Override
+	public void execute() throws MojoExecutionException {
+<span class="fc bfc" id="L174" title="All 2 branches covered.">		if (!canGenerateReport()) {</span>
+<span class="fc" id="L175">			return;</span>
+		}
+		try {
+<span class="fc" id="L178">			executeReport(Locale.getDefault());</span>
+<span class="fc" id="L179">		} catch (final MavenReportException e) {</span>
+<span class="fc" id="L180">			throw new MojoExecutionException(&quot;An error has occurred in &quot;</span>
+					+ getName(Locale.ENGLISH) + &quot; report generation.&quot;, e);
+<span class="fc" id="L182">		}</span>
+<span class="fc" id="L183">	}</span>
+
+	@Override
+	protected void executeReport(final Locale locale)
+			throws MavenReportException {
+<span class="fc" id="L188">		loadExecutionData();</span>
+		try {
+<span class="fc" id="L190">			final IReportVisitor visitor = createVisitor(locale);</span>
+<span class="fc" id="L191">			visitor.visitInfo(sessionInfoStore.getInfos(),</span>
+					executionDataStore.getContents());
+<span class="fc" id="L193">			createReport(visitor);</span>
+<span class="fc" id="L194">			visitor.visitEnd();</span>
+<span class="nc" id="L195">		} catch (final IOException e) {</span>
+<span class="nc" id="L196">			throw new MavenReportException(&quot;Error while creating report: &quot;</span>
+					+ e.getMessage(), e);
+<span class="fc" id="L198">		}</span>
+<span class="fc" id="L199">	}</span>
+
+	void loadExecutionData() throws MavenReportException {
+<span class="fc" id="L202">		final ExecFileLoader loader = new ExecFileLoader();</span>
+		try {
+<span class="fc" id="L204">			loader.load(getDataFile());</span>
+<span class="fc" id="L205">		} catch (final IOException e) {</span>
+<span class="fc" id="L206">			throw new MavenReportException(</span>
+					&quot;Unable to read execution data file &quot; + getDataFile()
+							+ &quot;: &quot; + e.getMessage(), e);
+<span class="fc" id="L209">		}</span>
+<span class="fc" id="L210">		sessionInfoStore = loader.getSessionInfoStore();</span>
+<span class="fc" id="L211">		executionDataStore = loader.getExecutionDataStore();</span>
+<span class="fc" id="L212">	}</span>
+
+	void createReport(final IReportGroupVisitor visitor) throws IOException {
+<span class="fc" id="L215">		final FileFilter fileFilter = new FileFilter(this.getIncludes(),</span>
+				this.getExcludes());
+<span class="fc" id="L217">		final BundleCreator creator = new BundleCreator(this.getProject(),</span>
+				fileFilter, getLog());
+<span class="fc" id="L219">		final IBundleCoverage bundle = creator.createBundle(executionDataStore);</span>
+<span class="fc" id="L220">		final SourceFileCollection locator = new SourceFileCollection(</span>
+				getCompileSourceRoots(), sourceEncoding);
+<span class="fc" id="L222">		checkForMissingDebugInformation(bundle);</span>
+<span class="fc" id="L223">		visitor.visitBundle(bundle, locator);</span>
+<span class="fc" id="L224">	}</span>
+
+	void checkForMissingDebugInformation(final ICoverageNode node) {
+<span class="pc bpc" id="L227" title="1 of 4 branches missed.">		if (node.getClassCounter().getTotalCount() &gt; 0</span>
+				&amp;&amp; node.getLineCounter().getTotalCount() == 0) {
+<span class="fc" id="L229">			getLog().warn(</span>
+					&quot;To enable source code annotation class files have to be compiled with debug information.&quot;);
+		}
+<span class="fc" id="L232">	}</span>
+
+	IReportVisitor createVisitor(final Locale locale) throws IOException {
+<span class="fc" id="L235">		final List&lt;IReportVisitor&gt; visitors = new ArrayList&lt;IReportVisitor&gt;();</span>
+<span class="fc" id="L236">		getOutputDirectoryFile().mkdirs();</span>
+<span class="fc" id="L237">		final XMLFormatter xmlFormatter = new XMLFormatter();</span>
+<span class="fc" id="L238">		xmlFormatter.setOutputEncoding(outputEncoding);</span>
+<span class="fc" id="L239">		visitors.add(xmlFormatter.createVisitor(new FileOutputStream(new File(</span>
+				getOutputDirectoryFile(), &quot;jacoco.xml&quot;))));
+<span class="fc" id="L241">		final CSVFormatter csvFormatter = new CSVFormatter();</span>
+<span class="fc" id="L242">		csvFormatter.setOutputEncoding(outputEncoding);</span>
+<span class="fc" id="L243">		visitors.add(csvFormatter.createVisitor(new FileOutputStream(new File(</span>
+				getOutputDirectoryFile(), &quot;jacoco.csv&quot;))));
+<span class="fc" id="L245">		final HTMLFormatter htmlFormatter = new HTMLFormatter();</span>
+<span class="fc" id="L246">		htmlFormatter.setOutputEncoding(outputEncoding);</span>
+<span class="fc" id="L247">		htmlFormatter.setLocale(locale);</span>
+<span class="fc" id="L248">		visitors.add(htmlFormatter.createVisitor(new FileMultiReportOutput(</span>
+				getOutputDirectoryFile())));
+<span class="fc" id="L250">		return new MultiReportVisitor(visitors);</span>
+	}
+
+	File resolvePath(final String path) {
+<span class="fc" id="L254">		File file = new File(path);</span>
+<span class="pc bpc" id="L255" title="1 of 2 branches missed.">		if (!file.isAbsolute()) {</span>
+<span class="nc" id="L256">			file = new File(getProject().getBasedir(), path);</span>
+		}
+<span class="fc" id="L258">		return file;</span>
+	}
+
+	List&lt;File&gt; getCompileSourceRoots() {
+<span class="fc" id="L262">		final List&lt;File&gt; result = new ArrayList&lt;File&gt;();</span>
+<span class="fc bfc" id="L263" title="All 2 branches covered.">		for (final Object path : getProject().getCompileSourceRoots()) {</span>
+<span class="fc" id="L264">			result.add(resolvePath((String) path));</span>
+		}
+<span class="fc" id="L266">		return result;</span>
+	}
+
+<span class="fc" id="L269">	private static class SourceFileCollection implements ISourceFileLocator {</span>
+
+		private final List&lt;File&gt; sourceRoots;
+		private final String encoding;
+
+		public SourceFileCollection(final List&lt;File&gt; sourceRoots,
+<span class="fc" id="L275">				final String encoding) {</span>
+<span class="fc" id="L276">			this.sourceRoots = sourceRoots;</span>
+<span class="fc" id="L277">			this.encoding = encoding;</span>
+<span class="fc" id="L278">		}</span>
+
+		public Reader getSourceFile(final String packageName,
+				final String fileName) throws IOException {
+			final String r;
+<span class="fc bfc" id="L283" title="All 2 branches covered.">			if (packageName.length() &gt; 0) {</span>
+<span class="fc" id="L284">				r = packageName + '/' + fileName;</span>
+			} else {
+<span class="fc" id="L286">				r = fileName;</span>
+			}
+<span class="pc bpc" id="L288" title="1 of 2 branches missed.">			for (final File sourceRoot : sourceRoots) {</span>
+<span class="fc" id="L289">				final File file = new File(sourceRoot, r);</span>
+<span class="pc bpc" id="L290" title="2 of 4 branches missed.">				if (file.exists() &amp;&amp; file.isFile()) {</span>
+<span class="fc" id="L291">					return new InputStreamReader(new FileInputStream(file),</span>
+							encoding);
+				}
+<span class="nc" id="L294">			}</span>
+<span class="nc" id="L295">			return null;</span>
+		}
+
+		public int getTabWidth() {
+<span class="fc" id="L299">			return 4;</span>
+		}
+	}
+
+	abstract File getDataFile();
+
+	abstract File getOutputDirectoryFile();
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.3.201410101205</span>Code Coverage Report for JaCoCo 0.7.3-SNAPSHOT</div></body></html>

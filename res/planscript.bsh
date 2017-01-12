@@ -1,0 +1,551 @@
+import edu.caltech.nanodb.plannodes.*;
+import edu.caltech.nanodb.expressions.*;
+
+import java.util.*;
+
+import org.apache.log4j.Logger;
+
+print("\nRunning planscript.bsh...\n");
+
+// Appends newPred to oldPred in the case where oldPred is a conjunction.
+// If not a conjunction, creates a new conjunction of oldPred and newPred.
+appendConjunct(oldPred, newPred) {
+  // If oldPred doesn't exist, just set old = new;
+  if (oldPred == null)
+    return newPred;
+  else if (newPred == null)
+    return oldPred;
+  else {
+    // If oldPred already was an AND, just add newPred
+    if (oldPred instanceof BooleanOperator &&
+        oldPred.getType() == BooleanOperator.Type.AND_EXPR) {
+      oldPred.addTerm(newPred);
+      return oldPred;
+    }
+    else {
+      // Since oldPred is something else, we have to create a new AND containing
+      // both old and new.
+      conjunction = new BooleanOperator(BooleanOperator.Type.AND_EXPR);
+      conjunction.addTerm(oldPred);
+      conjunction.addTerm(newPred);
+
+      oldPred = conjunction;
+      return oldPred;
+    }
+  }
+}
+
+
+// Find the first join in the subtree of node that contains the given symbols.
+firstJoinContaining(node, symbols) {
+  if (node.nodeType == PlanNode.OperationType.THETA_JOIN) {
+    // This is a join node. Check to see if it satisfies the conditions we want.
+    columns = node.getColumnInfos();
+    // Iterate over the symbols in the expression we are checking.
+    for (expressionColumn : symbols) {
+      // Iterate over the columninfos in this join.
+      match = false;
+      for (joinColumn : columns) {
+        if (expressionColumn.getTableName().equals(joinColumn.getTableName()) &&
+            expressionColumn.getColumnName().equals(joinColumn.getName())) {
+          match = true;
+          break;
+        }
+      }
+
+      if (!match) {
+        // The last checked symbol didn't match anything in the join schema.
+        // So there cannot be the desired join in this subtree, so return null.
+        return null;
+      }
+    }
+
+    // Since all the symbols matched, this join has the schema we want, so
+    // return it.
+    return node;
+  }
+  else if (node.leftChild != null) {
+    // This is not a join node but it has a child. Call recursively.
+    return firstJoinContaining(node.leftChild, symbols);
+  }
+  else {
+    // This is a leaf node, return null.
+    return null;
+  }
+}
+
+
+// Find the first node in the subtree that has a predicate and matches the
+// symbols.
+firstSelectionNodeContaining(node, symbols) {
+  if (node.nodeType == PlanNode.OperationType.SELECT ||
+      node.nodeType == PlanNode.OperationType.THETA_JOIN) {
+    // Has a predicate. Check to see if it satisfies the conditions we want.
+    columns = node.getColumnInfos();
+    // Iterate over the symbols in the expression we are checking.
+    for (expressionColumn : symbols) {
+      // Iterate over the columninfos in this node.
+      match = false;
+      for (nodeColumn : columns) {
+        if (expressionColumn.getTableName().equals(nodeColumn.getTableName()) &&
+            expressionColumn.getColumnName().equals(nodeColumn.getName())) {
+          match = true;
+          break;
+        }
+      }
+
+      if (!match) {
+        // The last checked symbol didn't match anything in the node schema.
+        // So there cannot be the desired node in this subtree, so return null.
+        return null;
+      }
+    }
+
+    // Since all the symbols matched, this node has the schema we want, so
+    // return it.
+    return node;
+  }
+  else if (node.leftChild != null) {
+    // This is not a selecting node but it has a child. Call recursively.
+    return firstSelectionNodeContaining(node.leftChild, symbols);
+  }
+  else {
+    // This is a leaf node, return null.
+    return null;
+  }
+}
+
+
+
+
+// Checks node's subtree to see if there is a theta join that joinCondition
+// can be moved down to and copies if such a join exists.
+// Return true if the condition was copied and false otherwise.
+copyJoinConditionDownward(node, joinCondition, joinSymbols) {
+  if (joinCondition == null)
+    return false;
+
+  // Find a suitable join node.
+  if (node.leftChild == null)
+    return false;
+  join = null;
+  if (node.nodeType == PlanNode.OperationType.THETA_JOIN) {
+    // First try the left subtree. If it fails to find a join, then do right.
+    join = firstJoinContaining(node.leftChild, joinSymbols);
+    if (join == null) {
+      // Try the right subtree.
+      join = firstJoinContaining(node.rightChild, joinSymbols);
+    }
+  }
+  else {
+    join = firstJoinContaining(node.leftChild, joinSymbols);
+  }
+
+  if (join != null) {
+    // We found a join that works.
+    // Add condition to that join.
+    join.predicate = appendConjunct(join.predicate, joinCondition);
+    return true;
+  }
+
+  return false;
+}
+
+
+// Checks node's subtree to see if there is a selecting node that the predicate
+// can be moved down to and copies if such a node exists.
+// Return true if the condition was copied and false otherwise.
+copySelectionConditionDownward(node, predicate, symbols) {
+  if (predicate == null)
+    return false;
+
+  // Find a suitable node.
+  if (node.leftChild == null)
+    return false;
+  selectionNode = null;
+  if (node.nodeType == PlanNode.OperationType.THETA_JOIN) {
+    // First try the left subtree. If it fails to find a node, then do right.
+    selectionNode = firstSelectionNodeContaining(node.leftChild, symbols);
+    if (selectionNode == null) {
+      // Try the right subtree.
+      selectionNode = firstSelectionNodeContaining(node.rightChild, symbols);
+    }
+  }
+  else {
+    selectionNode = firstSelectionNodeContaining(node.leftChild, symbols);
+  }
+
+  if (selectionNode != null) {
+    // We found a node that works.
+    // Add condition to that predicate.
+    selectionNode.predicate = appendConjunct(selectionNode.predicate,
+                                             predicate);
+    return true;
+  }
+
+  return false;
+}
+
+
+// Pushes any join conditions or file scan conditions from node down to theta
+// joins or leaf selects respectively.
+// This function recurses over the entire subtree, so calling on the root node
+// will push all conditions as low as possible in the plan tree.
+pushConditions(node) {
+  logger.debug("\nPushing conditions for " + node);
+
+  // If this node doesn't have a child, do nothing.
+  if (node.leftChild != null) {
+    if ((node.nodeType == PlanNode.OperationType.SELECT ||
+         node.nodeType == PlanNode.OperationType.THETA_JOIN) &&
+        node.predicate != null) {
+      // We have a predicate, so check to see if its an AND.
+      if (node.predicate instanceof BooleanOperator &&
+          node.predicate.getType() == BooleanOperator.Type.AND_EXPR) {
+
+        // Iterate over all conjuncts.
+        int numTerms = node.predicate.getNumTerms();
+        for (i = 0; i < numTerms; i++) {
+          // Get the ith term and try to push it.
+          term = node.predicate.getTerm(i);
+
+          symbols = new HashSet();
+          term.getAllSymbols(symbols);
+          // Check to see if this involves more than 1 table.
+          setOfTables = new HashSet();
+          for (column : symbols) {
+            table = column.getTableName();
+            setOfTables.add(table);
+          }
+
+          if (setOfTables.size() < 2) {
+            // This is not a join condition, try to push it down to a select.
+            if (copySelectionConditionDownward(node, term, symbols)) {
+              // We successfully pushed the condition down, so remove it from this
+              // conjunction.
+              node.predicate.removeTerm(i);
+              // Because we removed a term, bring the numTerms down by 1
+              numTerms--;
+              i--;
+            }
+          }
+          else {
+            // This is a join condition, try to push it.
+            if (copyJoinConditionDownward(node, term, symbols)) {
+              // We successfully pushed the condition down, so remove it from this
+              // conjunction.
+              node.predicate.removeTerm(i);
+              // Because we removed a term, bring the numTerms down by 1
+              numTerms--;
+              i--;
+            }
+          }
+
+
+        }
+
+        // Check expression degeneracy.
+        if (numTerms == 0) {
+          // No terms remain, set predicate to null.
+          node.predicate = null;
+        }
+        else if (numTerms == 1) {
+          // 1 Term remains, set predicate to that term.
+          node.predicate = node.predicate.getTerm(0);
+        }
+      }
+      else {
+        // Push the lone condition.
+
+        symbols = new HashSet();
+        node.predicate.getAllSymbols(symbols);
+        // Check to see if this involves more than 1 table.
+        setOfTables = new HashSet();
+        for (column : symbols) {
+          table = column.getTableName();
+          setOfTables.add(table);
+        }
+
+        if (setOfTables.size() < 2) {
+          // This is not a join condition, try to push it down to a select.
+          if (copySelectionConditionDownward(node, node.predicate, symbols)) {
+            // We copied this condition, set the predicate to null.
+            node.predicate = null;
+          }
+        }
+        else {
+          // This is a join condition, try to push it.
+          if (copyJoinConditionDownward(node, node.predicate, symbols)) {
+            // We copied this condition, set the predicate to null.
+            node.predicate = null;
+          }
+        }
+      }
+    }
+
+    // Push child's conditions
+    if (node.nodeType == PlanNode.OperationType.THETA_JOIN) {
+      // Push the left subtree and then the right subtree.
+      pushConditions(node.leftChild);
+      pushConditions(node.rightChild);
+    }
+    else {
+      // Just push the left subtree.
+      pushConditions(node.leftChild);
+    }
+  }
+}
+
+
+// Eliminates SelectNodes in node's plan tree that are simple filters and have
+// null conditions. This function is intended to be called after conditions are
+// pushed but before plan tree restructuring takes place.
+//
+// Returns the new root node (in case the old root node was removed).
+eliminateNodes(node) {
+  logger.debug("\nAttempting to eliminate " + node);
+
+  if (node.leftChild != null) {
+    if ((node.nodeType == PlanNode.OperationType.SELECT &&
+        node.implementation == SelectNode.ImplementationType.SIMPLE_FILTER &&
+        node.predicate == null) ||
+        (node.nodeType == PlanNode.OperationType.PROJECT &&
+        node.isTrivial())) {
+
+      // Get the subtree
+      children = eliminateNodes(node.leftChild);
+
+      // Remove this node from the tree.
+      if (node.parent != null) {
+        // This node has a parent.
+
+        if (node.parent.leftChild == node) {
+          // This node is its parent's left child.
+          node.parent.leftChild = children;
+          children.parent = node.parent;
+        }
+        else {
+          // This node is its parent's right child.
+          node.parent.rightChild = children;
+          children.parent = node.parent;
+        }
+      }
+      else {
+        // This node is the top of the tree.
+        children.parent = null;
+      }
+
+      // Make sure we remove all references in the deleted node so that
+      // garbage collection can safely occur.
+      node.leftChild = null;
+      node.parent = null;
+
+
+      // Return the children
+      return children;
+    }
+    else {
+      // Eliminate nodes from the children.
+      if (node.nodeType == PlanNode.OperationType.THETA_JOIN) {
+        leftChildren = eliminateNodes(node.leftChild);
+        rightChildren = eliminateNodes(node.rightChild);
+        node.leftChild = leftChildren;
+        node.rightChild = rightChildren;
+        leftChildren.parent = node;
+        rightChildren.parent = node;
+      }
+      else {
+        leftChildren = eliminateNodes(node.leftChild);
+        node.leftChild = leftChildren;
+        leftChildren.parent = node;
+      }
+
+      return node;
+    }
+  }
+  else {
+    // This node doesn't have a left child, so it can't be eliminated.
+    // Return the input node.
+    return node;
+  }
+}
+
+
+// Generates the equivalent plans for a given root node.
+//
+// Returns the list of equivalent plan trees.
+equivalentPlans(node) {
+
+  list = new PlanArray();
+
+  list.addPlan(node);
+
+  path = new NodePath();
+
+  for (i = 0; i < list.size(); i++) {
+    applyRules(list, list.getPlan(i), list.getPlan(i), path);
+  }
+
+
+  return list;
+
+}
+
+
+// Recursive helper function that applies equivalence rules to the given node.
+// If the equivalence rules allow the node to be transformed, use root and path
+// to create a copy of the tree with the local transformation and add it to the
+// list of plans.
+applyRules(list, root, node, path) {
+
+  // Apply equivalence rules.
+  ruleJoinsCommutative(list, root, node, path);
+  //ruleJoinsAssociative(list, root, node, path);
+  ruleJoinsAssociativeFlip(list, root, node, path);
+
+  // Recurse
+  if (node.leftChild != null) {
+    // Update the path.
+    leftPath = new NodePath(path);
+    leftPath.walkLeft();
+
+    applyRules(list, root, node.leftChild, leftPath);
+  }
+  if (node.rightChild != null) {
+    // Update the path.
+    rightPath = new NodePath(path);
+    rightPath.walkRight();
+
+    applyRules(list, root, node.rightChild, rightPath);
+  }
+}
+
+
+// EQUIVALENCE RULES:
+// Follows the naming convention: ruleName
+
+// Represents the rule:
+// r1 THETA JOIN r2 == r2 THETA JOIN r1
+ruleJoinsCommutative(list, root, node, path) {
+  if (node.nodeType == PlanNode.OperationType.THETA_JOIN) {
+    // Create a clone of the entire tree and traverse to this point.
+    clone = root.duplicate();
+
+    //Print out path info
+    logger.debug("\nIn order to get to join, traversing: " + path);
+    cloneJoin = path.traverse(clone);
+
+    // Swap the left and right children.
+    // This ignores the schema order!
+    left = cloneJoin.leftChild;
+    cloneJoin.leftChild = cloneJoin.rightChild;
+    cloneJoin.rightChild = left;
+
+    // Add the new plan tree to the list.
+    list.addPlan(clone);
+  }
+}
+
+
+// Represents the rule:
+// r1 THETA JOIN (r2 THETA JOIN r3) == (r1 THETA JOIN r2) THETA JOIN r3
+ruleJoinsAssociative(list, root, node, path) {
+  if (node.nodeType == PlanNode.OperationType.THETA_JOIN &&
+      node.rightChild.nodeType == PlanNode.OperationType.THETA_JOIN) {
+    // Create a clone of the entire tree and traverse to this point.
+    clone = root.duplicate();
+
+    //Print out path info
+    logger.debug("\nIn order to get to join/(x,join), traversing: " + path);
+    parentJoin = path.traverse(clone);
+    childJoin = parentJoin.rightChild;
+
+    // Move the lower-right theta join's condition up to the top theta join.
+    newPredicate = appendConjunct(parentJoin.predicate,
+                                  childJoin.predicate);
+    parentJoin.predicate = newPredicate;
+
+    // Set the lower-right theta join's predicate to null.
+    childJoin.predicate = null;
+
+    // Move the children around.
+
+    r1 = parentJoin.leftChild;
+    r2 = childJoin.leftChild;
+    r3 = childJoin.rightChild;
+
+    // Move the child join to the left side and set it up
+    parentJoin.leftChild = childJoin;
+    childJoin.leftChild = r1;
+    childJoin.rightChild = r2;
+
+    // Set up the right side to be r3
+    parentJoin.rightChild = r3;
+
+
+    // Recalculate parent references.
+    parentJoin.leftChild.parent = parentJoin;
+    parentJoin.rightChild.parent = parentJoin;
+    r1.parent = childJoin;
+    r2.parent = childJoin;
+    r3.parent = parentJoin;
+
+
+    // Push conditions again.
+    pushConditions(clone);
+
+    // Add the new plan tree to the list.
+    list.addPlan(clone);
+  }
+}
+
+
+
+
+// Represents the rule:
+// r1 THETA JOIN (r2 THETA JOIN r3) == r2 THETA JOIN (r1 THETA JOIN r3)
+//
+// This rule should be equivalent to associativity if commutativity is present.
+ruleJoinsAssociativeFlip(list, root, node, path) {
+  if (node.nodeType == PlanNode.OperationType.THETA_JOIN &&
+      node.rightChild.nodeType == PlanNode.OperationType.THETA_JOIN) {
+    // Create a clone of the entire tree and traverse to this point.
+    clone = root.duplicate();
+
+    //Print out path info
+    logger.debug("\nIn order to get to join/(x,join), traversing: " + path);
+    parentJoin = path.traverse(clone);
+    childJoin = parentJoin.rightChild;
+
+    // Move the lower-right theta join's condition up to the top theta join.
+    newPredicate = appendConjunct(parentJoin.predicate,
+                                  childJoin.predicate);
+    parentJoin.predicate = newPredicate;
+
+    // Set the lower-right theta join's predicate to null.
+    childJoin.predicate = null;
+
+    // Move the children around.
+
+    r1 = parentJoin.leftChild;
+    r2 = childJoin.leftChild;
+
+    childJoin.leftChild = r1;
+    parentJoin.leftChild = r2;
+
+
+    // Recalculate parent references.
+    r1.parent = childJoin;
+    r2.parent = parentJoin;
+
+
+    // Push conditions again.
+    pushConditions(clone);
+
+    // Add the new plan tree to the list.
+    list.addPlan(clone);
+  }
+}
+
+
+

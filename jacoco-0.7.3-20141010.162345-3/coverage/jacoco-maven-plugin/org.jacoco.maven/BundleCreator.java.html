@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../.resources/report.gif" type="image/gif"/><title>BundleCreator.java</title><link rel="stylesheet" href="../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../.sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">JaCoCo</a> &gt; <a href="../index.html" class="el_bundle">jacoco-maven-plugin</a> &gt; <a href="index.source.html" class="el_package">org.jacoco.maven</a> &gt; <span class="el_source">BundleCreator.java</span></div><h1>BundleCreator.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2009, 2014 Mountainminds GmbH &amp; Co. KG and Contributors
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Evgeny Mandrikov - initial API and implementation
+ *    Kyle Lieber - implementation of CheckMojo
+ *
+ *******************************************************************************/
+package org.jacoco.maven;
+
+import static java.lang.String.format;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.FileUtils;
+import org.jacoco.core.analysis.Analyzer;
+import org.jacoco.core.analysis.CoverageBuilder;
+import org.jacoco.core.analysis.IBundleCoverage;
+import org.jacoco.core.analysis.IClassCoverage;
+import org.jacoco.core.data.ExecutionDataStore;
+
+/**
+ * Creates an IBundleCoverage.
+ */
+public final class BundleCreator {
+
+	private final MavenProject project;
+	private final FileFilter fileFilter;
+	private final Log log;
+
+	/**
+	 * Construct a new BundleCreator given the MavenProject and FileFilter.
+	 * 
+	 * @param project
+	 *            the MavenProject
+	 * @param fileFilter
+	 *            the FileFilter
+	 * @param log
+	 *            for log output
+	 */
+	public BundleCreator(final MavenProject project,
+<span class="fc" id="L51">			final FileFilter fileFilter, final Log log) {</span>
+<span class="fc" id="L52">		this.project = project;</span>
+<span class="fc" id="L53">		this.fileFilter = fileFilter;</span>
+<span class="fc" id="L54">		this.log = log;</span>
+<span class="fc" id="L55">	}</span>
+
+	/**
+	 * Create an IBundleCoverage for the given ExecutionDataStore.
+	 * 
+	 * @param executionDataStore
+	 *            the execution data.
+	 * @return the coverage data.
+	 * @throws IOException
+	 *             if class files can't be read
+	 */
+	public IBundleCoverage createBundle(
+			final ExecutionDataStore executionDataStore) throws IOException {
+<span class="fc" id="L68">		final CoverageBuilder builder = new CoverageBuilder();</span>
+<span class="fc" id="L69">		final Analyzer analyzer = new Analyzer(executionDataStore, builder);</span>
+<span class="fc" id="L70">		final File classesDir = new File(this.project.getBuild()</span>
+				.getOutputDirectory());
+
+		@SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L74">		final List&lt;File&gt; filesToAnalyze = FileUtils.getFiles(classesDir,</span>
+				fileFilter.getIncludes(), fileFilter.getExcludes());
+
+<span class="fc bfc" id="L77" title="All 2 branches covered.">		for (final File file : filesToAnalyze) {</span>
+<span class="fc" id="L78">			analyzer.analyzeAll(file);</span>
+		}
+
+<span class="fc" id="L81">		final IBundleCoverage bundle = builder</span>
+				.getBundle(this.project.getName());
+<span class="fc" id="L83">		logBundleInfo(bundle, builder.getNoMatchClasses());</span>
+
+<span class="fc" id="L85">		return bundle;</span>
+	}
+
+	private void logBundleInfo(final IBundleCoverage bundle,
+			final Collection&lt;IClassCoverage&gt; nomatch) {
+<span class="fc" id="L90">		log.info(format(&quot;Analyzed bundle '%s' with %s classes&quot;,</span>
+				bundle.getName(),
+				Integer.valueOf(bundle.getClassCounter().getTotalCount())));
+<span class="fc bfc" id="L93" title="All 2 branches covered.">		if (!nomatch.isEmpty()) {</span>
+<span class="fc" id="L94">			log.warn(format(</span>
+					&quot;Classes in bundle '%s' do no match with execution data. &quot;
+							+ &quot;For report generation the same class files must be used as at runtime.&quot;,
+					bundle.getName()));
+<span class="fc bfc" id="L98" title="All 2 branches covered.">			for (final IClassCoverage c : nomatch) {</span>
+<span class="fc" id="L99">				log.warn(format(&quot;Execution data for class %s does not match.&quot;,</span>
+						c.getName()));
+			}
+		}
+<span class="fc" id="L103">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.3.201410101205</span>Code Coverage Report for JaCoCo 0.7.3-SNAPSHOT</div></body></html>

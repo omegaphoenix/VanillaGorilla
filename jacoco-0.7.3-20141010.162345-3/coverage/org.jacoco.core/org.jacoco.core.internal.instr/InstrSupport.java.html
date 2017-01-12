@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../.resources/report.gif" type="image/gif"/><title>InstrSupport.java</title><link rel="stylesheet" href="../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../.sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">JaCoCo</a> &gt; <a href="../index.html" class="el_bundle">org.jacoco.core</a> &gt; <a href="index.source.html" class="el_package">org.jacoco.core.internal.instr</a> &gt; <span class="el_source">InstrSupport.java</span></div><h1>InstrSupport.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2009, 2014 Mountainminds GmbH &amp; Co. KG and Contributors
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Marc R. Hoffmann - initial API and implementation
+ *    
+ *******************************************************************************/
+package org.jacoco.core.internal.instr;
+
+import static java.lang.String.format;
+
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+
+/**
+ * Constants and utilities for byte code instrumentation.
+ */
+public final class InstrSupport {
+
+<span class="nc" id="L24">	private InstrSupport() {</span>
+<span class="nc" id="L25">	}</span>
+
+	// === Data Field ===
+
+	/**
+	 * Name of the field that stores coverage information of a class.
+	 */
+	public static final String DATAFIELD_NAME = &quot;$jacocoData&quot;;
+
+	/**
+	 * Access modifiers of the field that stores coverage information of a
+	 * class.
+	 */
+	public static final int DATAFIELD_ACC = Opcodes.ACC_SYNTHETIC
+			| Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_TRANSIENT
+			| Opcodes.ACC_FINAL;
+
+	/**
+	 * Access modifiers of the field that stores coverage information of a Java
+	 * 8 interface.
+	 */
+	public static final int DATAFIELD_INTF_ACC = Opcodes.ACC_SYNTHETIC
+			| Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
+
+	/**
+	 * Data type of the field that stores coverage information for a class (
+	 * &lt;code&gt;boolean[]&lt;/code&gt;).
+	 */
+	public static final String DATAFIELD_DESC = &quot;[Z&quot;;
+
+	// === Init Method ===
+
+	/**
+	 * Name of the initialization method.
+	 */
+	public static final String INITMETHOD_NAME = &quot;$jacocoInit&quot;;
+
+	/**
+	 * Descriptor of the initialization method.
+	 */
+	public static final String INITMETHOD_DESC = &quot;()[Z&quot;;
+
+	/**
+	 * Access modifiers of the initialization method.
+	 */
+	public static final int INITMETHOD_ACC = Opcodes.ACC_SYNTHETIC
+			| Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
+
+	/**
+	 * Ensures that the given member does not correspond to a internal member
+	 * created by the instrumentation process. This would mean that the class is
+	 * already instrumented.
+	 * 
+	 * @param member
+	 *            name of the member to check
+	 * @param owner
+	 *            name of the class owning the member
+	 * @throws IllegalStateException
+	 *             thrown if the member has the same name than the
+	 *             instrumentation member
+	 */
+	public static void assertNotInstrumented(final String member,
+			final String owner) throws IllegalStateException {
+<span class="fc bfc" id="L88" title="All 4 branches covered.">		if (member.equals(DATAFIELD_NAME) || member.equals(INITMETHOD_NAME)) {</span>
+<span class="fc" id="L89">			throw new IllegalStateException(format(</span>
+					&quot;Class %s is already instrumented.&quot;, owner));
+		}
+<span class="fc" id="L92">	}</span>
+
+	/**
+	 * Generates the instruction to push the given int value on the stack.
+	 * Implementation taken from
+	 * {@link org.objectweb.asm.commons.GeneratorAdapter#push(int)}.
+	 * 
+	 * @param mv
+	 *            visitor to emit the instruction
+	 * @param value
+	 *            the value to be pushed on the stack.
+	 */
+	public static void push(final MethodVisitor mv, final int value) {
+<span class="fc bfc" id="L105" title="All 4 branches covered.">		if (value &gt;= -1 &amp;&amp; value &lt;= 5) {</span>
+<span class="fc" id="L106">			mv.visitInsn(Opcodes.ICONST_0 + value);</span>
+<span class="fc bfc" id="L107" title="All 4 branches covered.">		} else if (value &gt;= Byte.MIN_VALUE &amp;&amp; value &lt;= Byte.MAX_VALUE) {</span>
+<span class="fc" id="L108">			mv.visitIntInsn(Opcodes.BIPUSH, value);</span>
+<span class="fc bfc" id="L109" title="All 4 branches covered.">		} else if (value &gt;= Short.MIN_VALUE &amp;&amp; value &lt;= Short.MAX_VALUE) {</span>
+<span class="fc" id="L110">			mv.visitIntInsn(Opcodes.SIPUSH, value);</span>
+		} else {
+<span class="fc" id="L112">			mv.visitLdcInsn(Integer.valueOf(value));</span>
+		}
+<span class="fc" id="L114">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.3.201410101205</span>Code Coverage Report for JaCoCo 0.7.3-SNAPSHOT</div></body></html>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../.resources/report.gif" type="image/gif"/><title>CoverageTransformer.java</title><link rel="stylesheet" href="../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../.sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">JaCoCo</a> &gt; <a href="../index.html" class="el_bundle">org.jacoco.agent.rt</a> &gt; <a href="index.source.html" class="el_package">org.jacoco.agent.rt.internal</a> &gt; <span class="el_source">CoverageTransformer.java</span></div><h1>CoverageTransformer.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2009, 2014 Mountainminds GmbH &amp; Co. KG and Contributors
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Marc R. Hoffmann - initial API and implementation
+ *    
+ *******************************************************************************/
+package org.jacoco.agent.rt.internal;
+
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.IllegalClassFormatException;
+import java.security.ProtectionDomain;
+
+import org.jacoco.core.instr.Instrumenter;
+import org.jacoco.core.runtime.AgentOptions;
+import org.jacoco.core.runtime.IRuntime;
+import org.jacoco.core.runtime.WildcardMatcher;
+
+/**
+ * Class file transformer to instrument classes for code coverage analysis.
+ */
+public class CoverageTransformer implements ClassFileTransformer {
+
+	private static final String AGENT_PREFIX;
+
+	static {
+<span class="fc" id="L31">		final String name = CoverageTransformer.class.getName();</span>
+<span class="fc" id="L32">		AGENT_PREFIX = toVMName(name.substring(0, name.lastIndexOf('.')));</span>
+<span class="fc" id="L33">	}</span>
+
+	private final Instrumenter instrumenter;
+
+	private final IExceptionLogger logger;
+
+	private final WildcardMatcher includes;
+
+	private final WildcardMatcher excludes;
+
+	private final WildcardMatcher exclClassloader;
+
+	private final ClassFileDumper classFileDumper;
+
+	private final boolean includeBootstrapClasses;
+
+	/**
+	 * New transformer with the given delegates.
+	 * 
+	 * @param runtime
+	 *            coverage runtime
+	 * @param options
+	 *            configuration options for the generator
+	 * @param logger
+	 *            logger for exceptions during instrumentation
+	 */
+	public CoverageTransformer(final IRuntime runtime,
+<span class="fc" id="L60">			final AgentOptions options, final IExceptionLogger logger) {</span>
+<span class="fc" id="L61">		this.instrumenter = new Instrumenter(runtime);</span>
+<span class="fc" id="L62">		this.logger = logger;</span>
+		// Class names will be reported in VM notation:
+<span class="fc" id="L64">		includes = new WildcardMatcher(toVMName(options.getIncludes()));</span>
+<span class="fc" id="L65">		excludes = new WildcardMatcher(toVMName(options.getExcludes()));</span>
+<span class="fc" id="L66">		exclClassloader = new WildcardMatcher(options.getExclClassloader());</span>
+<span class="fc" id="L67">		classFileDumper = new ClassFileDumper(options.getClassDumpDir());</span>
+<span class="fc" id="L68">		includeBootstrapClasses = options.getInclBootstrapClasses();</span>
+<span class="fc" id="L69">	}</span>
+
+	public byte[] transform(final ClassLoader loader, final String classname,
+			final Class&lt;?&gt; classBeingRedefined,
+			final ProtectionDomain protectionDomain,
+			final byte[] classfileBuffer) throws IllegalClassFormatException {
+
+<span class="fc bfc" id="L76" title="All 2 branches covered.">		if (classBeingRedefined != null) {</span>
+			// We do not support class retransformation.
+<span class="fc" id="L78">			return null;</span>
+		}
+
+<span class="fc bfc" id="L81" title="All 2 branches covered.">		if (!filter(loader, classname)) {</span>
+<span class="fc" id="L82">			return null;</span>
+		}
+
+		try {
+<span class="nc" id="L86">			classFileDumper.dump(classname, classfileBuffer);</span>
+<span class="nc" id="L87">			return instrumenter.instrument(classfileBuffer, classname);</span>
+<span class="fc" id="L88">		} catch (final Exception ex) {</span>
+<span class="fc" id="L89">			final IllegalClassFormatException wrapper = new IllegalClassFormatException(</span>
+					ex.getMessage());
+<span class="fc" id="L91">			wrapper.initCause(ex);</span>
+			// Report this, as the exception is ignored by the JVM:
+<span class="fc" id="L93">			logger.logExeption(wrapper);</span>
+<span class="fc" id="L94">			throw wrapper;</span>
+		}
+	}
+
+	/**
+	 * Checks whether this class should be instrumented.
+	 * 
+	 * @param loader
+	 *            loader for the class
+	 * @param classname
+	 *            VM name of the class to check
+	 * @return &lt;code&gt;true&lt;/code&gt; if the class should be instrumented
+	 */
+	protected boolean filter(final ClassLoader loader, final String classname) {
+<span class="fc bfc" id="L108" title="All 2 branches covered.">		if (!includeBootstrapClasses) {</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">			if (loader == null) {</span>
+<span class="fc" id="L110">				return false;</span>
+			}
+<span class="fc bfc" id="L112" title="All 2 branches covered.">			if (exclClassloader.matches(loader.getClass().getName())) {</span>
+<span class="fc" id="L113">				return false;</span>
+			}
+		}
+
+<span class="fc bfc" id="L117" title="All 6 branches covered.">		return !classname.startsWith(AGENT_PREFIX) &amp;&amp;</span>
+
+		includes.matches(classname) &amp;&amp;
+
+		!excludes.matches(classname);
+	}
+
+	private static String toVMName(final String srcName) {
+<span class="fc" id="L125">		return srcName.replace('.', '/');</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.3.201410101205</span>Code Coverage Report for JaCoCo 0.7.3-SNAPSHOT</div></body></html>

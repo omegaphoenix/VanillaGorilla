@@ -1,0 +1,27 @@
+<FindBugsFilter>
+    <!--
+      Sadly, we have no control over the code that ANTLR generates...
+      -->
+    <Match>
+        <Class name="edu.caltech.nanodb.sqlparse.NanoSqlLexer" />
+        <Method name="&lt;init&gt;" params="antlr.LexerSharedInputState" returns="void" />
+        <Bug pattern="DM_NUMBER_CTOR" />
+    </Match>
+    <Match>
+        <Class name="edu.caltech.nanodb.sqlparse.NanoSqlParser" />
+        <Field name="_tokenNames" />
+        <Bug pattern="MS_PKGPROTECT" />
+    </Match>
+
+
+    <!--
+      Ignore this warning, since TypeConverter.getBooleanValue() has to return
+      null when its input is null, since this is how we represent the SQL NULL
+      value.
+      -->
+    <Match>
+        <Class name="edu.caltech.nanodb.expressions.TypeConverter" />
+        <Method name="getBooleanValue" params="java.lang.Object" returns="java.lang.Boolean" />
+        <Bug pattern="NP_BOOLEAN_RETURN_NULL" />
+    </Match>
+</FindBugsFilter>
