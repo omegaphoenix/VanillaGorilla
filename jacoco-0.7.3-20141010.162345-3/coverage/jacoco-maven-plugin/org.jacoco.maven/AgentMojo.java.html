@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../.resources/report.gif" type="image/gif"/><title>AgentMojo.java</title><link rel="stylesheet" href="../../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../.sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">JaCoCo</a> &gt; <a href="../index.html" class="el_bundle">jacoco-maven-plugin</a> &gt; <a href="index.source.html" class="el_package">org.jacoco.maven</a> &gt; <span class="el_source">AgentMojo.java</span></div><h1>AgentMojo.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Copyright (c) 2009, 2014 Mountainminds GmbH &amp; Co. KG and Contributors
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    Evgeny Mandrikov - initial API and implementation
+ *
+ *******************************************************************************/
+package org.jacoco.maven;
+
+import java.io.File;
+
+/**
+ * &lt;p&gt;
+ * Prepares a property pointing to the JaCoCo runtime agent that can be passed
+ * as a VM argument to the application under test. Depending on the project
+ * packaging type by default a property with the following name is set:
+ * &lt;/p&gt;
+ * 
+ * &lt;ul&gt;
+ * &lt;li&gt;tycho.testArgLine for packaging type eclipse-test-plugin and&lt;/li&gt;
+ * &lt;li&gt;argLine otherwise.&lt;/li&gt;
+ * &lt;/ul&gt;
+ * 
+ * &lt;p&gt;
+ * Note that these properties must not be overwritten by the test configuration,
+ * otherwise the JaCoCo agent cannot be attached. If you need custom parameters
+ * please append them. For example:
+ * &lt;/p&gt;
+ * 
+ * &lt;pre&gt;
+ *   &amp;lt;argLine&amp;gt;${argLine} -your -extra -arguments&amp;lt;/argLine&amp;gt;
+ * &lt;/pre&gt;
+ * 
+ * &lt;p&gt;
+ * Resulting coverage information is collected during execution and by default
+ * written to a file when the process terminates.
+ * &lt;/p&gt;
+ * 
+ * @phase initialize
+ * @goal prepare-agent
+ * @requiresProject true
+ * @requiresDependencyResolution runtime
+ * @threadSafe
+ * @since 0.5.3
+ */
+<span class="fc" id="L50">public class AgentMojo extends AbstractAgentMojo {</span>
+
+	/**
+	 * Path to the output file for execution data.
+	 * 
+	 * @parameter property=&quot;jacoco.destFile&quot;
+	 *            default-value=&quot;${project.build.directory}/jacoco.exec&quot;
+	 */
+	private File destFile;
+
+	/**
+	 * @return the destFile
+	 */
+	@Override
+	File getDestFile() {
+<span class="fc" id="L65">		return destFile;</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.3.201410101205</span>Code Coverage Report for JaCoCo 0.7.3-SNAPSHOT</div></body></html>

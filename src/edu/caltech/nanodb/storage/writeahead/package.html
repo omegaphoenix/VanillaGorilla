@@ -1,0 +1,167 @@
+<html>
+<body>
+<p>
+This package contains the implementation for the write-ahead log, which allows
+us to provide transaction atomicity, consistency and durability.  The
+write-ahead log format is designed with several goals in mind:
+</p>
+
+<ul>
+    <li>Log records provide <a href="http://en.wikipedia.org/wiki/Algorithms_for_Recovery_and_Isolation_Exploiting_Semantics">ARIES</a>-like
+        features:  the individual records corresponding to a given transaction
+        are chained together via "previous LSN" values stored in each record,
+        allowing fast rollback of transaction modifications.</li>
+    <li>The entire log file can be efficiently traversed both forward and
+        backward, which is necessary during recovery processing.</li>
+</ul>
+
+<p>
+To implement all of these features, the log record format is somewhat complex.
+The details are outlined below.
+</p>
+
+<p>
+For records that store the Previous LSN value, the Previous LSN is stored as
+a two-byte log file number (in the range [0..65535]), and then a four-byte
+file-offset (signed integer), relative to the start of the file.
+</p>
+
+<p>
+In the descriptions below, a "B" suffix means "bytes".  For example, "6B" means
+six bytes, and "<em>S<sub>si</sub></em> B" means <em>S<sub>si</sub></em> bytes.
+</p>
+
+<dl>
+    <dt>&lt;<i>T<sub>i</sub></i> start&gt; (6 bytes)</dt>
+    <dd>
+        Start-transaction records don't require a "previous LSN" value, because
+        there is no previous LSN for the transaction.  Thus, the format is as
+        follows:
+        <table>
+            <tr><th>Size</th><th>Description</th></tr>
+
+            <tr><td>1B</td><td>{@link edu.caltech.nanodb.storage.writeahead.WALRecordType#START_TXN}</td></tr>
+            <tr><td>4B</td><td>Transaction ID</td></tr>
+
+            <tr><td>1B</td><td>{@link edu.caltech.nanodb.storage.writeahead.WALRecordType#START_TXN}</td></tr>
+        </table>
+    </dd>
+
+    <dt>&lt;<i>T<sub>i</sub></i> update <i>P</i> &rarr; <i>P'</i> &gt;</dt>
+    <dd>
+        Update records store modifications to data pages.  We record changes on
+        the page-level for a variety of reasons.  First, in some situations the
+        old value or the new value is actually missing, e.g. in the cases of an
+        insert or a delete.  Also, we don't want the WAL to be tied to specific
+        data-file formats; we would like to use the WAL for logging index
+        changes as well as table changes.  The format is as follows:
+        <table>
+            <tr><th>Size</th><th>Description</th></tr>
+
+            <tr><td>1B</td><td>{@link edu.caltech.nanodb.storage.writeahead.WALRecordType#UPDATE_PAGE}</td></tr>
+            <tr><td>4B</td><td>Transaction ID</td></tr>
+            <tr><td>6B</td><td>PrevLSN</td></tr>
+
+            <tr><td>1-256B</td><td>Filename of the modified file, written as a {@code VARCHAR(255)}.
+                This value can be read with a function like {@link edu.caltech.nanodb.storage.DBFileReader#readVarString255}.</td></tr>
+            <tr><td>2B</td><td>Page number of modified page, written as an unsigned short</td></tr>
+
+            <tr><td valign="top">?B</td>
+               <td>Description of the old page <i>P</i>, and the new page <i>P'</i>.
+                   The differences are stored as a series of <em>segments</em>, where
+                   each segment is a range of bytes that is different between the old
+                   and new versions of the page.  Each segment is described by a
+                   starting index, a size, and then two sequences of bytes.
+                 <ul>
+                   <li>2B - number of segments <em>N<sub>s</sub></em> (unsigned short)</li>
+                   <li>
+                     <em>N<sub>s</sub></em> repetitions of:
+                     <ul>
+                       <li>2B - starting index of the segment in the page (unsigned short)</li>
+                       <li>2B - size of the segment in bytes, <em>S<sub>si</sub></em> (unsigned short)</li>
+                       <li><em>S<sub>si</sub></em> B - old version of the data (i.e. undo data)</li>
+                       <li><em>S<sub>si</sub></em> B - new version of the data (i.e. redo data)</li>
+                     </ul>
+                   </li>
+                 </ul>
+               </td></tr>
+
+            <tr><td>4B</td><td>File-offset of the start of this update record,
+                relative to the start of the file.</td></tr>
+            <tr><td>1B</td><td>{@link edu.caltech.nanodb.storage.writeahead.WALRecordType#UPDATE_PAGE}</td></tr>
+        </table>
+    </dd>
+
+    <dt>&lt;<i>T<sub>i</sub></i> update (redo-only) <i>P'</i> &gt;</dt>
+    <dd>
+        Redo-only update records are similar to standard update records, except
+        that they contain no undo information.  The format is as follows:
+        <table>
+            <tr><th>Size</th><th>Description</th></tr>
+
+            <tr><td>1B</td><td>{@link edu.caltech.nanodb.storage.writeahead.WALRecordType#UPDATE_PAGE_REDO_ONLY}</td></tr>
+            <tr><td>4B</td><td>Transaction ID</td></tr>
+            <tr><td>6B</td><td>PrevLSN</td></tr>
+
+            <tr><td>1-256B</td><td>Filename of the modified file, written as a {@code VARCHAR(255)}.
+                This value can be read with a function like {@link edu.caltech.nanodb.storage.DBFileReader#readVarString255}.</td></tr>
+            <tr><td>2B</td><td>Page number of modified page, written as an unsigned short</td></tr>
+
+            <tr><td valign="top">?B</td>
+               <td>Description of the new page <i>P'</i>.  
+                   The differences are stored as a series of <em>segments</em>, where 
+                   each segment is a range of bytes that is different between the old
+                   and new versions of the page.  Since this is a redo-only record, only
+                   the new version of the data is stored.  Each segment is described by a 
+                   starting index, a size, and then two sequences of bytes.
+                 <ul>
+                   <li>2B - number of segments <em>N<sub>s</sub></em> (unsigned short)</li>
+                   <li>
+                     <em>N<sub>s</sub></em> repetitions of:
+                     <ul>
+                       <li>2B - starting index of the segment in the page (unsigned short)</li>
+                       <li>2B - size of the segment in bytes, <em>S<sub>si</sub></em> (unsigned short)</li>
+                       <li><em>S<sub>si</sub></em> B - new version of the data (i.e. redo data)</li>
+                     </ul>
+                   </li>
+                 </ul>
+               </td></tr>
+
+            <tr><td>4B</td><td>File-offset of the start of this update record,
+                relative to the start of the file.</td></tr>
+            <tr><td>1B</td><td>{@link edu.caltech.nanodb.storage.writeahead.WALRecordType#UPDATE_PAGE_REDO_ONLY}</td></tr>
+        </table>
+    </dd>
+
+    <dt>&lt;<i>T<sub>i</sub></i> commit&gt;</dt>
+    <dd>
+        Commit records are 12 bytes:
+        <table>
+            <tr><th>Size</th><th>Description</th></tr>
+
+            <tr><td>1B</td><td>{@link edu.caltech.nanodb.storage.writeahead.WALRecordType#COMMIT_TXN}</td></tr>
+            <tr><td>4B</td><td>Transaction ID</td></tr>
+            <tr><td>6B</td><td>PrevLSN</td></tr>
+
+            <tr><td>1B</td><td>{@link edu.caltech.nanodb.storage.writeahead.WALRecordType#COMMIT_TXN}</td></tr>
+        </table>
+    </dd>
+
+    <dt>&lt;<i>T<sub>i</sub></i> abort&gt;</dt>
+    <dd>
+        Abort records are 12 bytes:
+        <table>
+            <tr><th>Size</th><th>Description</th></tr>
+
+            <tr><td>1B</td><td>{@link edu.caltech.nanodb.storage.writeahead.WALRecordType#ABORT_TXN}</td></tr>
+            <tr><td>4B</td><td>Transaction ID</td></tr>
+            <tr><td>6B</td><td>PrevLSN</td></tr>
+
+            <tr><td>1B</td><td>{@link edu.caltech.nanodb.storage.writeahead.WALRecordType#ABORT_TXN}</td></tr>
+        </table>
+    </dd>
+
+</dl>
+
+</body>
+</html>

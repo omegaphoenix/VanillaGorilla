@@ -1,0 +1,95 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="nanodb-tests" verbose="1" >
+  <!-- For running a limited set of test cases when they are stubborn. -->
+  <!--
+  <test name="single-test">
+    <classes>
+      <class name="edu.caltech.test.nanodb.sql.TestExists">
+        <methods>
+          <include name="testExistsCorrelated" />
+        </methods>
+      </class>
+
+      <class name="edu.caltech.test.nanodb.sql.TestScalarSubquery" />
+      <class name="edu.caltech.test.nanodb.sql.TestExists" />
+      <class name="edu.caltech.test.nanodb.sql.TestInPredicates" />
+    </classes>
+  </test>
+  -->
+
+  <!-- For running through all the tests. -->
+  <test name="general-tests">
+    <packages>
+      <package name="edu.caltech.test.nanodb.expressions" />
+      <package name="edu.caltech.test.nanodb.relations" />
+      <package name="edu.caltech.test.nanodb.sqlparse" />
+      <package name="edu.caltech.test.nanodb.util" />
+    </packages>
+
+    <classes>
+      <class name="edu.caltech.test.nanodb.storage.TestDBFile" />
+      <class name="edu.caltech.test.nanodb.storage.TestDBPage" />
+      <class name="edu.caltech.test.nanodb.storage.TestFileManager" />
+      <class name="edu.caltech.test.nanodb.storage.TestFilePointer" />
+    </classes>
+  </test>
+
+  <test name="assignment1-tests">
+    <classes>
+      <class name="edu.caltech.test.nanodb.storage.heapfile.TestHeapTableFormat" />
+    </classes>
+  </test>
+
+  <test name="assignment2-tests">
+    <packages>
+      <package name="edu.caltech.test.nanodb.sql" />
+      <package name="edu.caltech.test.nanodb.functions" />
+    </packages>
+  </test>
+
+  <!--
+  <test name="assignment5-tests">
+    <classes>
+      <class name="edu.caltech.test.nanodb.storage.btreefile.TestBTreeFile">
+        <methods>
+          <include name="testBTreeTableOnePageInsert" />
+          <include name="testBTreeTableTwoPageInsert" />
+          <include name="testBTreeTableTwoLevelInsert" />
+          <include name="testBTreeTableThreeLevelInsert" />
+        </methods>
+      </class>
+      <class name="edu.caltech.test.nanodb.indexes.TestIndexOps">
+        <methods>
+          <include name="testCreateNormalIndex" />
+          <include name="testCreateSameColIndex" />
+          <include name="testCreateSameIndex" />
+          <include name="testUniquePopulated" />
+        </methods>
+      </class>
+      <class name="edu.caltech.test.nanodb.indexes.TestUniqueOps">
+        <methods>
+          <include name="testUniqueConstraint" />
+          <include name="testUniqueIndexExists" />
+          <include name="testUniquePopulated" />
+        </methods>
+      </class>
+    </classes>
+  </test>
+
+  <test name="btree-delete-tests">
+    <classes>
+      <class name="edu.caltech.test.nanodb.storage.btreefile.TestBTreeFile">
+        <methods>
+          <include name="testBTreeTableOnePageInsertDelete" />
+          <include name="testBTreeTableTwoPageInsertDelete" />
+          <include name="testBTreeTableTwoLevelInsertDelete" />
+          <include name="testBTreeTableThreeLevelInsertDelete" />
+          <include name="testBTreeTableMultiLevelInsertDelete" />
+        </methods>
+      </class>
+    </classes>
+  </test>
+  -->
+</suite>
+

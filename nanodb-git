@@ -1,0 +1,21 @@
+#!/bin/bash
+
+CPATH=.
+CPATH=$CPATH\;lib\\log4j-1.2.13.jar
+CPATH=$CPATH\;lib\\antlr-3.2.jar
+CPATH=$CPATH\;lib\\commons-io-2.1.jar
+CPATH=$CPATH\;build\\classes
+
+# To set the page-size to use, add "-Dnanodb.pagesize=2048" to JAVA_OPTS.
+# To enable transaction processing, add "-Dnanodb.txns=on" to JAVA_OPTS.
+JAVA_OPTS="-Dlog4j.configuration=logging.conf"
+
+# See if we have the rlwrap utility; if so, it makes using NanoDB
+# from the command-line sooo much nicer...
+testrl=$(which rlwrap)
+if [ -z "$testrl" ] 
+then
+    java $JAVA_OPTS -cp $CPATH edu.caltech.nanodb.client.ExclusiveClient
+else
+    rlwrap java $JAVA_OPTS -cp $CPATH edu.caltech.nanodb.client.ExclusiveClient
+fi

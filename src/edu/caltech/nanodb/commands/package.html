@@ -1,0 +1,48 @@
+<html>
+<body>
+This package contains the classes that represent the commands that the NanoSQL
+database recognizes.  All of the commands are represented as subclasses of the
+{@link edu.caltech.nanodb.commands.Command} abstract base-class.  Commands are
+grouped into the following categories:
+
+<h3>Data Definition Language (DDL) Commands</h3>
+
+These commands manipulate the contents of the data-dictionary.  The supported
+commands are as follows:
+<ul>
+  <li><tt>CREATE TABLE</tt> - {@link edu.caltech.nanodb.commands.CreateTableCommand} class</li>
+  <li><tt>DROP TABLE</tt> - {@link edu.caltech.nanodb.commands.DropTableCommand} class</li>
+</ul>
+
+<h3>Data Manipulation Language (DML) Commands</h3>
+
+These commands retrieve and modify the database tables themselves.  Note that
+these commands all derive from the {@link edu.caltech.nanodb.commands.QueryCommand}
+abstract class.  The supported commands are as follows:
+<ul>
+  <li><tt>DELETE ...</tt> - {@link edu.caltech.nanodb.commands.DeleteCommand} class</li>
+  <li><tt>INSERT ...</tt> - {@link edu.caltech.nanodb.commands.InsertCommand} class</li>
+  <li><tt>SELECT ...</tt> - {@link edu.caltech.nanodb.commands.SelectCommand} class</li>
+  <li><tt>UPDATE ...</tt> - {@link edu.caltech.nanodb.commands.UpdateCommand} class</li>
+</ul>
+
+<h3>Transaction-Demarcation Commands</h3>
+
+These commands provide control over when a transaction is started or ended:
+<ul>
+    <li><tt>BEGIN [WORK]</tt> | <tt>START TRANSACTION</tt> - {@link edu.caltech.nanodb.commands.BeginTransactionCommand} class</li>
+    <li><tt>COMMIT [WORK]</tt> - {@link edu.caltech.nanodb.commands.CommitTransactionCommand} class</li>
+    <li><tt>ROLLBACK [WORK]</tt> - {@link edu.caltech.nanodb.commands.RollbackTransactionCommand} class</li>
+</ul>
+
+<h3>Utility Commands</h3>
+
+These commands perform various utility operations:
+<ul>
+  <li><tt>ANALYZE ...</tt> - {@link edu.caltech.nanodb.commands.AnalyzeCommand} class</li>
+  <li><tt>EXPLAIN ...</tt> - {@link edu.caltech.nanodb.commands.ExplainCommand} class</li>
+  <li><tt>EXIT</tt> | <tt>QUIT</tt> - {@link edu.caltech.nanodb.commands.ExitCommand} class</li>
+</ul>
+
+</body>
+</html>

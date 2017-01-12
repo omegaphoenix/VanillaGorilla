@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>Grammar /Users/donnie/Documents/CS122/Wi2017/nanodb-2017/res/nanosql.g</TITLE>
+</HEAD>
+<BODY>
+<table summary="" border="1" cellpadding="5">
+<tr>
+<td>
+<font size="+2">Grammar NanoSqlLexer</font><br>
+<a href="http://www.ANTLR.org">ANTLR</a>-generated HTML file from /Users/donnie/Documents/CS122/Wi2017/nanodb-2017/res/nanosql.g
+<p>
+Terence Parr, <a href="http://www.magelang.com">MageLang Institute</a>
+<br>ANTLR Version 2.7.7 (20060906); 1989-2005
+</td>
+</tr>
+</table>
+<PRE>
+
+Definition of lexer NanoSqlLexer, which is a subclass of CharScanner.
+
+/** Lexer nextToken rule:
+ *  The lexer nextToken rule is synthesized from all of the user-defined
+ *  lexer rules.  It logically consists of one big alternative block with
+ *  each user-defined rule being an alternative.
+ */
+<a href="NanoSqlLexer.html#mCOLON">mCOLON</a> 
+|	<a href="NanoSqlLexer.html#mCOMMA">mCOMMA</a> 
+|	<a href="NanoSqlLexer.html#mLPAREN">mLPAREN</a> 
+|	<a href="NanoSqlLexer.html#mRPAREN">mRPAREN</a> 
+|	<a href="NanoSqlLexer.html#mSEMICOLON">mSEMICOLON</a> 
+|	<a href="NanoSqlLexer.html#mSTAR">mSTAR</a> 
+|	<a href="NanoSqlLexer.html#mSLASH">mSLASH</a> 
+|	<a href="NanoSqlLexer.html#mPERCENT">mPERCENT</a> 
+|	<a href="NanoSqlLexer.html#mPLUS">mPLUS</a> 
+|	<a href="NanoSqlLexer.html#mMINUS">mMINUS</a> 
+|	<a href="NanoSqlLexer.html#mNEWLINE">mNEWLINE</a> 
+|	<a href="NanoSqlLexer.html#mWS">mWS</a> 
+|	<a href="NanoSqlLexer.html#mCOMMENT">mCOMMENT</a> 
+|	<a href="NanoSqlLexer.html#mCOMPARE_OPERATOR">mCOMPARE_OPERATOR</a> 
+|	<a href="NanoSqlLexer.html#mIDENT">mIDENT</a> 
+|	<a href="NanoSqlLexer.html#mQUOTED_IDENT">mQUOTED_IDENT</a> 
+|	<a href="NanoSqlLexer.html#mNUM_LITERAL_OR_SYMBOL">mNUM_LITERAL_OR_SYMBOL</a> 
+|	<a href="NanoSqlLexer.html#mSTRING_LITERAL">mSTRING_LITERAL</a> 
+<a name="mCOLON">mCOLON</a>
+	:	&#039;:&#039; 
+	;
+
+<a name="mCOMMA">mCOMMA</a>
+	:	&#039;,&#039; 
+	;
+
+<a name="mLPAREN">mLPAREN</a>
+	:	&#039;(&#039; 
+	;
+
+<a name="mRPAREN">mRPAREN</a>
+	:	&#039;)&#039; 
+	;
+
+<a name="mSEMICOLON">mSEMICOLON</a>
+	:	&#039;;&#039; 
+	;
+
+<a name="mSTAR">mSTAR</a>
+	:	&#039;*&#039; 
+	;
+
+<a name="mSLASH">mSLASH</a>
+	:	&#039;/&#039; 
+	;
+
+<a name="mPERCENT">mPERCENT</a>
+	:	&#039;%&#039; 
+	;
+
+<a name="mPLUS">mPLUS</a>
+	:	&#039;+&#039; 
+	;
+
+<a name="mMINUS">mMINUS</a>
+	:	&#039;-&#039; 
+	;
+
+<a name="mNEWLINE">mNEWLINE</a>
+	:	( (	&#039;\r&#039; 
+			|	
+			) 
+			&#039;\n&#039; ) 
+	;
+
+<a name="mWS">mWS</a>
+	:	(	&#039; &#039; 
+		|	&#039;\t&#039; 
+		)+ 
+		
+	;
+
+/**
+ * Comments - we skip those too.
+ *
+ * Note:  No need to mention &#039;\r&#039; in this rule since it will match the wildcard
+ *        character that consumes characters up to the &#039;\n&#039;.
+ */
+<a name="mCOMMENT">mCOMMENT</a>
+	:	( &#039;-&#039; &#039;-&#039; ( . )* &#039;\n&#039; ) 
+	;
+
+<a name="mCOMPARE_OPERATOR">mCOMPARE_OPERATOR</a>
+	:	&#039;=&#039; 
+		(	&#039;=&#039; 
+		|	
+		) 
+		
+	|	&#039;&lt;&#039; 
+		(	( &#039;&gt;&#039; ) 
+		|	( &#039;=&#039; ) 
+		|	
+		) 
+	|	&#039;!&#039; &#039;=&#039; 
+	|	&#039;&gt;&#039; 
+		(	&#039;=&#039; 
+		|	
+		) 
+	;
+
+<a name="mIDENT">mIDENT</a>
+	:	(				'A'..'Z' 
+		|				'a'..'z' 
+		|	&#039;_&#039; 
+		) 
+		(				'A'..'Z' 
+		|				'a'..'z' 
+		|				'0'..'9' 
+		|	&#039;_&#039; 
+		)* 
+		
+	;
+
+<a name="mQUOTED_IDENT">mQUOTED_IDENT</a>
+	:	&#039;&quot;&#039; 
+		(				'A'..'Z' 
+		|				'a'..'z' 
+		|	&#039;_&#039; 
+		) 
+		(				'A'..'Z' 
+		|				'a'..'z' 
+		|				'0'..'9' 
+		|	&#039;_&#039; 
+		)* 
+		&#039;&quot;&#039; 
+	;
+
+/**
+ * Number-literal parsing is tricky, because you might have an integer, a
+ * decimal number, or a simple period (&#039;.&#039;) by itself.  This lexer rule handles
+ * all three of these options, and sets the token-type appropriately.
+ * &lt;p&gt;
+ * Note that these numbers are &lt;i&gt;unsigned&lt;/i&gt;.  Signed numbers have to be
+ * processed separately.
+ */
+<a name="mNUM_LITERAL_OR_SYMBOL">mNUM_LITERAL_OR_SYMBOL</a>
+	:	( 			'0'..'9' )+ 
+		(	( &#039;L&#039; ) 
+		|	( &#039;.&#039; ( 					'0'..'9' )* 
+				(	(	&#039;f&#039; 
+					|	&#039;F&#039; 
+					) 
+					
+				|	
+				) ) 
+		|	
+		) 
+	|	&#039;.&#039; 
+		(	( 				'0'..'9' ) ( 				'0'..'9' )* 
+			(	(	&#039;f&#039; 
+				|	&#039;F&#039; 
+				) 
+				
+			|	
+			) 
+		|	
+		) 
+	;
+
+<a name="mSTRING_LITERAL">mSTRING_LITERAL</a>
+	:	&#039;\&#039;&#039; ( (	&#039;\&#039;&#039; 
+			|	&#039;\r&#039; 
+			|	&#039;\n&#039; 
+			) )* &#039;\&#039;&#039; 
+	;

@@ -1,0 +1,747 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>Grammar /Users/donnie/Documents/CS122/Wi2017/nanodb-2017/res/nanosql.g</TITLE>
+</HEAD>
+<BODY>
+<table summary="" border="1" cellpadding="5">
+<tr>
+<td>
+<font size="+2">Grammar NanoSqlParser</font><br>
+<a href="http://www.ANTLR.org">ANTLR</a>-generated HTML file from /Users/donnie/Documents/CS122/Wi2017/nanodb-2017/res/nanosql.g
+<p>
+Terence Parr, <a href="http://www.magelang.com">MageLang Institute</a>
+<br>ANTLR Version 2.7.7 (20060906); 1989-2005
+</td>
+</tr>
+</table>
+<PRE>
+
+/**
+ * A parser for processing SQL commands into the various command-classes derived
+ * from {@link edu.caltech.nanodb.commands.Command}.  The information in these
+ * commands is then used for data-definition, data-manipulation, and general
+ * utility operations, within the database.
+ */
+Definition of parser NanoSqlParser, which is a subclass of LLkParser.
+
+
+<a name="commands">commands</a>
+	:	<a href="NanoSqlParser.html#command">command</a> ( SEMICOLON 
+			(	<a href="NanoSqlParser.html#command">command</a> 
+			|	
+			) )* 
+	;
+
+
+/**
+ * A single statement, which could be one of many possible options.  Note that
+ * this command is not followed by a semicolon, which allows it to be used in the
+ * &quot;commands&quot; rule.
+ */
+<a name="command">command</a>
+	:	(	<a href="NanoSqlParser.html#create_stmt">create_stmt</a> 
+		|	<a href="NanoSqlParser.html#drop_stmt">drop_stmt</a> 
+		|	<a href="NanoSqlParser.html#select_stmt">select_stmt</a> 
+		|	<a href="NanoSqlParser.html#insert_stmt">insert_stmt</a> 
+		|	<a href="NanoSqlParser.html#update_stmt">update_stmt</a> 
+		|	<a href="NanoSqlParser.html#delete_stmt">delete_stmt</a> 
+		|	<a href="NanoSqlParser.html#begin_txn_stmt">begin_txn_stmt</a> 
+		|	<a href="NanoSqlParser.html#commit_txn_stmt">commit_txn_stmt</a> 
+		|	<a href="NanoSqlParser.html#rollback_txn_stmt">rollback_txn_stmt</a> 
+		|	<a href="NanoSqlParser.html#analyze_stmt">analyze_stmt</a> 
+		|	<a href="NanoSqlParser.html#explain_stmt">explain_stmt</a> 
+		|	<a href="NanoSqlParser.html#exit_stmt">exit_stmt</a> 
+		|	<a href="NanoSqlParser.html#crash_stmt">crash_stmt</a> 
+		|	<a href="NanoSqlParser.html#dump_table_stmt">dump_table_stmt</a> 
+		|	<a href="NanoSqlParser.html#flush_stmt">flush_stmt</a> 
+		|	<a href="NanoSqlParser.html#verify_stmt">verify_stmt</a> 
+		|	<a href="NanoSqlParser.html#optimize_stmt">optimize_stmt</a> 
+		|	<a href="NanoSqlParser.html#show_stats_stmt">show_stats_stmt</a> 
+		|	<a href="NanoSqlParser.html#show_tables_stmt">show_tables_stmt</a> 
+		|	<a href="NanoSqlParser.html#show_vars_stmt">show_vars_stmt</a> 
+		|	<a href="NanoSqlParser.html#set_var_stmt">set_var_stmt</a> 
+		) 
+	;
+
+
+<a name="command_semicolon">command_semicolon</a>
+	:	<a href="NanoSqlParser.html#command">command</a> SEMICOLON 
+	;
+
+
+/**
+ * CREATE Statements - each database object that can be created will produce a
+ * different {@link edu.caltech.nanodb.commands.Command} instance that contains
+ * the SQL command&#039;s details.  This rule returns that Command instance, fully
+ * configured.
+ */
+<a name="create_stmt">create_stmt</a>
+	:	<a href="NanoSqlParser.html#create_table">create_table</a> 
+	|	<a href="NanoSqlParser.html#create_view">create_view</a> 
+	|	<a href="NanoSqlParser.html#create_index">create_index</a> 
+	;
+
+
+<a name="drop_stmt">drop_stmt</a>
+	:	<a href="NanoSqlParser.html#drop_table_stmt">drop_table_stmt</a> 
+	|	<a href="NanoSqlParser.html#drop_index_stmt">drop_index_stmt</a> 
+	;
+
+
+<a name="select_stmt">select_stmt</a>
+	:	<a href="NanoSqlParser.html#select_clause">select_clause</a> 
+	;
+
+
+<a name="insert_stmt">insert_stmt</a>
+	:	INSERT INTO <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> <a href="NanoSqlParser.html#insert_cols">insert_cols</a> 
+		(	<a href="NanoSqlParser.html#insert_vals">insert_vals</a> 
+		|	<a href="NanoSqlParser.html#select_clause">select_clause</a> 
+		) 
+	;
+
+
+<a name="update_stmt">update_stmt</a>
+	:	UPDATE <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> SET <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> EQUALS <a href="NanoSqlParser.html#expression">expression</a> ( COMMA <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> EQUALS <a href="NanoSqlParser.html#expression">expression</a> )* 
+		(	WHERE <a href="NanoSqlParser.html#expression">expression</a> 
+		|	
+		) 
+	;
+
+
+<a name="delete_stmt">delete_stmt</a>
+	:	DELETE FROM <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+		(	WHERE <a href="NanoSqlParser.html#expression">expression</a> 
+		|	
+		) 
+		
+	;
+
+
+<a name="begin_txn_stmt">begin_txn_stmt</a>
+	:	(	START TRANSACTION 
+		|	BEGIN 
+			(	WORK 
+			|	
+			) 
+		) 
+		
+	;
+
+
+<a name="commit_txn_stmt">commit_txn_stmt</a>
+	:	COMMIT 
+		(	WORK 
+		|	
+		) 
+		
+	;
+
+
+<a name="rollback_txn_stmt">rollback_txn_stmt</a>
+	:	ROLLBACK 
+		(	WORK 
+		|	
+		) 
+		
+	;
+
+
+<a name="analyze_stmt">analyze_stmt</a>
+	:	ANALYZE 
+		(	VERBOSE 
+		|	
+		) 
+		<a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> ( COMMA <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> )* 
+	;
+
+
+<a name="explain_stmt">explain_stmt</a>
+	:	EXPLAIN 
+		(	<a href="NanoSqlParser.html#select_stmt">select_stmt</a> 
+		|	<a href="NanoSqlParser.html#insert_stmt">insert_stmt</a> 
+		|	<a href="NanoSqlParser.html#update_stmt">update_stmt</a> 
+		|	<a href="NanoSqlParser.html#delete_stmt">delete_stmt</a> 
+		) 
+		
+	;
+
+
+/**
+ * The exit command is just a simple way for the main loop to know that it&#039;s
+ * time to stop having fun.
+ */
+<a name="exit_stmt">exit_stmt</a>
+	:	(	EXIT 
+		|	QUIT 
+		) 
+		
+	;
+
+
+<a name="crash_stmt">crash_stmt</a>
+	:	CRASH 
+		(	INT_LITERAL 
+		|	
+		) 
+		
+	;
+
+
+<a name="dump_table_stmt">dump_table_stmt</a>
+	:	DUMP TABLE <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+		(	TO FILE STRING_LITERAL 
+		|	
+		) 
+		(	FORMAT <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+		|	
+		) 
+		
+	;
+
+
+<a name="flush_stmt">flush_stmt</a>
+	:	FLUSH 
+	;
+
+
+<a name="verify_stmt">verify_stmt</a>
+	:	VERIFY <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> ( COMMA <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> )* 
+	;
+
+
+<a name="optimize_stmt">optimize_stmt</a>
+	:	OPTIMIZE <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> ( COMMA <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> )* 
+	;
+
+
+<a name="show_stats_stmt">show_stats_stmt</a>
+	:	SHOW 
+		(	STORAGE 
+		|	TABLE <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+		) 
+		STATS 
+	;
+
+
+<a name="show_tables_stmt">show_tables_stmt</a>
+	:	SHOW TABLES 
+	;
+
+
+<a name="show_vars_stmt">show_vars_stmt</a>
+	:	SHOW VARIABLES 
+		(	LIKE STRING_LITERAL 
+		|	
+		) 
+	;
+
+
+<a name="set_var_stmt">set_var_stmt</a>
+	:	SET VARIABLE STRING_LITERAL EQUALS <a href="NanoSqlParser.html#expression">expression</a> 
+	;
+
+
+/**
+ * An UNQUALIFIED identifier for a &quot;database object&quot; - a table or column.
+ */
+<a name="dbobj_ident">dbobj_ident</a>
+	:	IDENT 
+	|	QUOTED_IDENT 
+	;
+
+
+/**
+ * Column names may be of the form &lt;tt&gt;colName&lt;/tt&gt;, or
+ * &lt;tt&gt;tblName.colName&lt;/tt&gt;.
+ */
+<a name="column_name">column_name</a>
+	:	<a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+		(	PERIOD <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+		|	
+		) 
+	;
+
+
+<a name="create_table">create_table</a>
+	:	CREATE 
+		(	TEMPORARY 
+		|	
+		) 
+		TABLE 
+		(	IF NOT EXISTS 
+		|	
+		) 
+		<a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> <a href="NanoSqlParser.html#table_decl">table_decl</a> 
+		(	<a href="NanoSqlParser.html#cmd_properties">cmd_properties</a> 
+		|	
+		) 
+	;
+
+
+<a name="create_view">create_view</a>
+	:	CREATE VIEW <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> AS <a href="NanoSqlParser.html#select_clause">select_clause</a> 
+	;
+
+
+<a name="create_index">create_index</a>
+	:	CREATE 
+		(	UNIQUE 
+		|	
+		) 
+		INDEX 
+		(	<a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+		|	
+		) 
+		ON <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> LPAREN <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> ( COMMA <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> )* RPAREN 
+		(	<a href="NanoSqlParser.html#cmd_properties">cmd_properties</a> 
+		|	
+		) 
+	;
+
+
+/**
+ * Parse a comma-delimited list of column-declarations, and add them to the
+ * passed-in CreateTableCommand object.  Semantic checks are done along the way
+ * to ensure that none of the values are contradictory or otherwise insane.
+ */
+<a name="table_decl">table_decl</a>
+	:	LPAREN 
+		(	<a href="NanoSqlParser.html#table_col_decl">table_col_decl</a> 
+		|	<a href="NanoSqlParser.html#table_constraint">table_constraint</a> 
+		) 
+		( COMMA 
+			(	<a href="NanoSqlParser.html#table_col_decl">table_col_decl</a> 
+			|	<a href="NanoSqlParser.html#table_constraint">table_constraint</a> 
+			) )* RPAREN 
+	;
+
+
+<a name="cmd_properties">cmd_properties</a>
+	:	PROPERTIES LPAREN <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> EQUALS <a href="NanoSqlParser.html#literal_expr">literal_expr</a> ( COMMA <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> EQUALS <a href="NanoSqlParser.html#literal_expr">literal_expr</a> )* RPAREN 
+	;
+
+
+/**
+ * Table column declarations are similar to view column declarations, but can
+ * have additional syntax declaring constraints on values in the table-column.
+ */
+<a name="table_col_decl">table_col_decl</a>
+	:	IDENT <a href="NanoSqlParser.html#column_type">column_type</a> ( <a href="NanoSqlParser.html#column_constraint">column_constraint</a> )* 
+	;
+
+
+/**
+ * Table columns can have a number of constraints, which may optionally be named.
+ * Note that column-constraints and table-constraints can be quite different,
+ * even though they are represented with the same Java class in the
+ * implementation.
+ */
+<a name="table_constraint">table_constraint</a>
+	:	(	CONSTRAINT IDENT 
+		|	
+		) 
+		(	(	UNIQUE 
+			|	PRIMARY KEY 
+			) 
+			LPAREN IDENT ( COMMA IDENT )* RPAREN 
+		|	FOREIGN KEY LPAREN IDENT ( COMMA IDENT )* RPAREN REFERENCES IDENT 
+			(	LPAREN IDENT ( COMMA IDENT )* RPAREN 
+			|	
+			) 
+			(	ON DELETE 
+				(	RESTRICT 
+				|	CASCADE 
+				|	SET NULL 
+				) 
+			|	
+			) 
+			(	ON UPDATE 
+				(	RESTRICT 
+				|	CASCADE 
+				|	SET NULL 
+				) 
+			|	
+			) 
+		) 
+	;
+
+
+/**
+ * Column type-specifications are parsed by this rule.  Some types are simple
+ * keywords.  Others have supporting arguments to parse as well, such as lengths
+ * or precisions.  User-defined types are not supported.
+ */
+<a name="column_type">column_type</a>
+	:	(	TYPE_INT 
+		|	TYPE_INTEGER 
+		) 
+		
+	|	TYPE_BIGINT 
+	|	TYPE_FLOAT 
+	|	TYPE_DOUBLE 
+	|	(	TYPE_CHAR 
+		|	TYPE_VARCHAR 
+		) 
+		LPAREN INT_LITERAL RPAREN 
+	|	TYPE_CHARACTER 
+		(	TYPE_VARYING 
+		|	
+		) 
+		LPAREN INT_LITERAL RPAREN 
+	|	TYPE_DATE 
+	|	TYPE_DATETIME 
+	|	TYPE_TIME 
+	|	TYPE_TIMESTAMP 
+	;
+
+
+/**
+ * Table columns can have a number of constraints, which may optionally be named.
+ * Note that column-constraints and table-constraints can be quite different,
+ * even though they are represented with the same Java class in the
+ * implementation.
+ */
+<a name="column_constraint">column_constraint</a>
+	:	(	CONSTRAINT IDENT 
+		|	
+		) 
+		(	NOT NULL 
+		|	UNIQUE 
+		|	PRIMARY KEY 
+		|	REFERENCES IDENT 
+			(	LPAREN IDENT RPAREN 
+			|	
+			) 
+		) 
+	;
+
+
+<a name="literal_expr">literal_expr</a>
+	:	NULL 
+	|	TRUE 
+	|	FALSE 
+	|	INT_LITERAL 
+	|	LONG_LITERAL 
+	|	FLOAT_LITERAL 
+	|	DEC_LITERAL 
+	|	STRING_LITERAL 
+	;
+
+
+/**
+ * This rule parses a SELECT clause.  Since SELECT clauses can be nested in
+ * other expressions, it&#039;s important to have this as a separate sub-rule in the
+ * parser.
+ */
+<a name="select_clause">select_clause</a>
+	:	(	WITH LPAREN <a href="NanoSqlParser.html#select_clause">select_clause</a> RPAREN 
+			(	AS 
+			|	
+			) 
+			<a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> ( COMMA LPAREN <a href="NanoSqlParser.html#select_clause">select_clause</a> RPAREN 
+				(	AS 
+				|	
+				) 
+				<a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> )* 
+		|	
+		) 
+		SELECT 
+		(	ALL 
+		|	DISTINCT 
+		|	
+		) 
+		<a href="NanoSqlParser.html#select_value">select_value</a> ( COMMA <a href="NanoSqlParser.html#select_value">select_value</a> )* 
+		(	FROM <a href="NanoSqlParser.html#from_clause">from_clause</a> 
+		|	
+		) 
+		(	WHERE <a href="NanoSqlParser.html#expression">expression</a> 
+		|	
+		) 
+		(	GROUP BY <a href="NanoSqlParser.html#expression">expression</a> ( COMMA <a href="NanoSqlParser.html#expression">expression</a> )* 
+			(	HAVING <a href="NanoSqlParser.html#expression">expression</a> 
+			|	
+			) 
+		|	
+		) 
+		(	ORDER BY <a href="NanoSqlParser.html#expression">expression</a> 
+			(	ASC 
+			|	DESC 
+			|	
+			) 
+			( COMMA <a href="NanoSqlParser.html#expression">expression</a> 
+				(	ASC 
+				|	DESC 
+				|	
+				) 
+				)* 
+		|	
+		) 
+		(	LIMIT INT_LITERAL 
+		|	
+		) 
+		(	OFFSET INT_LITERAL 
+		|	
+		) 
+	;
+
+
+<a name="drop_table_stmt">drop_table_stmt</a>
+	:	DROP TABLE 
+		(	IF EXISTS 
+		|	
+		) 
+		<a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+	;
+
+
+<a name="drop_index_stmt">drop_index_stmt</a>
+	:	DROP INDEX <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> ON <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+	;
+
+
+<a name="select_value">select_value</a>
+	:	STAR 
+	|	<a href="NanoSqlParser.html#expression">expression</a> 
+		(	(	AS 
+			|	
+			) 
+			<a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+		|	
+		) 
+		
+	;
+
+
+<a name="from_clause">from_clause</a>
+	:	<a href="NanoSqlParser.html#join_expr">join_expr</a> ( COMMA <a href="NanoSqlParser.html#join_expr">join_expr</a> )* 
+	;
+
+
+/**
+ * The expression rule matches pretty much any possible logical and/or
+ * mathematical expression that one might need.  Note that it will parse a lot
+ * of expressions that don&#039;t make any sense because of type-matching
+ * requirements, but that is fine - this parse rule is about determining the
+ * appropriate structure of the expression, and that is about applying operator
+ * precedence and following the form of the expressions.  Semantic analysis
+ * catches the nonsensical statements.
+ */
+<a name="expression">expression</a>
+	:	<a href="NanoSqlParser.html#logical_or_expr">logical_or_expr</a> 
+	;
+
+
+<a name="join_expr">join_expr</a>
+	:	<a href="NanoSqlParser.html#from_expr">from_expr</a> ( (	CROSS 
+			|	(	NATURAL 
+				|	
+				) 
+				(	INNER 
+				|	(	LEFT 
+					|	RIGHT 
+					|	FULL 
+					) 
+					(	OUTER 
+					|	
+					) 
+				|	
+				) 
+			) 
+			( JOIN <a href="NanoSqlParser.html#from_expr">from_expr</a> 
+				(	ON <a href="NanoSqlParser.html#expression">expression</a> 
+				|	USING LPAREN <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> ( COMMA <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> )* RPAREN 
+				|	
+				) ) )* 
+	;
+
+
+<a name="from_expr">from_expr</a>
+	:	<a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+		(	LPAREN 
+			(	<a href="NanoSqlParser.html#expression">expression</a> ( COMMA <a href="NanoSqlParser.html#expression">expression</a> )* 
+			|	
+			) 
+			RPAREN 
+		|	
+		) 
+		(	(	AS 
+			|	
+			) 
+			<a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+		|	
+		) 
+		
+	|	LPAREN <a href="NanoSqlParser.html#select_clause">select_clause</a> RPAREN 
+		(	AS 
+		|	
+		) 
+		<a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+	|	LPAREN <a href="NanoSqlParser.html#from_clause">from_clause</a> RPAREN 
+	;
+
+
+<a name="insert_cols">insert_cols</a>
+	:	(	LPAREN <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> ( COMMA <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> )* RPAREN 
+		|	
+		) 
+	;
+
+
+<a name="insert_vals">insert_vals</a>
+	:	VALUES LPAREN <a href="NanoSqlParser.html#expression">expression</a> ( COMMA <a href="NanoSqlParser.html#expression">expression</a> )* RPAREN 
+	;
+
+
+<a name="dump_index_stmt">dump_index_stmt</a>
+	:	DUMP INDEX <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> ON TABLE <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+		(	TO FILE STRING_LITERAL 
+		|	
+		) 
+		(	FORMAT <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
+		|	
+		) 
+		
+	;
+
+
+<a name="logical_or_expr">logical_or_expr</a>
+	:	<a href="NanoSqlParser.html#logical_and_expr">logical_and_expr</a> ( OR <a href="NanoSqlParser.html#logical_and_expr">logical_and_expr</a> )* 
+	;
+
+
+<a name="expr_list">expr_list</a>
+	:	LPAREN 
+		(	<a href="NanoSqlParser.html#expression">expression</a> ( COMMA <a href="NanoSqlParser.html#expression">expression</a> )* 
+		|	
+		) 
+		RPAREN 
+	;
+
+
+<a name="logical_and_expr">logical_and_expr</a>
+	:	<a href="NanoSqlParser.html#logical_not_expr">logical_not_expr</a> ( AND <a href="NanoSqlParser.html#logical_not_expr">logical_not_expr</a> )* 
+	;
+
+
+<a name="logical_not_expr">logical_not_expr</a>
+	:	(	NOT 
+		|	
+		) 
+		(	<a href="NanoSqlParser.html#relational_expr">relational_expr</a> 
+		|	<a href="NanoSqlParser.html#exists_expr">exists_expr</a> 
+		) 
+		
+	;
+
+
+/**
+ * @todo Change this rule to a compare_expr, then create a relational_expr that
+ *       includes compare_expr, like_expr, between_expr, in_expr, and is_expr.
+ *       BUT:  this introduces nondeterminism into the parser, once you add the
+ *       other alternatives.  :(  Work out a solution...
+ */
+<a name="relational_expr">relational_expr</a>
+	:	<a href="NanoSqlParser.html#additive_expr">additive_expr</a> 
+		(	( (	EQUALS 
+				|	NOT_EQUALS 
+				|	GRTR_THAN 
+				|	LESS_THAN 
+				|	GRTR_EQUAL 
+				|	LESS_EQUAL 
+				) 
+				<a href="NanoSqlParser.html#additive_expr">additive_expr</a> ) 
+		|	IS 
+			(	NOT 
+			|	
+			) 
+			NULL 
+		|	( (	NOT 
+				|	
+				) 
+				(	( (	LIKE 
+						|	SIMILAR TO 
+						) 
+						<a href="NanoSqlParser.html#additive_expr">additive_expr</a> ) 
+				|	( BETWEEN <a href="NanoSqlParser.html#additive_expr">additive_expr</a> AND <a href="NanoSqlParser.html#additive_expr">additive_expr</a> ) 
+				|	( IN 
+						(	<a href="NanoSqlParser.html#expr_list">expr_list</a> 
+						|	LPAREN <a href="NanoSqlParser.html#select_clause">select_clause</a> RPAREN 
+						) ) 
+				) ) 
+		|	
+		) 
+	;
+
+
+<a name="exists_expr">exists_expr</a>
+	:	EXISTS LPAREN <a href="NanoSqlParser.html#select_clause">select_clause</a> RPAREN 
+	;
+
+
+/**
+ * A numeric expression is at least one numeric term.  Multiple numeric terms
+ * are added or subtracted with each other.
+ */
+<a name="additive_expr">additive_expr</a>
+	:	<a href="NanoSqlParser.html#mult_expr">mult_expr</a> ( (	PLUS 
+			|	MINUS 
+			) 
+			<a href="NanoSqlParser.html#mult_expr">mult_expr</a> )* 
+	;
+
+
+/**
+ * A numeric term is at least one numeric factor.  Multiple numeric factors
+ * are multiplied or divided with each other.
+ */
+<a name="mult_expr">mult_expr</a>
+	:	<a href="NanoSqlParser.html#unary_op_expr">unary_op_expr</a> ( (	STAR 
+			|	SLASH 
+			|	PERCENT 
+			) 
+			<a href="NanoSqlParser.html#unary_op_expr">unary_op_expr</a> )* 
+	;
+
+
+<a name="unary_op_expr">unary_op_expr</a>
+	:	MINUS <a href="NanoSqlParser.html#unary_op_expr">unary_op_expr</a> 
+	|	PLUS <a href="NanoSqlParser.html#unary_op_expr">unary_op_expr</a> 
+	|	<a href="NanoSqlParser.html#base_expr">base_expr</a> 
+	;
+
+
+<a name="base_expr">base_expr</a>
+	:	<a href="NanoSqlParser.html#literal_expr">literal_expr</a> 
+	|	<a href="NanoSqlParser.html#column_name">column_name</a> 
+	|	<a href="NanoSqlParser.html#function_call">function_call</a> 
+	|	LPAREN 
+		(	<a href="NanoSqlParser.html#logical_or_expr">logical_or_expr</a> 
+		|	<a href="NanoSqlParser.html#select_clause">select_clause</a> 
+		) 
+		RPAREN 
+	;
+
+
+/**
+ * A function call can refer to either a normal scalar function, or it can refer
+ * to an aggregate function call.  It&#039;s up to the query executor to ensure that
+ * the function actually exists, and that it&#039;s the proper type for its context.
+ */
+<a name="function_call">function_call</a>
+	:	( <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> LPAREN 
+			(	(	(	DISTINCT 
+					|	
+					) 
+					<a href="NanoSqlParser.html#expression">expression</a> ( COMMA <a href="NanoSqlParser.html#expression">expression</a> )* 
+				|	STAR 
+				) 
+			|	
+			) 
+			RPAREN ) 
+	;
+
+</PRE>
+</BODY>
+</HTML>
