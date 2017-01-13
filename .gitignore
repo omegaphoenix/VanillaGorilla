@@ -1,0 +1,9 @@
+# Ant/Javadoc
+build/
+
+# Vim
+*~
+*.swp 
+
+# Java
+*.class
