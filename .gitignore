@@ -1,9 +1,17 @@
 # Ant/Javadoc
 build/
 
+# Database files
+datafiles/
+test_datafiles/
+
 # Vim
 *~
 *.swp 
+
+# IntelliJ
+.idea/
+*.iml
 
 # Java
 *.class
