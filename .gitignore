@@ -10,6 +10,7 @@ test_datafiles/
 *.swp 
 
 # IntelliJ
+out/
 .idea/
 *.iml
 
