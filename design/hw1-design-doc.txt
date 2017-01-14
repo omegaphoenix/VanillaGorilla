@@ -1,0 +1,100 @@
+CS122 Assignment 1 - NanoDB Set-Up and Storage Layer - Design Document
+======================================================================
+
+A:  Logistics
+-------------
+
+A1.  List your team name and the people who worked on this assignment.
+
+     VanillaGorilla
+
+     Justin Leong
+     Matthew Jin
+     David Qu
+
+A2.  Specify the repository URL, tag name and commit-hash of the Git version
+     you are submitting for your assignment.  (You can list the commit hashes
+     of your repository tags with this command:  git show-ref --tags)
+
+     Repository URL:  https://github.com/omegaphoenix/VanillaGorilla
+     Tag name:        <tag>
+     Commit hash:     <hash>
+
+A3.  Specify any late tokens you are applying to this assignment, or
+     "none" if no late tokens.
+
+A4.  Briefly describe what parts of the assignment each teammate focused on.
+
+B:  Deleting and Updating Tuples
+--------------------------------
+
+B1.  Briefly describe (1-3 sentences) how you reclaim slot entries in
+     the slotted page.  Which slot entries are you able to reclaim?
+
+B2.  Briefly outline the steps of what your setNullColumnValue() function
+     does.  You don't have to go into much detail; we can look at your
+     code for the details.  Just describe the basic things the function
+     must do to set a column-value to NULL.
+
+B3.  Similarly, briefly outline the steps of what your
+     setNonNullColumnValue() function does.
+
+C:  Unpinning Tuples and Pages
+------------------------------
+
+C1.  Briefly describe your strategy for determining when tuples need to
+     be unpinned.  Make sure to comment on plan-nodes and commands.
+
+C2.  In general, you only need to worry about unpinning tuples because
+     the backing page will also be unpinned.  However, there are some
+     situations when DBPages themselves must be unpinned directly.
+     Describe any situations where you unpin pages directly in your
+     implementation, and why you do so.  (Make sure to answer this
+     question in the context of your insert-optimization changes.)
+
+D:  NanoDB Storage Performance
+------------------------------
+
+D1.  In 3-6 sentences, describe your general approach for improving the
+     performance of inserts, including what general file-level structuring
+     you use of blocks.
+
+D2.  Does your file-level organization have the potential to increase the
+     number of large disk seeks when performing inserts?  What steps do
+     you take, if any, to reduce the number of disk seeks?
+
+D3.  What steps must be taken during a tuple-delete operation to update
+     your file-level structures?  How many pages must be written to?
+
+D4.  What steps must be taken after a tuple-insert operation that fills
+     the data page?
+
+D5.  Describe your criteria for when a page is considered to be "full."
+
+E:  Feedback [OPTIONAL]
+-----------------------
+
+WE NEED YOUR FEEDBACK!  Thoughtful and constructive input will help us to
+improve future versions of the course.  These questions are OPTIONAL, and
+they obviously won't affect your grade in any way (including if you hate
+everything about the assignment and databases in general, or Donnie and/or
+the TAs in particular).  Feel free to answer as many or as few of them as
+you wish.
+
+NOTE:  If you wish to give anonymous feedback, a similar survey will be
+       made available on the Moodle.
+
+E1.  How many hours total did your team spend on this assignment?
+     (That is, the sum of each teammate's time spent on the assignment.)
+
+E2.  What parts of the assignment were most time-consuming?  Why?
+
+E3.  Did you find any parts of the assignment particularly instructive?
+     Correspondingly, did any parts feel like unnecessary busy-work?
+
+E4.  Did you particularly enjoy any parts of the assignment?  Were there
+     any parts that you particularly disliked?
+
+E5.  Do you have any suggestions for how future versions of the
+     assignment can be improved?
+
