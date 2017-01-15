@@ -375,14 +375,13 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         logger.debug(String.format(
             "New tuple will reside on page %d, slot %d.", pageNo, slot));
 
-        int prevSpace = DataPage.getFreeSpaceInPage(dbPage);
-
         HeapFilePageTuple pageTup =
             HeapFilePageTuple.storeNewTuple(schema, dbPage, slot, tupOffset, tup);
 
-        // Page is full if it cannot fit a tuple of the same size again.
+        // Page is full if it cannot fit two more tuples of the same size as
+        // the last insertion.
         int spaceLeft = DataPage.getFreeSpaceInPage(dbPage);
-        if (spaceLeft < prevSpace - spaceLeft + 4) {
+        if (spaceLeft < tupSize + 4) {
             // Remove from linked list of full pages
             int nextPageNo = DataPage.getNextNonFullPage(dbPage);
             DataPage.setNextNonFullPage(prevPage, nextPageNo);
