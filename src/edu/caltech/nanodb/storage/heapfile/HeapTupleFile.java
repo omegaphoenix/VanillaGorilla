@@ -296,7 +296,8 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         // Sanity check:  Make sure that the tuple would actually fit in a page
         // in the first place!
         // The "+ 2" is for the case where we need a new slot entry as well.
-        if (tupSize + 2 > dbFile.getPageSize()) {
+        // The "+ 4" is for the linked list pointer at the end.
+        if (tupSize + 2 + 4 > dbFile.getPageSize()) {
             throw new IOException("Tuple size " + tupSize +
                 " is larger than page size " + dbFile.getPageSize() + ".");
         }
