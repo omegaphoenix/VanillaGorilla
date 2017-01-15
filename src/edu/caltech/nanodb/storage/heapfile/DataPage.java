@@ -58,6 +58,7 @@ public class DataPage {
      */
     public static void initNewPage(DBPage dbPage) {
         setNumSlots(dbPage, 0);
+        setNextNonFullPage(dbPage, -1);
     }
 
 
