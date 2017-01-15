@@ -25,6 +25,8 @@ import edu.caltech.nanodb.storage.PageTuple;
 import edu.caltech.nanodb.storage.StorageManager;
 import edu.caltech.nanodb.storage.TupleFileManager;
 
+import javax.xml.crypto.Data;
+
 
 /**
  * This class implements the TupleFile interface for heap files.
@@ -373,8 +375,19 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         logger.debug(String.format(
             "New tuple will reside on page %d, slot %d.", pageNo, slot));
 
+        int prevSpace = DataPage.getFreeSpaceInPage(dbPage);
+
         HeapFilePageTuple pageTup =
             HeapFilePageTuple.storeNewTuple(schema, dbPage, slot, tupOffset, tup);
+
+        // Page is full if it cannot fit a tuple of the same size again.
+        int spaceLeft = DataPage.getFreeSpaceInPage(dbPage);
+        if (spaceLeft < prevSpace - spaceLeft + 4) {
+            // Remove from linked list of full pages
+            int nextPageNo = DataPage.getNextNonFullPage(dbPage);
+            DataPage.setNextNonFullPage(prevPage, nextPageNo);
+            DataPage.setNextNonFullPage(dbPage, -1);
+        }
 
         DataPage.sanityCheck(dbPage);
 
