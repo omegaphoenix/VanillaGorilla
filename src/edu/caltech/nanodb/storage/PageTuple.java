@@ -478,29 +478,34 @@ public abstract class PageTuple implements Tuple {
      * @param iCol the index of the column to set to <tt>NULL</tt>
      */
     private void setNullColumnValue(int iCol) {
-        /* TODO:  Implement!
-         *
-         * The column's flag in the tuple's null-bitmap must be set to true.
-         * Also, the data occupied by the column's value must be removed.
-         * There are many helpful methods that can be used for this method:
-         *  - isNullValue() and setNullFlag() to check/change the null-bitmap
-         *  - deleteTupleDataRange() to remove part of a tuple's data
-         *
-         * You will have to examine the column's type as well; you can use
-         * the schema.getColumnInfo(iCol) method to determine the column's
-         * type; schema.getColumnInfo(iCol).getType() to get the basic SQL
-         * data type.  If the column is a variable-size column (e.g. VARCHAR)
-         * then you may need to retrieve details from the column itself using
-         * the dbPage member, and the getStorageSize() field.
-         *
-         * Finally, the valueOffsets array is extremely important, because it
-         * contains the starting offset of every non-NULL column's data in the
-         * tuple.  Setting a column's value to NULL will obviously affect at
-         * least some of the value-offsets.  Make sure to update this array
-         * properly as well.  (Note that columns whose value is NULL will have
-         * the special NULL_OFFSET constant as their offset in the tuple.)
-         */
-        throw new UnsupportedOperationException("TODO:  Implement!");
+        // Only set to NULL if column is not already NULL.
+        if (!isNullValue(iCol)) {
+            setNullFlag(iCol, true);
+
+            // Get column information, including data type.
+            ColumnInfo columnInfo = schema.getColumnInfo(iCol);
+            ColumnType colType = columnInfo.getType();
+
+            Object value = getColumnValue(iCol);
+            assert (value != null);
+
+            // Determine data length for VARCHAR case, which is special.
+            int dataLength = 0;
+            if (colType.getBaseType() == SQLDataType.VARCHAR) {
+                String strValue = TypeConverter.getStringValue(value);
+                dataLength = strValue.length();
+            }
+
+            // Remove data from tuple.
+            int size = getStorageSize(colType, dataLength);
+            deleteTupleDataRange(valueOffsets[iCol], size);
+
+            // Update valueOffsets array, by shifting forward affected data.
+            valueOffsets[iCol] = NULL_OFFSET;
+            for (int i = iCol - 1; i >= 0; i--) {
+                valueOffsets[i] += size;
+            }
+        }
     }
 
 
