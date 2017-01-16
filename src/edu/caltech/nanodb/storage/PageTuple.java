@@ -551,8 +551,10 @@ public abstract class PageTuple implements Tuple {
             oldLength = getStorageSize(colType, strValue.length());
         }
 
-        // Remove existing data if there was already any.
-        if (valueOffsets[iCol] != NULL_OFFSET) {
+        int lengthChange = newLength - oldLength;
+        // Realign tuple data if the size of column changed.
+        if (lengthChange != 0 && valueOffsets[iCol] != NULL_OFFSET) {
+            // Remove existing data.
             deleteTupleDataRange(valueOffsets[iCol], oldLength);
             // Add new space.
             insertTupleDataRange(valueOffsets[iCol] + oldLength, newLength);
@@ -578,7 +580,6 @@ public abstract class PageTuple implements Tuple {
         }
 
         // Update rest of valueOffsets array, ignoring NULL values.
-        int lengthChange = newLength - oldLength;
         if (lengthChange != 0) {
             for (int i = iCol - 1; i >= 0; i--) {
                 if (valueOffsets[i] != NULL_OFFSET) {
