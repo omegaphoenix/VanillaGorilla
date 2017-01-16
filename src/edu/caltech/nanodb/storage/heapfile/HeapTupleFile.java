@@ -25,6 +25,8 @@ import edu.caltech.nanodb.storage.PageTuple;
 import edu.caltech.nanodb.storage.StorageManager;
 import edu.caltech.nanodb.storage.TupleFileManager;
 
+import javax.xml.crypto.Data;
+
 
 /**
  * This class implements the TupleFile interface for heap files.
@@ -64,7 +66,8 @@ public class HeapTupleFile implements TupleFile {
 
     public HeapTupleFile(StorageManager storageManager,
                          HeapTupleFileManager heapFileManager, DBFile dbFile,
-                         TableSchema schema, TableStats stats) {
+                         TableSchema schema, TableStats stats)
+        throws IOException {
         if (storageManager == null)
             throw new IllegalArgumentException("storageManager cannot be null");
 
@@ -79,6 +82,16 @@ public class HeapTupleFile implements TupleFile {
 
         if (stats == null)
             throw new IllegalArgumentException("stats cannot be null");
+
+        // Initialize linked list of non-full pages to nonexistent page
+        DBPage header = null;
+        try {
+            header = storageManager.loadDBPage(dbFile, 0);
+        } catch (IOException e) {
+            throw e;
+        }
+        HeaderPage.setFirstPage(header, -1);
+        HeaderPage.setLastPage(header, -1);
 
         this.storageManager = storageManager;
         this.heapFileManager = heapFileManager;
@@ -296,18 +309,24 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         // Sanity check:  Make sure that the tuple would actually fit in a page
         // in the first place!
         // The "+ 2" is for the case where we need a new slot entry as well.
-        if (tupSize + 2 > dbFile.getPageSize()) {
+        // The "+ 4" is for the linked list pointer at the end.
+        if (tupSize + 2 + 4 > dbFile.getPageSize()) {
             throw new IOException("Tuple size " + tupSize +
                 " is larger than page size " + dbFile.getPageSize() + ".");
         }
 
+        // Get first non-full page in linked-list
+        DBPage header = storageManager.loadDBPage(dbFile, 0);
+        int pageNo = HeaderPage.getFirstPage(header);
+        int firstPage = pageNo;
         // Search for a page to put the tuple in.  If we hit the end of the
         // data file, create a new page.
-        int pageNo = 1;
         DBPage dbPage = null;
+        DBPage prevPage = header;
         while (true) {
             // Try to load the page without creating a new one.
             try {
+                if (pageNo < 0) { break; };
                 dbPage = storageManager.loadDBPage(dbFile, pageNo);
             }
             catch (EOFException eofe) {
@@ -333,17 +352,23 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
 
             // If we reached this point then the page doesn't have enough
             // space, so go on to the next data page.
+            pageNo = DataPage.getNextNonFullPage(dbPage);
+            prevPage = dbPage;
             dbPage = null;  // So the next section will work properly.
-            pageNo++;
         }
 
         if (dbPage == null) {
             // Try to create a new page at the end of the file.  In this
-            // circumstance, pageNo is *just past* the last page in the data
-            // file.
+            // circumstance, pageNo is set to the next page to be added.
+            pageNo = dbFile.getNumPages();
             logger.debug("Creating new page " + pageNo + " to store new tuple.");
             dbPage = storageManager.loadDBPage(dbFile, pageNo, true);
             DataPage.initNewPage(dbPage);
+            // We add the new page to the front of the linked list to optimize for
+            // next insertions.
+            DataPage.setNextNonFullPage(dbPage, firstPage);
+            HeaderPage.setFirstPage(header, pageNo);
+            prevPage = header; // So the next section will work properly.
         }
 
         int slot = DataPage.allocNewTuple(dbPage, tupSize);
@@ -354,6 +379,17 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
 
         HeapFilePageTuple pageTup =
             HeapFilePageTuple.storeNewTuple(schema, dbPage, slot, tupOffset, tup);
+
+        // Page is full if it cannot fit two more tuples of the same size as
+        // the last insertion. (The "+ 2" is for the new slot entry we will
+        // also need.)
+        int spaceLeft = DataPage.getFreeSpaceInPage(dbPage);
+        if (spaceLeft < tupSize + 2) {
+            // Remove from linked list of full pages
+            int nextPageNo = DataPage.getNextNonFullPage(dbPage);
+            DataPage.setNextNonFullPage(prevPage, nextPageNo);
+            DataPage.setNextNonFullPage(dbPage, -1);
+        }
 
         DataPage.sanityCheck(dbPage);
 
@@ -403,6 +439,18 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         HeapFilePageTuple ptup = (HeapFilePageTuple) tup;
 
         DBPage dbPage = ptup.getDBPage();
+        // Check if full before removal. We need to add it back to the
+        // non-full linked list of pages. If next page is -1, then
+        // the page was full.
+        int nextPageNo = DataPage.getNextNonFullPage(dbPage);
+        if (nextPageNo < 0) {
+            DBPage header = storageManager.loadDBPage(dbFile, 0);
+            // Append to end of linked-list
+            int pageNo = HeaderPage.getLastPage(header);
+            DBPage currLastPage = storageManager.loadDBPage(dbFile, pageNo);
+            DataPage.setNextNonFullPage(currLastPage, dbPage.getPageNo());
+            HeaderPage.setLastPage(header, dbPage.getPageNo());
+        }
         DataPage.deleteTuple(dbPage, ptup.getSlot());
         DataPage.sanityCheck(dbPage);
 
