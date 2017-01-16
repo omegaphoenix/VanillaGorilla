@@ -366,6 +366,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             DataPage.initNewPage(dbPage);
             // The previous non-full pages points to the new page.
             DataPage.setNextNonFullPage(prevPage, pageNo);
+            HeaderPage.setLastPage(header, pageNo);
             HeaderPage.incrementNumPages(header);
         }
 
@@ -379,9 +380,10 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             HeapFilePageTuple.storeNewTuple(schema, dbPage, slot, tupOffset, tup);
 
         // Page is full if it cannot fit two more tuples of the same size as
-        // the last insertion.
+        // the last insertion. (The "+ 2" is for the new slot entry we will
+        // also need.)
         int spaceLeft = DataPage.getFreeSpaceInPage(dbPage);
-        if (spaceLeft < tupSize + 4) {
+        if (spaceLeft < tupSize + 2) {
             // Remove from linked list of full pages
             int nextPageNo = DataPage.getNextNonFullPage(dbPage);
             DataPage.setNextNonFullPage(prevPage, nextPageNo);
@@ -436,6 +438,18 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         HeapFilePageTuple ptup = (HeapFilePageTuple) tup;
 
         DBPage dbPage = ptup.getDBPage();
+        // Check if full before removal. We need to add it back to the
+        // non-full linked list of pages. If next page is -1, then
+        // the page was full.
+        int nextPageNo = DataPage.getNextNonFullPage(dbPage);
+        if (nextPageNo < 0) {
+            DBPage header = storageManager.loadDBPage(dbFile, 0);
+            // Append to end of linked-list
+            int pageNo = HeaderPage.getLastPage(header);
+            DBPage currLastPage = storageManager.loadDBPage(dbFile, pageNo);
+            DataPage.setNextNonFullPage(currLastPage, dbPage.getPageNo());
+            HeaderPage.setLastPage(header, dbPage.getPageNo());
+        }
         DataPage.deleteTuple(dbPage, ptup.getSlot());
         DataPage.sanityCheck(dbPage);
 
