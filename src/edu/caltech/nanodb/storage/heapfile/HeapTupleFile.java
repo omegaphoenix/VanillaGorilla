@@ -90,7 +90,6 @@ public class HeapTupleFile implements TupleFile {
         } catch (IOException e) {
             throw e;
         }
-        HeaderPage.setNumPages(header, 1);
         HeaderPage.setFirstPage(header, -1);
         HeaderPage.setLastPage(header, -1);
 
@@ -360,14 +359,13 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         if (dbPage == null) {
             // Try to create a new page at the end of the file.  In this
             // circumstance, pageNo is set to the next page to be added.
-            pageNo = HeaderPage.getNumPages(header);
+            pageNo = dbFile.getNumPages();
             logger.debug("Creating new page " + pageNo + " to store new tuple.");
             dbPage = storageManager.loadDBPage(dbFile, pageNo, true);
             DataPage.initNewPage(dbPage);
             // The previous non-full pages points to the new page.
             DataPage.setNextNonFullPage(prevPage, pageNo);
             HeaderPage.setLastPage(header, pageNo);
-            HeaderPage.incrementNumPages(header);
         }
 
         int slot = DataPage.allocNewTuple(dbPage, tupSize);

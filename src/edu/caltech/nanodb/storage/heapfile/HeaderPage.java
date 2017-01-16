@@ -84,13 +84,6 @@ public class HeaderPage {
 
 
     /**
-     * The offset from the back of the header page where the next page to
-     * be created is stored.
-     */
-    public static final int BACK_OFFSET_NUM_PAGES = 12;
-
-
-    /**
      * This helper method simply verifies that the data page provided to the
      * <tt>HeaderPage</tt> class is in fact a header-page (i.e. page 0 in the
      * data file).
@@ -238,40 +231,5 @@ public class HeaderPage {
     public static void setLastPage(DBPage dbPage, int pageNo) {
         verifyIsHeaderPage(dbPage);
         dbPage.writeInt(dbPage.getPageSize() - BACK_OFFSET_LAST_PAGE, pageNo);
-    }
-
-
-    /**
-     * Returns the number of pages that have been created plus 1.
-     *
-     * @param dbPage the header page of the heap table file
-     * @return page number of next page to be created
-     */
-    public static int getNumPages(DBPage dbPage) {
-        verifyIsHeaderPage(dbPage);
-        return dbPage.readInt(dbPage.getPageSize() - BACK_OFFSET_NUM_PAGES);
-    }
-
-
-    /**
-     * Set the total number of pages.
-     *
-     * @param dbPage the header page of the heap table file
-     * @param pageNo page number of next page to be created
-     */
-    public static void setNumPages(DBPage dbPage, int pageNo) {
-        verifyIsHeaderPage(dbPage);
-        dbPage.writeInt(dbPage.getPageSize() - BACK_OFFSET_NUM_PAGES, pageNo);
-    }
-
-
-    /**
-     * Increment the total number of pages.
-     *
-     * @param dbPage the header page of the heap table file
-     */
-    public static void incrementNumPages(DBPage dbPage) {
-        int numPages = getNumPages(dbPage) + 1;
-        dbPage.writeInt(dbPage.getPageSize() - BACK_OFFSET_NUM_PAGES, numPages);
     }
 }
