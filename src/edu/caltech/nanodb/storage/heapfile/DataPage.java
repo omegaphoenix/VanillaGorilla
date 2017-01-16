@@ -35,6 +35,13 @@ public class DataPage {
 
 
     /**
+     * The offset from the back of the data page for the pointer to the next
+     * non-full block in the linked list.
+     */
+    public static final int BACK_OFFSET_NUM_SLOTS = 4;
+
+
+    /**
      * This offset-value is stored into a slot when it is empty.  It is set to
      * zero because this is where the page's slot-count is stored and therefore
      * this is obviously an invalid offset for a tuple to be located at.
@@ -51,6 +58,7 @@ public class DataPage {
      */
     public static void initNewPage(DBPage dbPage) {
         setNumSlots(dbPage, 0);
+        setNextNonFullPage(dbPage, -1);
     }
 
 
@@ -213,14 +221,40 @@ public class DataPage {
      * This static helper function returns the index of where tuple data
      * currently ends in the specified data page.  This value depends more on
      * the overall structure of the data page, and at present is simply the
-     * page-size.
+     * page-size minus the room for a pointer to the next non-full page.
      *
      * @param dbPage the data page to examine
      *
      * @return the index where the tuple data ends in this data page
      */
     public static int getTupleDataEnd(DBPage dbPage) {
-        return dbPage.getPageSize();
+        return dbPage.getPageSize() - BACK_OFFSET_NUM_SLOTS;
+    }
+
+
+    /**
+     * This static helper function returns the next non-full page. This value
+     * is stored at the end of the data page.
+     *
+     * @param dbPage the data page to examine
+     *
+     * @return the index where the tuple data ends in this data page
+     */
+    public static int getNextNonFullPage(DBPage dbPage) {
+        return dbPage.readInt(dbPage.getPageSize() - BACK_OFFSET_NUM_SLOTS);
+    }
+
+
+    /**
+     * This static helper function modifies the next non-full page pointer.
+     * This value is stored at the end of the data page.
+     *
+     * @param dbPage the data page to modify
+     * @param nextPage the new next non-full page
+     */
+    public static void setNextNonFullPage(DBPage dbPage, int nextPage) {
+        dbPage.writeInt(dbPage.getPageSize() - BACK_OFFSET_NUM_SLOTS,
+                        nextPage);
     }
 
 
