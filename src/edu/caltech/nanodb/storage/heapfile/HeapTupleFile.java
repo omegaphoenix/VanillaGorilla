@@ -318,6 +318,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         // Get first non-full page in linked-list
         DBPage header = storageManager.loadDBPage(dbFile, 0);
         int pageNo = HeaderPage.getFirstPage(header);
+        int firstPage = pageNo;
         // Search for a page to put the tuple in.  If we hit the end of the
         // data file, create a new page.
         DBPage dbPage = null;
@@ -363,9 +364,10 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             logger.debug("Creating new page " + pageNo + " to store new tuple.");
             dbPage = storageManager.loadDBPage(dbFile, pageNo, true);
             DataPage.initNewPage(dbPage);
-            // The previous non-full pages points to the new page.
-            DataPage.setNextNonFullPage(prevPage, pageNo);
-            HeaderPage.setLastPage(header, pageNo);
+            // We add the new page to the front of the linked list to optimize for
+            // next insertions.
+            DataPage.setNextNonFullPage(dbPage, firstPage);
+            HeaderPage.setFirstPage(header, pageNo);
         }
 
         int slot = DataPage.allocNewTuple(dbPage, tupSize);
