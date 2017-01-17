@@ -524,33 +524,72 @@ public abstract class PageTuple implements Tuple {
         if (value == null)
             throw new IllegalArgumentException("value cannot be null");
 
-        /* TODO:  Implement!
-         *
-         * This time, the column's flag in the tuple's null-bitmap must be set
-         * to false (if it was true before).
-         *
-         * The trick is to figure out the size of the old column-value, and
-         * the size of the new column-value, so that the right amount of space
-         * can be made available for the new value.  If the column is a fixed-
-         * size type (e.g. an INTEGER) then this is easy, but if the column is
-         * a variable-size type (e.g. VARCHAR) then this will be more
-         * involved.  As before, retrieving the column's type will be important
-         * in implementing the method:  schema.getColumnInfo(iCol), and then
-         * schema.getColumnInfo(iCol).getType() to get the basic type info.
-         * You can use the getColumnValueSize() method to determine the size
-         * of a value as well.
-         *
-         * As before, the valueOffsets array is extremely important to use and
-         * modify correctly, so take care in how you manage it.
-         *
-         * The tuple's data in the page starts at the offset returned by the
-         * getDataStartOffset() method; this is the offset past the tuple's
-         * null-bitmask.
-         *
-         * Finally, once you have made space for the new column value, you can
-         * write the value itself using the writeNonNullValue() method.
-         */
-        throw new UnsupportedOperationException("TODO:  Implement!");
+        // Get column information, including data type.
+        ColumnInfo columnInfo = schema.getColumnInfo(iCol);
+        ColumnType colType = columnInfo.getType();
+
+        // Determine special dataLength value for VARCHARs.
+        int dataLength = 0;
+        if (colType.getBaseType() == SQLDataType.VARCHAR) {
+            String strValue = TypeConverter.getStringValue(value);
+            dataLength = strValue.length();
+        }
+
+        // Default oldLength is 0, which is the NULL case.
+        int oldLength = 0;
+        int newLength = getStorageSize(colType, dataLength);
+        boolean wasNull = false;
+        // If last value was NULL, change NULL flag to false.
+        if (isNullValue(iCol)) {
+            wasNull = true;
+            setNullFlag(iCol, false);
+        }
+        // Set oldLength if last value was not NULL.
+        else {
+            Object oldValue = getColumnValue(iCol);
+            String strValue = TypeConverter.getStringValue(oldValue);
+            oldLength = getStorageSize(colType, strValue.length());
+        }
+
+        int lengthChange = newLength - oldLength;
+        // Realign tuple data if the size of column changed.
+        if (lengthChange != 0 && valueOffsets[iCol] != NULL_OFFSET) {
+            // Remove existing data.
+            deleteTupleDataRange(valueOffsets[iCol], oldLength);
+            // Add new space.
+            insertTupleDataRange(valueOffsets[iCol] + oldLength, newLength);
+        }
+
+        // Update valueOffset for current column based on next non-NULL column.
+        // This will work in the case of valueOffsets[iCol] = NULL.
+        for (int curCol = iCol + 1; curCol <= valueOffsets.length; curCol++) {
+            // Check first for end of tuple.
+            if (curCol == valueOffsets.length) {
+                valueOffsets[iCol] = getEndOffset() - newLength;
+                break;
+            }
+            else if (valueOffsets[curCol] != NULL_OFFSET) {
+                valueOffsets[iCol] = valueOffsets[curCol] - newLength;
+                break;
+            }
+        }
+
+        // Insert space for column if originally NULL.
+        if (wasNull) {
+            insertTupleDataRange(valueOffsets[iCol] + newLength, newLength);
+        }
+
+        // Update rest of valueOffsets array, ignoring NULL values.
+        if (lengthChange != 0) {
+            for (int i = iCol - 1; i >= 0; i--) {
+                if (valueOffsets[i] != NULL_OFFSET) {
+                    valueOffsets[i] -= lengthChange;
+                }
+            }
+        }
+
+        // Finally, write data to the updated offset.
+        writeNonNullValue(dbPage, valueOffsets[iCol], colType, value);
     }
 
 
