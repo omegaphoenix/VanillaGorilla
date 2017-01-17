@@ -403,7 +403,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         // the last insertion. (The "+ SLOT_ENTRY_SIZE" is for the new slot entry we will
         // also need.)
         int spaceLeft = DataPage.getFreeSpaceInPage(dbPage);
-        if (spaceLeft < tupSize + SLOT_ENTRY_SIZE {
+        if (spaceLeft < tupSize + SLOT_ENTRY_SIZE) {
             // Remove from linked list of full pages
             int nextPageNo = DataPage.getNextNonFullPage(dbPage);
             DataPage.setNextNonFullPage(prevPage, nextPageNo);
