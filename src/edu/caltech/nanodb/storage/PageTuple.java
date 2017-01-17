@@ -501,10 +501,8 @@ public abstract class PageTuple implements Tuple {
             deleteTupleDataRange(valueOffsets[iCol], size);
 
             // Update valueOffsets array, by shifting forward affected data.
-            valueOffsets[iCol] = NULL_OFFSET;
-            for (int i = iCol - 1; i >= 0; i--) {
-                valueOffsets[i] += size;
-            }
+            pageOffset += size;
+            computeValueOffsets();
         }
     }
 
@@ -579,14 +577,9 @@ public abstract class PageTuple implements Tuple {
             insertTupleDataRange(valueOffsets[iCol] + newLength, newLength);
         }
 
-        // Update rest of valueOffsets array, ignoring NULL values.
-        if (lengthChange != 0) {
-            for (int i = iCol - 1; i >= 0; i--) {
-                if (valueOffsets[i] != NULL_OFFSET) {
-                    valueOffsets[i] -= lengthChange;
-                }
-            }
-        }
+        // Update valueOffsets array
+        pageOffset -= lengthChange;
+        computeValueOffsets();
 
         // Finally, write data to the updated offset.
         writeNonNullValue(dbPage, valueOffsets[iCol], colType, value);
