@@ -62,6 +62,7 @@ public class HeapTupleFileManager implements TupleFileManager {
         // to write out the schema information.
         DBPage headerPage = storageManager.loadDBPage(dbFile, 0);
         PageReader hpReader = new PageReader(headerPage);
+        headerPage.unpin();
         // Skip past the page-size value.
         hpReader.setPosition(HeaderPage.OFFSET_SCHEMA_START);
 
@@ -118,6 +119,7 @@ public class HeapTupleFileManager implements TupleFileManager {
         statsWriter.writeTableStats(schema, stats, hpWriter);
         int statsSize = hpWriter.getPosition() - schemaEndPos;
         HeaderPage.setStatsSize(headerPage, statsSize);
+        headerPage.unpin();
     }
 
 
