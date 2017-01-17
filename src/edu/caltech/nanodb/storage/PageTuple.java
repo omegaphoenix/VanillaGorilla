@@ -503,7 +503,9 @@ public abstract class PageTuple implements Tuple {
             // Update valueOffsets array, by shifting forward affected data.
             valueOffsets[iCol] = NULL_OFFSET;
             for (int i = iCol - 1; i >= 0; i--) {
-                valueOffsets[i] += size;
+                if (valueOffsets[i] != NULL_OFFSET) {
+                    valueOffsets[i] += size;
+                }
             }
         }
     }
