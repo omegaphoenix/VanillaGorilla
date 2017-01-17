@@ -50,6 +50,13 @@ public class DataPage {
 
 
     /**
+     * This value indicates that we are pointing at the end of the linked list
+     * of non-full pages.
+     */
+    public static final int END_OF_LIST = -1;
+
+
+    /**
      * Initialize a newly allocated data page.  Currently this involves setting
      * the number of slots to 0.  There is no other internal structure in data
      * pages at this point.
@@ -58,7 +65,7 @@ public class DataPage {
      */
     public static void initNewPage(DBPage dbPage) {
         setNumSlots(dbPage, 0);
-        setNextNonFullPage(dbPage, -1);
+        setNextNonFullPage(dbPage, END_OF_LIST);
     }
 
 

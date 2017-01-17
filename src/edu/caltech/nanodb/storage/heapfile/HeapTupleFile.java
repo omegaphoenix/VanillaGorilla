@@ -25,13 +25,31 @@ import edu.caltech.nanodb.storage.PageTuple;
 import edu.caltech.nanodb.storage.StorageManager;
 import edu.caltech.nanodb.storage.TupleFileManager;
 
-import javax.xml.crypto.Data;
-
 
 /**
  * This class implements the TupleFile interface for heap files.
  */
 public class HeapTupleFile implements TupleFile {
+    /**
+     * The size of a slot entry which points to where the data is stored
+     * on the page.
+     */
+    public static final int SLOT_ENTRY_SIZE = 2;
+
+
+    /**
+     * The number of slots to store the pointer to the next non-empty
+     * page in the linked list.
+     */
+    public static final int NEXT_POINTER_SIZE = 4;
+
+
+    /**
+     * This value indicates that we are pointing at the end of the linked list
+     * of non-full pages.
+     */
+    public static final int END_OF_LIST = -1;
+
 
     /** A logging object for reporting anything interesting that happens. */
     private static Logger logger = Logger.getLogger(HeapTupleFile.class);
@@ -308,9 +326,10 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
 
         // Sanity check:  Make sure that the tuple would actually fit in a page
         // in the first place!
-        // The "+ 2" is for the case where we need a new slot entry as well.
-        // The "+ 4" is for the linked list pointer at the end.
-        if (tupSize + 2 + 4 > dbFile.getPageSize()) {
+        // The "+ SLOT_ENTRY_SIZE" is for the case where we need a
+        // new slot entry as well.
+        // The "+ NEXT_POINTER_SIZE" is for the linked list pointer at the end.
+        if (tupSize + SLOT_ENTRY_SIZE + NEXT_POINTER_SIZE > dbFile.getPageSize()) {
             throw new IOException("Tuple size " + tupSize +
                 " is larger than page size " + dbFile.getPageSize() + ".");
         }
@@ -326,7 +345,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         while (true) {
             // Try to load the page without creating a new one.
             try {
-                if (pageNo < 0) { break; };
+                if (pageNo == END_OF_LIST) { break; };
                 dbPage = storageManager.loadDBPage(dbFile, pageNo);
             }
             catch (EOFException eofe) {
@@ -343,9 +362,9 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
                          pageNo, freeSpace));
 
             // If this page has enough free space to add a new tuple, break
-            // out of the loop.  (The "+ 2" is for the new slot entry we will
+            // out of the loop.  (The "+ SLOT_ENTRY_SIZE" is for the new slot entry we will
             // also need.)
-            if (freeSpace >= tupSize + 2) {
+            if (freeSpace >= tupSize + SLOT_ENTRY_SIZE) {
                 logger.debug("Found space for new tuple in page " + pageNo + ".");
                 break;
             }
@@ -381,10 +400,10 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             HeapFilePageTuple.storeNewTuple(schema, dbPage, slot, tupOffset, tup);
 
         // Page is full if it cannot fit two more tuples of the same size as
-        // the last insertion. (The "+ 2" is for the new slot entry we will
+        // the last insertion. (The "+ SLOT_ENTRY_SIZE" is for the new slot entry we will
         // also need.)
         int spaceLeft = DataPage.getFreeSpaceInPage(dbPage);
-        if (spaceLeft < tupSize + 2) {
+        if (spaceLeft < tupSize + SLOT_ENTRY_SIZE {
             // Remove from linked list of full pages
             int nextPageNo = DataPage.getNextNonFullPage(dbPage);
             DataPage.setNextNonFullPage(prevPage, nextPageNo);
@@ -443,7 +462,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         // non-full linked list of pages. If next page is -1, then
         // the page was full.
         int nextPageNo = DataPage.getNextNonFullPage(dbPage);
-        if (nextPageNo < 0) {
+        if (nextPageNo == END_OF_LIST) {
             DBPage header = storageManager.loadDBPage(dbFile, 0);
             // Append to front of linked-list
             int currFirstPage = HeaderPage.getFirstPage(header);

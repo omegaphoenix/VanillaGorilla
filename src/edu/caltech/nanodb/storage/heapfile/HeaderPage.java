@@ -84,6 +84,13 @@ public class HeaderPage {
 
 
     /**
+     * This value indicates that we are pointing at the end of the linked list
+     * of non-full pages.
+     */
+    public static final int END_OF_LIST = -1;
+
+
+    /**
      * This helper method simply verifies that the data page provided to the
      * <tt>HeaderPage</tt> class is in fact a header-page (i.e. page 0 in the
      * data file).
@@ -186,7 +193,7 @@ public class HeaderPage {
 
     /**
      * Returns the page number of the first page in the linked list of non-full
-     * pages. Returns -1 if there are no non-full pages
+     * pages. Returns END_OF_LIST if there are no non-full pages
      *
      * @param dbPage the header page of the heap table file
      * @return page number of first page in linked list of non-full pages
@@ -211,7 +218,7 @@ public class HeaderPage {
 
     /**
      * Returns the page number of the last page in the linked list of non-full
-     * pages. Returns -1 if there are no non-full pages
+     * pages. Returns END_OF_LIST if there are no non-full pages
      *
      * @param dbPage the header page of the heap table file
      * @return page number of last page in linked list of non-full pages
