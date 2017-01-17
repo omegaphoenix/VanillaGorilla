@@ -358,6 +358,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             HeapFilePageTuple.storeNewTuple(schema, dbPage, slot, tupOffset, tup);
 
         DataPage.sanityCheck(dbPage);
+        pageTup.unpin();
         dbPage.unpin();
         return pageTup;
     }

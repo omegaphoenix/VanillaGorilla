@@ -43,7 +43,6 @@ public class QueryEvaluator {
                 if (tuple == null)
                     break;
                 tuple.pin();
-
                 rowsProduced++;
 
                 // Do whatever we're supposed to do with the tuple.
