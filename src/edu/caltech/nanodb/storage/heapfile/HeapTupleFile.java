@@ -110,6 +110,7 @@ public class HeapTupleFile implements TupleFile {
         }
         HeaderPage.setFirstPage(header, -1);
         HeaderPage.setLastPage(header, -1);
+        header.unpin();
 
         this.storageManager = storageManager;
         this.heapFileManager = heapFileManager;
@@ -373,8 +374,10 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             // If we reached this point then the page doesn't have enough
             // space, so go on to the next data page.
             pageNo = DataPage.getNextNonFullPage(dbPage);
+            if (prevPage != header) {
+                prevPage.unpin();
+            }
             prevPage = dbPage;
-            dbPage.unpin();
             dbPage = null;  // So the next section will work properly.
         }
 
@@ -389,6 +392,9 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             // next insertions.
             DataPage.setNextNonFullPage(dbPage, firstPage);
             HeaderPage.setFirstPage(header, pageNo);
+            if (prevPage != header && prevPage != null) {
+                prevPage.unpin();
+            }
             prevPage = header;
         }
 
@@ -413,6 +419,10 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         }
 
         DataPage.sanityCheck(dbPage);
+        if (prevPage != header && prevPage != null) {
+            prevPage.unpin();
+        }
+        header.unpin();
         pageTup.unpin();
         dbPage.unpin();
         return pageTup;
@@ -471,6 +481,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             int currFirstPage = HeaderPage.getFirstPage(header);
             DataPage.setNextNonFullPage(dbPage, currFirstPage);
             HeaderPage.setFirstPage(header, dbPage.getPageNo());
+            header.unpin();
         }
         DataPage.deleteTuple(dbPage, ptup.getSlot());
         DataPage.sanityCheck(dbPage);
