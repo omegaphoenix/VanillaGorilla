@@ -187,6 +187,7 @@ public class DBPage implements Pinnable, AutoCloseable {
 
     @Override
     public void pin() {
+        logger.debug(String.format("Pinning page %d", this.getPageNo()));
         pinCount++;
 
         // To facilitate debugging of pinned-page leaks!
@@ -196,6 +197,7 @@ public class DBPage implements Pinnable, AutoCloseable {
 
     @Override
     public void unpin() {
+        logger.debug(String.format("Unpinning page %d", this.getPageNo()));
         if (pinCount <= 0) {
             throw new IllegalStateException(
                 "pinCount is not positive (value is " + pinCount + ")");

@@ -169,6 +169,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner one
                     // This is the first tuple in the file.  Build up the
                     // HeapFilePageTuple object and return it.
                     first = new HeapFilePageTuple(schema, dbPage, iSlot, offset);
+                    dbPage.unpin();
                     break page_scan;
                 }
             }
@@ -373,6 +374,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             // space, so go on to the next data page.
             pageNo = DataPage.getNextNonFullPage(dbPage);
             prevPage = dbPage;
+            dbPage.unpin();
             dbPage = null;  // So the next section will work properly.
         }
 
@@ -411,7 +413,8 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         }
 
         DataPage.sanityCheck(dbPage);
-
+        pageTup.unpin();
+        dbPage.unpin();
         return pageTup;
     }
 
