@@ -446,8 +446,8 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         if (nextPageNo < 0) {
             DBPage header = storageManager.loadDBPage(dbFile, 0);
             // Append to front of linked-list
-            int pageNo = HeaderPage.getFirstPage(header);
-            DataPage.setNextNonFullPage(dbPage, pageNo);
+            int currFirstPage = HeaderPage.getFirstPage(header);
+            DataPage.setNextNonFullPage(dbPage, currFirstPage);
             HeaderPage.setFirstPage(header, dbPage.getPageNo());
         }
         DataPage.deleteTuple(dbPage, ptup.getSlot());
