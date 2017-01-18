@@ -140,19 +140,26 @@ public class SortedGroupAggregateNode extends GroupAggregateNode {
             return null;
 
         TupleLiteral result = null;
-        Tuple input;
+        Tuple inputTuple;
 
         // Traverse the subplan's tuples, generating the group and aggregate
         // values for the current group.
-        while ((input = leftChild.getNextTuple()) != null) {
+        while ((inputTuple = leftChild.getNextTuple()) != null) {
             environment.clear();
-            environment.addTuple(inputSchema, input);
+            environment.addTuple(inputSchema, inputTuple);
 
             TupleLiteral groupValues = evaluateGroupByExprs();
+
+            // Note:  I unpin in each branch of the if statement, because the
+            // logic is a bit easier to follow than if I try to factor out
+            // common code.  Just make sure tuples always get unpinned...
 
             if (groupValues.equals(currentGroupValues)) {
                 // Still in the same group.  Update the aggregates.
                 updateAggregates(aggregates);
+
+                // Done with the current tuple, so unpin it.
+                inputTuple.unpin();
             }
             else {
                 if (currentGroupValues != null) {
@@ -169,6 +176,10 @@ public class SortedGroupAggregateNode extends GroupAggregateNode {
                 clearAggregates(aggregates);
                 updateAggregates(aggregates);
 
+                // Done with the current tuple, so unpin it.
+                inputTuple.unpin();
+
+                // Return the output tuple for the group we just finished.
                 return result;
             }
         }

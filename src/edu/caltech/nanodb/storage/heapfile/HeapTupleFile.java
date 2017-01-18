@@ -233,9 +233,13 @@ page_scan:  // So we can break out of the outer loop from inside the inner one
 
 
     /**
-     * Returns the tuple that follows the specified tuple,
-     * or <tt>null</tt> if there are no more tuples in the file.
-     **/
+     * Returns the tuple that follows the specified tuple, or {@code null} if
+     * there are no more tuples in the file.  This method must operate
+     * correctly regardless of whether the input tuple is pinned or unpinned.
+     *
+     * @param tup the "previous tuple" that specifies where to start looking
+     *        for the next tuple
+     */
     @Override
     public Tuple getNextTuple(Tuple tup) throws IOException {
 
@@ -254,13 +258,25 @@ page_scan:  // So we can break out of the outer loop from inside the inner one
         }
         HeapFilePageTuple ptup = (HeapFilePageTuple) tup;
 
-        DBPage dbPage = ptup.getDBPage();
-        DBFile dbFile = dbPage.getDBFile();
+        // Retrieve the location info from the previous tuple.  Since the
+        // tuple (and/or its backing page) may already have a pin-count of 0,
+        // we can't necessarily use the page itself.
+        DBPage prevDBPage = ptup.getDBPage();
+        DBFile dbFile = prevDBPage.getDBFile();
+        int prevPageNo = prevDBPage.getPageNo();
+        int prevSlot = ptup.getSlot();
         boolean newPage = false;
 
+        // Retrieve the page itself so that we can access the internal data.
+        // The page will come back pinned on behalf of the caller.  (If the
+        // page is still in the Buffer Manager's cache, it will not be read
+        // from disk, so this won't be expensive in that case.)
+        DBPage dbPage = storageManager.loadDBPage(dbFile, prevPageNo);
         HeapFilePageTuple nextTup = null;
 
-        int nextSlot = ptup.getSlot() + 1;
+        // Start by looking at the slot immediately following the previous
+        // tuple's slot.
+        int nextSlot = prevSlot + 1;
 
 page_scan:  // So we can break out of the outer loop from inside the inner loop.
         while (true) {
@@ -269,7 +285,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             while (nextSlot < numSlots) {
                 int nextOffset = DataPage.getSlotValue(dbPage, nextSlot);
                 if (nextOffset != DataPage.EMPTY_SLOT) {
-                    // Pins the page a second time.
+                    // Creating this tuple will pin the page a second time.
                     nextTup = new HeapFilePageTuple(schema, dbPage, nextSlot,
                                                     nextOffset);
                     break page_scan;

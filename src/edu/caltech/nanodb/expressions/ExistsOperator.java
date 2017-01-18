@@ -9,6 +9,7 @@ import edu.caltech.nanodb.relations.ColumnInfo;
 import edu.caltech.nanodb.relations.ColumnType;
 import edu.caltech.nanodb.relations.Schema;
 import edu.caltech.nanodb.relations.SchemaNameException;
+import edu.caltech.nanodb.relations.Tuple;
 
 
 /**
@@ -47,7 +48,15 @@ public class ExistsOperator extends SubqueryOperator {
 
         try {
             subqueryPlan.initialize();
-            return Boolean.valueOf(subqueryPlan.getNextTuple() != null);
+
+            // See if the subquery will produce any tuples!
+            Tuple tuple = subqueryPlan.getNextTuple();
+            if (tuple != null)
+                tuple.unpin();
+
+            subqueryPlan.cleanUp();
+
+            return Boolean.valueOf(tuple != null);
         }
         catch (IOException e) {
             throw new ExpressionException("Error while evaluating subquery", e);
