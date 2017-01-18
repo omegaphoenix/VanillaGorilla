@@ -224,6 +224,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner one
 
         DBPage dbPage = ptup.getDBPage();
         DBFile dbFile = dbPage.getDBFile();
+        boolean newPage = false;
 
         HeapFilePageTuple nextTup = null;
 
@@ -250,14 +251,22 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             // tuple in that page.
 
             try {
+                DBPage prevPage = dbPage;
                 dbPage = storageManager.loadDBPage(dbFile, dbPage.getPageNo() + 1);
                 nextSlot = 0;
+                if (newPage) {
+                    prevPage.unpin();
+                }
+                newPage = true;
             }
             catch (EOFException e) {
                 // Hit the end of the file with no more tuples.  We are done
                 // scanning.
                 break;
             }
+        }
+        if (newPage) {
+            dbPage.unpin();
         }
 
         return nextTup;
