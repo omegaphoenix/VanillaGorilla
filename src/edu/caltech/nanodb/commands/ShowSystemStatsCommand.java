@@ -49,7 +49,7 @@ public class ShowSystemStatsCommand extends Command {
         for (String[] pair : PERF_COUNTERS) {
             if (pair[0].equals(systemName)) {
                 String name = pair[1];
-                int value = PerformanceCounters.get(name);
+                long value = PerformanceCounters.get(name);
                 out.printf("%s = %d%n", name, value);
             }
         }
