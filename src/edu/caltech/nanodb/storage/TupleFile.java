@@ -71,9 +71,11 @@ public interface TupleFile {
 
     /**
      * Returns the tuple that follows the specified tuple, or {@code null} if
-     * there are no more tuples in the file.
+     * there are no more tuples in the file.  The implementation must operate
+     * correctly regardless of whether the input tuple is pinned or unpinned.
      *
-     * @param tuple the "previous" tuple in the table
+     * @param tuple the "previous" tuple in the table.  This tuple may be
+     *        pinned or unpinned.
      *
      * @return the tuple following the previous tuple, or {@code null} if the
      *         previous tuple is the last one in the table

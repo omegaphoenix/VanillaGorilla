@@ -121,9 +121,16 @@ public class DBPage implements Pinnable, AutoCloseable {
         this.bufferManager = bufferManager;
         this.dbFile = dbFile;
         this.pageNo = pageNo;
-        pinCount = 0;
         dirty = false;
         pageLSN = null;
+
+        // The pin-count can be 0 here, even though we are about to allocate
+        // a buffer from the Buffer Manager, because the Buffer Manager
+        // iterates through DBPage objects to reclaim space, not individual
+        // buffers.  This means that the buffer allocated for this page
+        // cannot be freed until the DBPage is actually registered with the
+        // Buffer Manager (which it won't be until it is fully loaded).
+        pinCount = 0;
 
         // This operation could fail with an IOException, because more
         // space must be allocated to keep track of the original page data,
@@ -1137,6 +1144,14 @@ public class DBPage implements Pinnable, AutoCloseable {
         }
 
         return dataSize;
+    }
+
+
+    @Override
+    public String toString() {
+        return String.format(
+            "DBPage[file=%s, pageNo=%d, pageSize=%d, dirty=%s, pageLSN=%s]",
+            dbFile, pageNo, dbFile.getPageSize(), dirty, pageLSN);
     }
 
 

@@ -156,14 +156,14 @@ public class HashedGroupAggregateNode extends GroupAggregateNode {
      * @throws IOException
      */
     private void computeAggregates() throws IOException {
-        Tuple input;
+        Tuple inputTuple;
 
-        computedAggregates = new LinkedHashMap<TupleLiteral, Map<String, FunctionCall>>();
+        computedAggregates = new LinkedHashMap<>();
 
         // Pull tuples from the left child until we run out.
-        while ((input = leftChild.getNextTuple()) != null) {
+        while ((inputTuple = leftChild.getNextTuple()) != null) {
             environment.clear();
-            environment.addTuple(inputSchema, input);
+            environment.addTuple(inputSchema, inputTuple);
 
             // Get the group values for the current row.
             TupleLiteral groupValues = evaluateGroupByExprs();
@@ -192,6 +192,9 @@ public class HashedGroupAggregateNode extends GroupAggregateNode {
             // do the computation, update each aggregate with the tuple's
             // current value.
             updateAggregates(groupAggregates);
+
+            // Now that we are done with the current tuple, unpin it.
+            inputTuple.unpin();
         }
     }
 
