@@ -70,6 +70,27 @@ public class HeaderPage {
 
 
     /**
+     * The offset from the back of the header page where the first page in
+     * the linked-list of non-full page is stored.
+     */
+    public static final int BACK_OFFSET_FIRST_PAGE = 4;
+
+
+    /**
+     * The offset from the back of the header page where the last page in
+     * the linked-list of non-full page is stored.
+     */
+    public static final int BACK_OFFSET_LAST_PAGE = 8;
+
+
+    /**
+     * This value indicates that we are pointing at the end of the linked list
+     * of non-full pages.
+     */
+    public static final int END_OF_LIST = -1;
+
+
+    /**
      * This helper method simply verifies that the data page provided to the
      * <tt>HeaderPage</tt> class is in fact a header-page (i.e. page 0 in the
      * data file).
@@ -167,5 +188,55 @@ public class HeaderPage {
     public static int getStatsOffset(DBPage dbPage) {
         verifyIsHeaderPage(dbPage);
         return OFFSET_SCHEMA_START + getSchemaSize(dbPage);
+    }
+
+
+    /**
+     * Returns the page number of the first page in the linked list of non-full
+     * pages. Returns END_OF_LIST if there are no non-full pages
+     *
+     * @param dbPage the header page of the heap table file
+     * @return page number of first page in linked list of non-full pages
+     */
+    public static int getFirstPage(DBPage dbPage) {
+        verifyIsHeaderPage(dbPage);
+        return dbPage.readInt(dbPage.getPageSize() - BACK_OFFSET_FIRST_PAGE);
+    }
+
+
+    /**
+     * Sets the page number of the first page in the linked list of non-full pages.
+     *
+     * @param dbPage the header page of the heap table file
+     * @param pageNo page number of the first page in linked list of non-full pages
+     */
+    public static void setFirstPage(DBPage dbPage, int pageNo) {
+        verifyIsHeaderPage(dbPage);
+        dbPage.writeInt(dbPage.getPageSize() - BACK_OFFSET_FIRST_PAGE, pageNo);
+    }
+
+
+    /**
+     * Returns the page number of the last page in the linked list of non-full
+     * pages. Returns END_OF_LIST if there are no non-full pages
+     *
+     * @param dbPage the header page of the heap table file
+     * @return page number of last page in linked list of non-full pages
+     */
+    public static int getLastPage(DBPage dbPage) {
+        verifyIsHeaderPage(dbPage);
+        return dbPage.readInt(dbPage.getPageSize() - BACK_OFFSET_LAST_PAGE);
+    }
+
+
+    /**
+     * Sets the page number of the last page in the linked list of non-full pages.
+     *
+     * @param dbPage the header page of the heap table file
+     * @param pageNo page number of the last page in linked list of non-full pages
+     */
+    public static void setLastPage(DBPage dbPage, int pageNo) {
+        verifyIsHeaderPage(dbPage);
+        dbPage.writeInt(dbPage.getPageSize() - BACK_OFFSET_LAST_PAGE, pageNo);
     }
 }
