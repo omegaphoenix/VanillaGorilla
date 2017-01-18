@@ -51,6 +51,12 @@ public class HeapTupleFile implements TupleFile {
     public static final int END_OF_LIST = -1;
 
 
+    /**
+     * This value indicates the page number of the header file
+     */
+    public static final int HEADER_PAGE_NO = 0;
+
+
     /** A logging object for reporting anything interesting that happens. */
     private static Logger logger = Logger.getLogger(HeapTupleFile.class);
 
@@ -104,12 +110,12 @@ public class HeapTupleFile implements TupleFile {
         // Initialize linked list of non-full pages to nonexistent page
         DBPage header = null;
         try {
-            header = storageManager.loadDBPage(dbFile, 0);
+            header = storageManager.loadDBPage(dbFile, HEADER_PAGE_NO);
         } catch (IOException e) {
             throw e;
         }
-        HeaderPage.setFirstPage(header, -1);
-        HeaderPage.setLastPage(header, -1);
+        HeaderPage.setFirstPage(header, END_OF_LIST);
+        HeaderPage.setLastPage(header, END_OF_LIST);
         header.unpin();
 
         this.storageManager = storageManager;
@@ -362,7 +368,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         }
 
         // Get first non-full page in linked-list
-        DBPage header = storageManager.loadDBPage(dbFile, 0);
+        DBPage header = storageManager.loadDBPage(dbFile, HEADER_PAGE_NO);
         int pageNo = HeaderPage.getFirstPage(header);
         int firstPage = pageNo;
         // Search for a page to put the tuple in.  If we hit the end of the
@@ -440,7 +446,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             // Remove from linked list of full pages
             int nextPageNo = DataPage.getNextNonFullPage(dbPage);
             DataPage.setNextNonFullPage(prevPage, nextPageNo);
-            DataPage.setNextNonFullPage(dbPage, -1);
+            DataPage.setNextNonFullPage(dbPage, END_OF_LIST);
         }
 
         DataPage.sanityCheck(dbPage);
@@ -497,11 +503,11 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
 
         DBPage dbPage = ptup.getDBPage();
         // Check if full before removal. We need to add it back to the
-        // non-full linked list of pages. If next page is -1, then
+        // non-full linked list of pages. If next page is END_OF_LIST, then
         // the page was full.
         int nextPageNo = DataPage.getNextNonFullPage(dbPage);
         if (nextPageNo == END_OF_LIST) {
-            DBPage header = storageManager.loadDBPage(dbFile, 0);
+            DBPage header = storageManager.loadDBPage(dbFile, HEADER_PAGE_NO);
             // Append to front of linked-list
             int currFirstPage = HeaderPage.getFirstPage(header);
             DataPage.setNextNonFullPage(dbPage, currFirstPage);
