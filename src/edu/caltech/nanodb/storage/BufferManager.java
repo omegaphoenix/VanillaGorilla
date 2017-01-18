@@ -534,9 +534,9 @@ public class BufferManager {
         for (SessionPinCount spc : spcs) {
             // It would be an overstatement to say this is an error, since we
             // can recover from it.
-            logger.warn(String.format("Session %d pinned DBPage %d %d times" +
-                " without a corresponding unpin call", sessionID,
-                spc.dbPage.getPageNo(), spc.pinCount));
+            logger.warn(String.format("Session %d pinned %s %d times" +
+                " without a corresponding unpin call", sessionID, spc.dbPage,
+                spc.pinCount));
 
             while (spc.pinCount > 0)
                 spc.dbPage.unpin();
@@ -630,14 +630,12 @@ public class BufferManager {
         logger.debug(String.format("Adding page [%s,%d] to page-cache.",
             dbFile, pageNo));
 
-        int pageSize = dbPage.getPageSize();
-        ensureSpaceAvailable(pageSize);
-
-        cachedPages.put(cpi, dbPage);
-
         // Make sure this page is pinned by the session so that we don't flush
-        // it until the session is done with it.
+        // it until the session is done with it.  We do that before adding it
+        // to the cached-pages collection, so that another thread can't
+        // reclaim the page out from under us.
         dbPage.pin();
+        cachedPages.put(cpi, dbPage);
     }
 
 

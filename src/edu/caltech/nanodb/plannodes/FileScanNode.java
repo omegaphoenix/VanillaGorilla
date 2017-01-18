@@ -273,12 +273,10 @@ public class FileScanNode extends SelectNode {
             return;
         }
 
-        if (currentTuple == null) {
+        if (currentTuple == null)   // Get the first tuple.
             currentTuple = tupleFile.getFirstTuple();
-        }
-        else {
+        else                        // Get the next tuple.
             currentTuple = tupleFile.getNextTuple(currentTuple);
-        }
     }
 
 

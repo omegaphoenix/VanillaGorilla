@@ -66,8 +66,8 @@ public abstract class SelectNode extends PlanNode {
     public void initialize() {
         super.initialize();
 
-        done = false;
         currentTuple = null;
+        done = false;
     }
 
 

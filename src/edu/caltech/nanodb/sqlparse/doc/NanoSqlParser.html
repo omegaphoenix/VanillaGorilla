@@ -1,14 +1,14 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML>
 <HEAD>
-<TITLE>Grammar /Users/donnie/Documents/CS122/Wi2017/nanodb-2017/res/nanosql.g</TITLE>
+<TITLE>Grammar nanosql.g</TITLE>
 </HEAD>
 <BODY>
 <table summary="" border="1" cellpadding="5">
 <tr>
 <td>
 <font size="+2">Grammar NanoSqlParser</font><br>
-<a href="http://www.ANTLR.org">ANTLR</a>-generated HTML file from /Users/donnie/Documents/CS122/Wi2017/nanodb-2017/res/nanosql.g
+<a href="http://www.ANTLR.org">ANTLR</a>-generated HTML file from nanosql.g
 <p>
 Terence Parr, <a href="http://www.magelang.com">MageLang Institute</a>
 <br>ANTLR Version 2.7.7 (20060906); 1989-2005
@@ -218,7 +218,7 @@ Definition of parser NanoSqlParser, which is a subclass of LLkParser.
 
 <a name="show_stats_stmt">show_stats_stmt</a>
 	:	SHOW 
-		(	STORAGE 
+		(	<a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
 		|	TABLE <a href="NanoSqlParser.html#dbobj_ident">dbobj_ident</a> 
 		) 
 		STATS 

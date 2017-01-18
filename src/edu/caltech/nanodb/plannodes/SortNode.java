@@ -181,15 +181,20 @@ public class SortNode extends PlanNode {
     private void prepareSortedResults() throws IOException {
         sortedResults = new ArrayList<Tuple>();
         while (true) {
-            // Get the next tuple.  If it's not cacheable then make a copy of it
-            // before storing it away.
+            // Get the next tuple.  If it's not cacheable then make a copy
+            // of it before storing it away.  (This is cheating; we are
+            // allowing the backing data buffers to be reclaimed by storing
+            // the tuple data outside of the Buffer Manager's buffers.)
 
             Tuple tup = leftChild.getNextTuple();
             if (tup == null)
                 break;
 
-            if (!tup.isDiskBacked())
-                tup = new TupleLiteral(tup);
+            if (tup.isDiskBacked()) {
+                Tuple copy = new TupleLiteral(tup);
+                tup.unpin();
+                tup = copy;
+            }
 
             sortedResults.add(tup);
         }
