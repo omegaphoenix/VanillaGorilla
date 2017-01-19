@@ -70,6 +70,14 @@ C:  Unpinning Tuples and Pages
 C1.  Briefly describe your strategy for determining when tuples need to
      be unpinned.  Make sure to comment on plan-nodes and commands.
 
+     Inside QueryEvaluator, tuples must be pinned when they are accessed
+     until they have been processed. Once they have been processed, they can
+     be unpinned. For SelectNode, tuples are iterated over by
+     advanceCurrentTuple() which already pins the tuple. If they do not satisfy
+     the selection predicate, then they must be unpinned. There is also a check
+     to make sure the tuple is not null (which it can be when getNextTuple() is
+     first called.
+
 C2.  In general, you only need to worry about unpinning tuples because
      the backing page will also be unpinned.  However, there are some
      situations when DBPages themselves must be unpinned directly.
@@ -77,10 +85,18 @@ C2.  In general, you only need to worry about unpinning tuples because
      implementation, and why you do so.  (Make sure to answer this
      question in the context of your insert-optimization changes.)
 
+     Generally speaking, pages only need to be pinned when there is no relevant
+     tuple. This happens most commonly when we iterate over the pages. Whenever
+     storageManager calls loadDbPage(), the loaded page is pinned, and needs to
+     be unpinned once the page is no longer used. We unpinned pages for this
+     case in addTuple and getNextTuple of HeapTupleFile.
+
      In the insert-optimization, pages are read so that we can iterate through
      the linked-list but no tuple is read. Thus, the pages that are iterated
      through must be unpinned directly. The header page is used to find
-     the front of the linked list so that must also be unpinned.
+     the front of the linked list so that must also be unpinned. We also
+     similarly unpin header pages inside HeapTupleFileManager when they are
+     accessed directly.
 
 D:  NanoDB Storage Performance
 ------------------------------
