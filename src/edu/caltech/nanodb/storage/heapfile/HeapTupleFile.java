@@ -115,7 +115,6 @@ public class HeapTupleFile implements TupleFile {
             throw e;
         }
         HeaderPage.setFirstPage(header, END_OF_LIST);
-        HeaderPage.setLastPage(header, END_OF_LIST);
         header.unpin();
 
         this.storageManager = storageManager;
