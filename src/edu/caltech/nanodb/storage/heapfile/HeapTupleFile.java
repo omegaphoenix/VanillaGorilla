@@ -179,6 +179,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner one
                     dbPage.unpin();
                     break page_scan;
                 }
+                dbPage.unpin();
             }
         }
         catch (EOFException e) {
