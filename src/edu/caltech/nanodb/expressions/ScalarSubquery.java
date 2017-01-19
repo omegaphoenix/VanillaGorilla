@@ -71,6 +71,7 @@ public class ScalarSubquery extends SubqueryOperator {
 
                 int numCols = t1.getColumnCount();
                 if (numCols != 1) {
+                    t1.unpin();
                     throw new ExpressionException(
                         "Scalar subquery must produce exactly one column (got " +
                             numCols + " instead)");

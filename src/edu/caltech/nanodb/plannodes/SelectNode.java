@@ -66,8 +66,8 @@ public abstract class SelectNode extends PlanNode {
     public void initialize() {
         super.initialize();
 
-        done = false;
         currentTuple = null;
+        done = false;
     }
 
 
@@ -92,6 +92,9 @@ public abstract class SelectNode extends PlanNode {
         // Continue to advance the current tuple until it is selected by the
         // predicate.
         do {
+            if (currentTuple != null) {
+                currentTuple.unpin();
+            }
             advanceCurrentTuple();
 
             // If the last tuple in the file (or chain of nodes) did not

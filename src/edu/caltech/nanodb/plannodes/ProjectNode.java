@@ -16,8 +16,8 @@ import org.apache.log4j.Logger;
 
 
 /**
- * PlanNode representing the <tt>SELECT</tt> clause in a <tt>SELECT</tt>
- * operation.  This is the relational algebra Project operator.
+ * PlanNode representing the <tt>SELECT</tt> clause in a SQL query.
+ * This is the relational algebra Project operator.
  */
 public class ProjectNode extends PlanNode {
 
@@ -42,7 +42,14 @@ public class ProjectNode extends PlanNode {
 
 
     /** The new schema that this project node creates */
-    public List<SelectValue> projectionSpec;
+    private List<SelectValue> projectionSpec;
+
+
+    /**
+     * This flag is set to true if the project is a trivial projection, where
+     * tuples are passed through unmodified.
+     */
+    private boolean projectIsTrivial;
 
 
     /**
@@ -88,6 +95,40 @@ public class ProjectNode extends PlanNode {
      */
     public ProjectNode(List<SelectValue> projectionSpec) {
         this(null, projectionSpec);
+        setTrivialFlag();
+    }
+
+
+    /**
+     * This helper method sets the {@link #projectIsTrivial} flag based on
+     * whether the passed-in projection specification is a single wildcard
+     * operation that would allow tuples to pass through unmodified.
+     */
+    private void setTrivialFlag() {
+        if (projectionSpec.size() == 1) {
+            SelectValue sel = projectionSpec.get(0);
+            if (sel.isWildcard()) {
+                ColumnName wildcard = sel.getWildcard();
+                if (wildcard.getTableName() == null) {
+                    projectIsTrivial = true;
+                }
+            }
+        }
+
+        projectIsTrivial = false;
+    }
+
+
+    /**
+     * Returns true if the project node is a trivial <tt>*</tt> projection
+     * with no table references.  If the projection is trivial then it could
+     * even be removed.
+     *
+     * @return true if the select value is a full wildcard value, not even
+     *         specifying a table name
+     */
+    public boolean isTrivial() {
+        return projectIsTrivial;
     }
 
 
@@ -482,28 +523,5 @@ public class ProjectNode extends PlanNode {
         node.projectionSpec = newList;
 
         return node;
-    }
-
-
-    /**
-     * Returns true if the project node is a trivial <tt>*</tt> projection
-     * with no table references.  If the projection is trivial then it could
-     * even be removed.
-     *
-     * @return true if the select value is a full wildcard value, not even
-     *         specifying a table name
-     */
-    public boolean isTrivial() {
-        if (projectionSpec.size() == 1) {
-            SelectValue sel = projectionSpec.get(0);
-            if (sel.isWildcard()) {
-                ColumnName wildcard = sel.getWildcard();
-                if (wildcard.getTableName() == null) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 }

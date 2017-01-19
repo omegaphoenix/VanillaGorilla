@@ -103,7 +103,6 @@ tokens {
   SOME        = "some";
   START       = "start";
   STATS       = "stats";
-  STORAGE     = "storage";
   TABLE       = "table";
   TABLES      = "tables";
   TO          = "to";
@@ -857,7 +856,7 @@ show_stats_stmt returns [Command c]
     String name = null;
   } :
   SHOW
-  ( STORAGE { c = new ShowStorageStatsCommand(); }
+  ( name=dbobj_ident { c = new ShowSystemStatsCommand(name); }
   | TABLE name=dbobj_ident { c = new ShowTableStatsCommand(name); }
   )
   STATS

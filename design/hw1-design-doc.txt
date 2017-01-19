@@ -1,0 +1,184 @@
+CS122 Assignment 1 - NanoDB Set-Up and Storage Layer - Design Document
+======================================================================
+
+A:  Logistics
+-------------
+
+A1.  List your team name and the people who worked on this assignment.
+
+     VanillaGorilla
+
+     Justin Leong
+     Matthew Jin
+     David Qu
+
+A2.  Specify the repository URL, tag name and commit-hash of the Git version
+     you are submitting for your assignment.  (You can list the commit hashes
+     of your repository tags with this command:  git show-ref --tags)
+
+     Repository URL:  https://github.com/omegaphoenix/VanillaGorilla
+     Tag name:        hw1
+     Commit hash:     a4791fb40b30acd2f6124c3b1e060a3b42830107
+
+A3.  Specify any late tokens you are applying to this assignment, or
+     "none" if no late tokens.
+
+    None.
+
+A4.  Briefly describe what parts of the assignment each teammate focused on.
+
+    Justin focused on improving insert performance.
+    Matthew focused on unpinning tuples and pages.
+    David focused on deleting and updating tuples.
+    We all helped debug various issues.
+
+B:  Deleting and Updating Tuples
+--------------------------------
+
+B1.  Briefly describe (1-3 sentences) how you reclaim slot entries in
+     the slotted page.  Which slot entries are you able to reclaim?
+
+     When a tuple is deleted, we check if its slot is at the end of
+     the header. If it is, then we reclaim slots starting with that one
+     until a non-empty one is found. Thus only a contiguous set of empty
+     slots at the end of the header is claimed if it exists.
+
+B2.  Briefly outline the steps of what your setNullColumnValue() function
+     does.  You don't have to go into much detail; we can look at your
+     code for the details.  Just describe the basic things the function
+     must do to set a column-value to NULL.
+
+     If it is already NULL, do nothing. Otherwise, set the nullFlag to true,
+     remove the existing data and then update the valueOffsets array by
+     shifting the pageOffset up by the size of the data removed.
+
+B3.  Similarly, briefly outline the steps of what your
+     setNonNullColumnValue() function does.
+
+     There are two cases: 1. the previous value was NULL, and 2. the
+     previous value was non-NULL. For case 1, find the offset to insert
+     data (which will be based on the next column that doesn't have
+     NULL_OFFSET or the endOffset). Then, insert space for the new data,
+     update the valueOffsets array, and write the new data. For case 2,
+     if the length changed, remove the old data and then add space for
+     the new data. Finally, update the valueOffsets array and write the
+     new data, like in case 1.
+
+C:  Unpinning Tuples and Pages
+------------------------------
+
+C1.  Briefly describe your strategy for determining when tuples need to
+     be unpinned.  Make sure to comment on plan-nodes and commands.
+
+     Inside QueryEvaluator, tuples must be pinned when they are accessed
+     until they have been processed. Once they have been processed, they can
+     be unpinned. For SelectNode, tuples are iterated over by
+     advanceCurrentTuple() which already pins the tuple. If they do not satisfy
+     the selection predicate, then they must be unpinned. There is also a check
+     to make sure the tuple is not null (which it can be when getNextTuple() is
+     first called.
+
+C2.  In general, you only need to worry about unpinning tuples because
+     the backing page will also be unpinned.  However, there are some
+     situations when DBPages themselves must be unpinned directly.
+     Describe any situations where you unpin pages directly in your
+     implementation, and why you do so.  (Make sure to answer this
+     question in the context of your insert-optimization changes.)
+
+     Generally speaking, pages only need to be pinned when there is no relevant
+     tuple. This happens most commonly when we iterate over the pages. Whenever
+     storageManager calls loadDbPage(), the loaded page is pinned, and needs to
+     be unpinned once the page is no longer used. We unpinned pages for this
+     case in addTuple and getNextTuple of HeapTupleFile.
+
+     In the insert-optimization, pages are read so that we can iterate through
+     the linked-list but no tuple is read. Thus, the pages that are iterated
+     through must be unpinned directly. The header page is used to find
+     the front of the linked list so that must also be unpinned. We also
+     similarly unpin header pages inside HeapTupleFileManager when they are
+     accessed directly.
+
+D:  NanoDB Storage Performance
+------------------------------
+
+D1.  In 3-6 sentences, describe your general approach for improving the
+     performance of inserts, including what general file-level structuring
+     you use of blocks.
+
+     Non-full pages are stored in a linked list with the last four bytes
+     of each block storing an integer representing the next non-full
+     block in the linked list. The header file has four bytes pointing to
+     the first non-full page in the singly linked list. When inserting,
+     the algorithm iterates through the linked list and inserts into the
+     first page with enough stace for the tuple. If all pages are too
+     small, a new page is created and added to the front of the linked
+     list and the tuple is inserted.  After a tuple insert, if a page
+     is full, it is moved out of the linked list.
+
+D2.  Does your file-level organization have the potential to increase the
+     number of large disk seeks when performing inserts?  What steps do
+     you take, if any, to reduce the number of disk seeks?
+
+     The organization does have the potential to increase the number of
+     large disk seeks if tuples exactly half the size of the page are
+     added because these pages will be marked full and a new page will
+     be created for the next tuple after iterating through all the other
+     pages.  To reduce the number of disk seeks, we move the "full" pages
+     out of the linked list so that we do not check these pages on insert.
+
+D3.  What steps must be taken during a tuple-delete operation to update
+     your file-level structures?  How many pages must be written to?
+
+     If the page from which the tuple is deleted is not full, the file-level
+     structures are not updated. If the page was full, it is inserted back to
+     the front of the linked list which requires writing to 2 pages, the
+     header page and the current page. The header page must be updated so that
+     the first page number is the current page and the current page must be
+     updated so the next page number is the previous first page.
+
+D4.  What steps must be taken after a tuple-insert operation that fills
+     the data page?
+
+     The page must be moved out of the linked list which requires writing to
+     the previous page to set the next page number to the next page of the
+     current page. Then the current page's next page number is overwritten
+     to be -1 which indicates that it is the end of the list or the page
+     is full.
+
+D5.  Describe your criteria for when a page is considered to be "full."
+
+     A page is considered full when the last tuple that was added to it
+     could not be added to it again.
+     This criteria might not be good for variable length tuples where the
+     tuples are close to half the size of a page or bigger because the
+     page might be marked as full when a lot of the space is still left over.
+     It is no longer considered full if a tuple was removed from the page
+     until it satisfies the previous condition again.
+
+E:  Feedback [OPTIONAL]
+-----------------------
+
+WE NEED YOUR FEEDBACK!  Thoughtful and constructive input will help us to
+improve future versions of the course.  These questions are OPTIONAL, and
+they obviously won't affect your grade in any way (including if you hate
+everything about the assignment and databases in general, or Donnie and/or
+the TAs in particular).  Feel free to answer as many or as few of them as
+you wish.
+
+NOTE:  If you wish to give anonymous feedback, a similar survey will be
+       made available on the Moodle.
+
+E1.  How many hours total did your team spend on this assignment?
+     (That is, the sum of each teammate's time spent on the assignment.)
+
+E2.  What parts of the assignment were most time-consuming?  Why?
+
+E3.  Did you find any parts of the assignment particularly instructive?
+     Correspondingly, did any parts feel like unnecessary busy-work?
+
+E4.  Did you particularly enjoy any parts of the assignment?  Were there
+     any parts that you particularly disliked?
+
+E5.  Do you have any suggestions for how future versions of the
+     assignment can be improved?
+
