@@ -77,6 +77,11 @@ C2.  In general, you only need to worry about unpinning tuples because
      implementation, and why you do so.  (Make sure to answer this
      question in the context of your insert-optimization changes.)
 
+     In the insert-optimization, pages are read so that we can iterate through
+     the linked-list but no tuple is read. Thus, the pages that are iterated
+     through must be unpinned directly. The header page is used to find
+     the front of the linked list so that must also be unpinned.
+
 D:  NanoDB Storage Performance
 ------------------------------
 
