@@ -179,6 +179,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner one
                     dbPage.unpin();
                     break page_scan;
                 }
+                dbPage.unpin();
             }
         }
         catch (EOFException e) {
@@ -271,7 +272,6 @@ page_scan:  // So we can break out of the outer loop from inside the inner one
         DBFile dbFile = prevDBPage.getDBFile();
         int prevPageNo = prevDBPage.getPageNo();
         int prevSlot = ptup.getSlot();
-        boolean newPage = false;
 
         // Retrieve the page itself so that we can access the internal data.
         // The page will come back pinned on behalf of the caller.  (If the
@@ -306,12 +306,10 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
 
             try {
                 DBPage prevPage = dbPage;
-                dbPage = storageManager.loadDBPage(dbFile, dbPage.getPageNo() + 1);
+                prevPageNo = dbPage.getPageNo();
+                dbPage = storageManager.loadDBPage(dbFile, prevPageNo + 1);
                 nextSlot = 0;
-                if (newPage) {
-                    prevPage.unpin();
-                }
-                newPage = true;
+                prevPage.unpin();
             }
             catch (EOFException e) {
                 // Hit the end of the file with no more tuples.  We are done
@@ -319,9 +317,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
                 break;
             }
         }
-        if (newPage) {
-            dbPage.unpin();
-        }
+        dbPage.unpin();
 
         return nextTup;
     }
