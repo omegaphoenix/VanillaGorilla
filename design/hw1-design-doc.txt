@@ -22,12 +22,12 @@ A2.  Specify the repository URL, tag name and commit-hash of the Git version
 
 A3.  Specify any late tokens you are applying to this assignment, or
      "none" if no late tokens.
-    
+
     None.
 
 A4.  Briefly describe what parts of the assignment each teammate focused on.
 
-    Justin focused on improving storage performance.
+    Justin focused on improving insert performance.
     Matthew focused on unpinning tuples and pages.
     David focused on deleting and updating tuples.
     We all helped debug various issues.
@@ -40,7 +40,7 @@ B1.  Briefly describe (1-3 sentences) how you reclaim slot entries in
 
      When a tuple is deleted, we check if its slot is at the end of
      the header. If it is, then we reclaim slots starting with that one
-     until a non-empty one is found. Thus only a contiguous set of empty 
+     until a non-empty one is found. Thus only a contiguous set of empty
      slots at the end of the header is claimed if it exists.
 
 B2.  Briefly outline the steps of what your setNullColumnValue() function
@@ -49,7 +49,7 @@ B2.  Briefly outline the steps of what your setNullColumnValue() function
      must do to set a column-value to NULL.
 
      If it is already NULL, do nothing. Otherwise, set the nullFlag to true,
-     remove the existing data and then update the valueOffsets array by 
+     remove the existing data and then update the valueOffsets array by
      shifting the pageOffset up by the size of the data removed.
 
 B3.  Similarly, briefly outline the steps of what your
@@ -57,7 +57,7 @@ B3.  Similarly, briefly outline the steps of what your
 
      There are two cases: 1. the previous value was NULL, and 2. the
      previous value was non-NULL. For case 1, find the offset to insert
-     data (which will be based on the next column that doesn't have 
+     data (which will be based on the next column that doesn't have
      NULL_OFFSET or the endOffset). Then, insert space for the new data,
      update the valueOffsets array, and write the new data. For case 2,
      if the length changed, remove the old data and then add space for
@@ -84,17 +84,55 @@ D1.  In 3-6 sentences, describe your general approach for improving the
      performance of inserts, including what general file-level structuring
      you use of blocks.
 
+     Non-full pages are stored in a linked list with the last four bytes
+     of each block storing an integer representing the next non-full
+     block in the linked list. The header file has four bytes pointing to
+     the first non-full page in the singly linked list. When inserting,
+     the algorithm iterates through the linked list and inserts into the
+     first page with enough stace for the tuple. If all pages are too
+     small, a new page is created and added to the front of the linked
+     list and the tuple is inserted.  After a tuple insert, if a page
+     is full, it is moved out of the linked list.
+
 D2.  Does your file-level organization have the potential to increase the
      number of large disk seeks when performing inserts?  What steps do
      you take, if any, to reduce the number of disk seeks?
 
+     The organization does have the potential to increase the number of
+     large disk seeks if tuples exactly half the size of the page are
+     added because these pages will be marked full and a new page will
+     be created for the next tuple after iterating through all the other
+     pages.  To reduce the number of disk seeks, we move the "full" pages
+     out of the linked list so that we do not check these pages on insert.
+
 D3.  What steps must be taken during a tuple-delete operation to update
      your file-level structures?  How many pages must be written to?
+
+     If the page from which the tuple is deleted is not full, the file-level
+     structures are not updated. If the page was full, it is inserted back to
+     the front of the linked list which requires writing to 2 pages, the
+     header page and the current page. The header page must be updated so that
+     the first page number is the current page and the current page must be
+     updated so the next page number is the previous first page.
 
 D4.  What steps must be taken after a tuple-insert operation that fills
      the data page?
 
+     The page must be moved out of the linked list which requires writing to
+     the previous page to set the next page number to the next page of the
+     current page. Then the current page's next page number is overwritten
+     to be -1 which indicates that it is the end of the list or the page
+     is full.
+
 D5.  Describe your criteria for when a page is considered to be "full."
+
+     A page is considered full when the last tuple that was added to it
+     could not be added to it again.
+     This criteria might not be good for variable length tuples where the
+     tuples are close to half the size of a page or bigger because the
+     page might be marked as full when a lot of the space is still left over.
+     It is no longer considered full if a tuple was removed from the page
+     until it satisfies the previous condition again.
 
 E:  Feedback [OPTIONAL]
 -----------------------
