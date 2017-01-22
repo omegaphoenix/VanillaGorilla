@@ -29,7 +29,7 @@ import edu.caltech.nanodb.relations.TableInfo;
 public class SimplePlanner extends AbstractPlannerImpl {
 
     /** A logging object for reporting anything interesting that happens. */
-    private static Logger logger = Logger.getLogger(SimplestPlanner.class);
+    private static Logger logger = Logger.getLogger(SimplePlanner.class);
 
 
     /**
