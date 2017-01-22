@@ -8,11 +8,13 @@ import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.queryast.FromClause;
 import edu.caltech.nanodb.queryast.SelectClause;
+import edu.caltech.nanodb.queryast.SelectValue;
 
 import edu.caltech.nanodb.expressions.Expression;
 
 import edu.caltech.nanodb.plannodes.FileScanNode;
 import edu.caltech.nanodb.plannodes.PlanNode;
+import edu.caltech.nanodb.plannodes.ProjectNode;
 import edu.caltech.nanodb.plannodes.SelectNode;
 
 import edu.caltech.nanodb.plannodes.SimpleFilterNode;
@@ -56,9 +58,9 @@ public class SimplePlanner extends AbstractPlannerImpl {
                 "Not implemented:  enclosing queries");
         }
 
+        List<SelectValue> selectValues = null;
         if (!selClause.isTrivialProject()) {
-            throw new UnsupportedOperationException(
-                "Not implemented:  project");
+            selectValues = selClause.getSelectValues();
         }
 
         FromClause fromClause = selClause.getFromClause();
@@ -67,8 +69,14 @@ public class SimplePlanner extends AbstractPlannerImpl {
                 "Not implemented:  joins or subqueries in FROM clause");
         }
 
-        return makeSimpleSelect(fromClause.getTableName(),
-            selClause.getWhereExpr(), null);
+        PlanNode result = makeSimpleSelect(fromClause.getTableName(),
+                                           selClause.getWhereExpr(), null);
+        // Project if necessary.
+        if (selectValues != null) {
+            result =  new ProjectNode(result, selectValues);
+            result.prepare();
+        }
+        return result;
     }
 
 
