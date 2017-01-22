@@ -63,8 +63,11 @@ public class SimplePlanner extends AbstractPlannerImpl {
         }
 
         FromClause fromClause = selClause.getFromClause();
+        // This if statement is to avoid duplicating null pointer checks.
+        if (fromClause == null) {
+        }
         // If from clause is a base table, simply do a file scan.
-        if (fromClause.isBaseTable()) {
+        else if (fromClause.isBaseTable()) {
             result = makeSimpleSelect(fromClause.getTableName(),
                                       selClause.getWhereExpr(), null);
         }
@@ -85,7 +88,13 @@ public class SimplePlanner extends AbstractPlannerImpl {
 
         // Project if necessary.
         if (selectValues != null) {
-            result =  new ProjectNode(result, selectValues);
+            // If there is no FROM clause, make a trivial ProjectNode()
+            if (fromClause == null) {
+                result = new ProjectNode(selectValues);
+            }
+            else {
+                result = new ProjectNode(result, selectValues);
+            }
             result.prepare();
         }
         return result;
