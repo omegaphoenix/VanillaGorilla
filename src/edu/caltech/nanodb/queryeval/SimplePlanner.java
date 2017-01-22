@@ -48,29 +48,41 @@ public class SimplePlanner extends AbstractPlannerImpl {
     @Override
     public PlanNode makePlan(SelectClause selClause,
         List<SelectClause> enclosingSelects) throws IOException {
-
-        // For HW1, we have a very simple implementation that defers to
-        // makeSimpleSelect() to handle simple SELECT queries with one table,
-        // and an optional WHERE clause.
+        // PlanNode to return.
+        PlanNode result = null;
 
         if (enclosingSelects != null && !enclosingSelects.isEmpty()) {
             throw new UnsupportedOperationException(
                 "Not implemented:  enclosing queries");
         }
 
+        // Check to see for trivial project (SELECT * FROM ...)
         List<SelectValue> selectValues = null;
         if (!selClause.isTrivialProject()) {
             selectValues = selClause.getSelectValues();
         }
 
         FromClause fromClause = selClause.getFromClause();
-        if (!fromClause.isBaseTable()) {
+        // If from clause is a base table, simply do a file scan.
+        if (fromClause.isBaseTable()) {
+            result = makeSimpleSelect(fromClause.getTableName(),
+                                      selClause.getWhereExpr(), null);
+        }
+        else if (fromClause.isJoinExpr()) {
+            if (fromClause.isOuterJoin()) {
+                throw new UnsupportedOperationException(
+                          "Not implemented: outer joins");
+            }
+            else {
+                throw new UnsupportedOperationException(
+                          "Not implemented: inner joins");
+            }
+        }
+        else if (fromClause.isDerivedTable()) {
             throw new UnsupportedOperationException(
-                "Not implemented:  joins or subqueries in FROM clause");
+                      "Not implemented: subqueries in FROM clause");
         }
 
-        PlanNode result = makeSimpleSelect(fromClause.getTableName(),
-                                           selClause.getWhereExpr(), null);
         // Project if necessary.
         if (selectValues != null) {
             result =  new ProjectNode(result, selectValues);
