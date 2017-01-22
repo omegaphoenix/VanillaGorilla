@@ -85,4 +85,55 @@ public abstract class AbstractPlannerImpl implements Planner {
         return selectNode;
     }
 
+    /**
+     * Make a plan for the join expression.
+     *
+     *
+     * @param selClause an object describing the query to be performed.
+     * @param fromClause an object describing the FROM clause in a query.
+     *
+     * @return a plan tree for executing the specified joins.
+     *
+     * @throws IOException if an IO error occurs when the planner attempts to
+     *         load schema and indexing information.
+     */
+    public PlanNode makeJoinPlan(SelectClause selClause,
+                                 FromClause fromClause) throws IOException {
+        PlanNode result = null;
+        // Base case for recursion.
+        if (fromClause.isBaseTable()) {
+            return makeSimpleSelect(fromClause.getTableName(),
+                    selClause.getWhereExpr(), null);
+        }
+
+        JoinType joinType = fromClause.getJoinType();
+        PlanNode left = makeJoinPlan(selClause, fromClause.getLeftChild());
+        PlanNode right = makeJoinPlan(selClause, fromClause.getRightChild());
+        switch (joinType) {
+        case CROSS:
+            result = new NestedLoopJoinNode(left, right, joinType, null);
+            result.prepare();
+            break;
+        case INNER:
+            throw new UnsupportedOperationException(
+                      "Not implemented: INNER join");
+            // return new NestedLoopJoinNode(left, right, joinType, )
+        case FULL_OUTER:
+            throw new UnsupportedOperationException(
+                      "Not implemented: FULL_OUTER join");
+        case LEFT_OUTER:
+            throw new UnsupportedOperationException(
+                      "Not implemented: LEFT_OUTER join");
+        case RIGHT_OUTER:
+            throw new UnsupportedOperationException(
+                      "Not implemented: RIGHT_OUTER join");
+        case ANTIJOIN:
+            throw new UnsupportedOperationException(
+                      "Not implemented: ANTIJOIN");
+        case SEMIJOIN:
+            throw new UnsupportedOperationException(
+                      "Not implemented: SEMIJOIN");
+        }
+        return result;
+    }
 }

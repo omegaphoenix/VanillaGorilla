@@ -72,29 +72,7 @@ public class SimplePlanner extends AbstractPlannerImpl {
                                       selClause.getWhereExpr(), null);
         }
         else if (fromClause.isJoinExpr()) {
-            switch (fromClause.getJoinType()) {
-            case CROSS:
-                throw new UnsupportedOperationException(
-                          "Not implemented: CROSS join");
-            case INNER:
-                throw new UnsupportedOperationException(
-                          "Not implemented: INNER join");
-            case FULL_OUTER:
-                throw new UnsupportedOperationException(
-                          "Not implemented: FULL_OUTER join");
-            case LEFT_OUTER:
-                throw new UnsupportedOperationException(
-                          "Not implemented: LEFT_OUTER join");
-            case RIGHT_OUTER:
-                throw new UnsupportedOperationException(
-                          "Not implemented: RIGHT_OUTER join");
-            case ANTIJOIN:
-                throw new UnsupportedOperationException(
-                          "Not implemented: ANTIJOIN");
-            case SEMIJOIN:
-                throw new UnsupportedOperationException(
-                          "Not implemented: SEMIJOIN");
-            }
+            result = makeJoinPlan(selClause, fromClause);
         }
         else if (fromClause.isDerivedTable()) {
             throw new UnsupportedOperationException(
