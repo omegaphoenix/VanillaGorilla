@@ -55,32 +55,25 @@ public class SimplePlanner extends AbstractPlannerImpl {
             throw new UnsupportedOperationException(
                 "Not implemented:  enclosing queries");
         }
+        FromClause fromClause = selClause.getFromClause();
+        if (fromClause != null) {
+            // If from clause is a base table, simply do a file scan.
+            if (fromClause.isBaseTable()) {
+                result = makeSimpleSelect(fromClause.getTableName(),
+                        selClause.getWhereExpr(), null);
+            }
+            else if (fromClause.isJoinExpr()) {
+                result = makeJoinPlan(selClause, fromClause);
+            }
+            else if (fromClause.isDerivedTable()) {
+                throw new UnsupportedOperationException(
+                        "Not implemented: subqueries in FROM clause");
+            }
+        }
 
         // Check to see for trivial project (SELECT * FROM ...)
-        List<SelectValue> selectValues = null;
         if (!selClause.isTrivialProject()) {
-            selectValues = selClause.getSelectValues();
-        }
-
-        FromClause fromClause = selClause.getFromClause();
-        // This if statement is to avoid duplicating null pointer checks.
-        if (fromClause == null) {
-        }
-        // If from clause is a base table, simply do a file scan.
-        else if (fromClause.isBaseTable()) {
-            result = makeSimpleSelect(fromClause.getTableName(),
-                                      selClause.getWhereExpr(), null);
-        }
-        else if (fromClause.isJoinExpr()) {
-            result = makeJoinPlan(selClause, fromClause);
-        }
-        else if (fromClause.isDerivedTable()) {
-            throw new UnsupportedOperationException(
-                      "Not implemented: subqueries in FROM clause");
-        }
-
-        // Project if necessary.
-        if (selectValues != null) {
+            List<SelectValue> selectValues = selClause.getSelectValues();
             // If there is no FROM clause, make a trivial ProjectNode()
             if (fromClause == null) {
                 result = new ProjectNode(selectValues);
