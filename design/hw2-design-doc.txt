@@ -6,7 +6,7 @@ A:  Logistics
 
 A1.  List your team name and the people who worked on this assignment.
 
-    VanillaGorilla 
+    VanillaGorilla
 
     Justin Leong
     Matthew Jin
@@ -64,6 +64,27 @@ C1.  The join algorithm stated in class is really only suitable for
      algorithm executes, and what state must be saved so that the
      operation can resume at the appropriate place when the next row
      must be returned.
+
+     leftChild.init
+     leftTuple = leftChild.next()
+     MainLoop:
+     while leftTuple is not null
+         rightChild.init
+         leftTuple = leftChild.next()
+         while rightTuple is not null
+             if pred(leftTuple, rightTuple)
+                 return join(leftTuple, rightTuple)
+                 rightTuple = rightChild.next()
+                 GOTO MainLoop
+         leftTuple = leftChild.next()
+         GOTO MainLoop
+
+    The leftTuple and rightTuple must be saved so that the algorithm can
+    resume at the appropriate place when the next row must be returned.
+
+    The leftTuple is incremented when rightTuple can't be incremented
+    anymore which means there are no rows left from rightChild and we
+    reset rightChild to iterate through it's tuples again.
 
 C2.  What tweaks did you need to introduce into the implementation for
      left outer joins?  Keep your answer brief, but please also be specific.
