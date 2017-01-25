@@ -4,6 +4,7 @@ package edu.caltech.nanodb.plannodes;
 import java.io.IOException;
 import java.util.List;
 
+import edu.caltech.nanodb.expressions.TupleLiteral;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.expressions.Expression;
@@ -181,12 +182,30 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
     public Tuple getNextTuple() throws IOException {
         if (done)
             return null;
-
         while (getTuplesToJoin()) {
-            if (canJoinTuples())
-                return joinTuples(leftTuple, rightTuple);
+            switch (joinType) {
+                case CROSS:
+                    return joinTuples(leftTuple, rightTuple);
+                case INNER:
+                    return joinTuples(leftTuple, rightTuple);
+                case LEFT_OUTER:
+                    if (rightTuple == null) {
+                        return joinTuples(leftTuple,
+                                new TupleLiteral(rightSchema.numColumns()));
+                    }
+                    return joinTuples(leftTuple, rightTuple);
+                case SEMIJOIN:
+                case ANTIJOIN:
+                    Tuple currLeft = leftTuple;
+                    leftTuple = leftChild.getNextTuple();
+                    rightChild.initialize();
+                    return leftTuple;
+                case RIGHT_OUTER:
+                case FULL_OUTER:
+                default:
+                    throw new IOException("This type of join not supported by node.");
+            }
         }
-
         return null;
     }
 
@@ -199,8 +218,78 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
      *         {@code false} if no more pairs of tuples are available to join.
      */
     private boolean getTuplesToJoin() throws IOException {
-        // TODO:  Implement
+        if (done) {
+            return false;
+        }
+        // Initialize leftTuple
+        if (leftTuple == null) {
+            leftTuple = leftChild.getNextTuple();
+            if (leftTuple == null) {
+                return false;
+            }
+        }
+
+        // Get next rightTuple
+        rightTuple = rightChild.getNextTuple();
+
+        switch(joinType) {
+            case ANTIJOIN:
+                while (leftTuple != null && rightTuple != null) {
+                    // Matches at least one tuple on right
+                    if (validTuples()) {
+                        // Check next left tuple
+                        leftTuple = leftChild.getNextTuple();
+                        rightTuple = rightChild.initialize();
+                    }
+                    rightTuple = rightChild.getNextTuple();
+                }
+                // No matches
+                return leftTuple != null;
+            default:
+                while (leftTuple != null) {
+                    if (validTuples()) {
+                        return true;
+                    }
+                    // Increment rightTuple
+                    if (rightTuple != null) {
+                        rightTuple = rightChild.getNextTuple();
+                    }
+                    // If we reached the end of rightChild, go back to to beginning
+                    // and increment left tuple
+                    else {
+                        rightChild.initialize();
+                        rightTuple = rightChild.getNextTuple();
+                        leftTuple = leftChild.getNextTuple();
+                    }
+                }
+        }
         return false;
+    }
+
+
+    /**
+     * This helper function implements the logic that checks {@link #leftTuple}
+     * and {@link #rightTuple} based on the nested-loop logic.
+     *
+     * @return {@code true} if current tuples can be joined
+     *         {@code false} current tuples cannot be joined
+     */
+    private boolean validTuples() throws IOException {
+        switch (joinType) {
+            case CROSS:
+                return true;
+            case INNER:
+                return canJoinTuples();
+            case LEFT_OUTER:
+                return rightTuple == null || canJoinTuples();
+            case SEMIJOIN:
+                return canJoinTuples();
+            case ANTIJOIN:
+                return canJoinTuples();
+            default:
+                throw new IOException("This type of join not supported by node.");
+
+        }
     }
 
 
