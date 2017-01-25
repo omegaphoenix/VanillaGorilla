@@ -3,7 +3,7 @@ package edu.caltech.nanodb.expressions;
 
 /**
  * This interface is used to implement scans or transformations of expression
- * trees by specifying waht to do when entering or leaving each expression
+ * trees by specifying what to do when entering or leaving each expression
  * node.  When leaving an expression node, a replacement expression may be
  * returned that will replace the expression node that was just left.
  */

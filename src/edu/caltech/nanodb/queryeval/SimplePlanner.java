@@ -11,11 +11,13 @@ import edu.caltech.nanodb.queryast.SelectClause;
 import edu.caltech.nanodb.queryast.SelectValue;
 
 import edu.caltech.nanodb.expressions.Expression;
+import edu.caltech.nanodb.expressions.AggregateProcessor;
 
 import edu.caltech.nanodb.plannodes.FileScanNode;
 import edu.caltech.nanodb.plannodes.PlanNode;
 import edu.caltech.nanodb.plannodes.ProjectNode;
 import edu.caltech.nanodb.plannodes.SelectNode;
+import edu.caltech.nanodb.plannodes.HashedGroupAggregateNode;
 
 import edu.caltech.nanodb.plannodes.SimpleFilterNode;
 import edu.caltech.nanodb.relations.TableInfo;
@@ -70,10 +72,19 @@ public class SimplePlanner extends AbstractPlannerImpl {
                         "Not implemented: subqueries in FROM clause");
             }
         }
-
         // Check to see for trivial project (SELECT * FROM ...)
         if (!selClause.isTrivialProject()) {
             List<SelectValue> selectValues = selClause.getSelectValues();
+
+        for (SelectValue sv : selectValues) {
+            if (!sv.isExpression())
+                continue;
+            AggregateProcessor processor = new AggregateProcessor();
+            Expression e = sv.getExpression().traverse(processor);
+            sv.setExpression(e);
+        }
+
+
             // If there is no FROM clause, make a trivial ProjectNode()
             if (fromClause == null) {
                 result = new ProjectNode(selectValues);
