@@ -281,9 +281,9 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
     private boolean validTuples() throws IOException {
         switch (joinType) {
             case CROSS:
-                return true;
+                return rightTuple != null && true;
             case INNER:
-                return canJoinTuples();
+                return rightTuple != null && canJoinTuples();
             case LEFT_OUTER:
                 return rightTuple == null || canJoinTuples();
             case SEMIJOIN:

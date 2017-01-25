@@ -115,24 +115,28 @@ public abstract class AbstractPlannerImpl implements Planner {
             result.prepare();
             break;
         case INNER:
-            throw new UnsupportedOperationException(
-                      "Not implemented: INNER join");
-            // return new NestedLoopJoinNode(left, right, joinType, )
+            result = new NestedLoopJoinNode(left, right, joinType, null);
+            result.prepare();
+            break;
         case FULL_OUTER:
             throw new UnsupportedOperationException(
                       "Not implemented: FULL_OUTER join");
         case LEFT_OUTER:
-            throw new UnsupportedOperationException(
-                      "Not implemented: LEFT_OUTER join");
+            result = new NestedLoopJoinNode(left, right, joinType, null);
+            result.prepare();
+            break;
         case RIGHT_OUTER:
-            throw new UnsupportedOperationException(
-                      "Not implemented: RIGHT_OUTER join");
+            result = new NestedLoopJoinNode(right, left, joinType.LEFT_OUTER, null);
+            result.prepare();
+            break;
         case ANTIJOIN:
-            throw new UnsupportedOperationException(
-                      "Not implemented: ANTIJOIN");
+            result = new NestedLoopJoinNode(left, right, joinType, null);
+            result.prepare();
+            break;
         case SEMIJOIN:
-            throw new UnsupportedOperationException(
-                      "Not implemented: SEMIJOIN");
+            result = new NestedLoopJoinNode(left, right, joinType, null);
+            result.prepare();
+            break;
         }
         return result;
     }
