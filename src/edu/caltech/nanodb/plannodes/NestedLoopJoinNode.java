@@ -287,7 +287,7 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
             case LEFT_OUTER:
                 return rightTuple == null || canJoinTuples();
             case SEMIJOIN:
-                return canJoinTuples();
+                return rightTuple != null && canJoinTuples();
             case ANTIJOIN:
                 return canJoinTuples();
             default:

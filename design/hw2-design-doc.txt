@@ -73,7 +73,7 @@ C1.  The join algorithm stated in class is really only suitable for
          leftTuple = leftChild.next()
          while rightTuple is not null
              if pred(leftTuple, rightTuple)
-                 return join(leftTuple, rightTuple)
+                 return join(leftTuple, rightTuple) // Continue after returning
                  rightTuple = rightChild.next()
                  GOTO MainLoop
          leftTuple = leftChild.next()
@@ -103,6 +103,11 @@ C3.  Same question as for C2, but for semijoins.
      the predicate.
 
 C4.  Same question as for C2, but for antijoins.
+
+     For antijoin, we only return if we reach the end of the inner loop
+     and no previous rightTuple has satisfied the predicate with the
+     current leftTuple. If any rightTuple satisfies the predicate,
+     we increment leftTuple and reset rightTuple.
 
 C5.  Enumerate your nested-loop join test cases, following this form:
 
