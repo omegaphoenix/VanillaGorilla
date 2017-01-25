@@ -29,6 +29,7 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
 
     /** Most recently retrieved tuple of the left relation. */
     private Tuple leftTuple;
+    private Tuple prevLeftTuple;
 
     /** Most recently retrieved tuple of the right relation. */
     private Tuple rightTuple;
@@ -168,6 +169,7 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
 
         done = false;
         leftTuple = null;
+        prevLeftTuple = null;
         rightTuple = null;
     }
 
@@ -189,10 +191,12 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
                 case INNER:
                     return joinTuples(leftTuple, rightTuple);
                 case LEFT_OUTER:
-                    if (rightTuple == null) {
+                    if (rightTuple == null && leftTuple != prevLeftTuple) {
+                        prevLeftTuple = leftTuple;
                         return joinTuples(leftTuple,
                                 new TupleLiteral(rightSchema.numColumns()));
                     }
+                    prevLeftTuple = leftTuple;
                     return joinTuples(leftTuple, rightTuple);
                 case SEMIJOIN:
                 case ANTIJOIN:
@@ -232,36 +236,36 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
         // Get next rightTuple
         rightTuple = rightChild.getNextTuple();
 
-        switch(joinType) {
-            case ANTIJOIN:
-                while (leftTuple != null && rightTuple != null) {
-                    // Matches at least one tuple on right
-                    if (validTuples()) {
-                        // Check next left tuple
-                        leftTuple = leftChild.getNextTuple();
-                        rightTuple = rightChild.initialize();
-                    }
+        if (joinType == joinType.ANTIJOIN) {
+            while (leftTuple != null && rightTuple != null) {
+                // Matches at least one tuple on right
+                if (validTuples()) {
+                    // Check next left tuple
+                    leftTuple = leftChild.getNextTuple();
+                    rightTuple = rightChild.initialize();
+                }
+                rightTuple = rightChild.getNextTuple();
+            }
+            // No matches
+            return leftTuple != null;
+        }
+        else {
+            while (leftTuple != null) {
+                if (validTuples()) {
+                    return true;
+                }
+                // Increment rightTuple
+                if (rightTuple != null) {
                     rightTuple = rightChild.getNextTuple();
                 }
-                // No matches
-                return leftTuple != null;
-            default:
-                while (leftTuple != null) {
-                    if (validTuples()) {
-                        return true;
-                    }
-                    // Increment rightTuple
-                    if (rightTuple != null) {
-                        rightTuple = rightChild.getNextTuple();
-                    }
-                    // If we reached the end of rightChild, go back to to beginning
-                    // and increment left tuple
-                    else {
-                        rightChild.initialize();
-                        rightTuple = rightChild.getNextTuple();
-                        leftTuple = leftChild.getNextTuple();
-                    }
+                // If we reached the end of rightChild, go back to to beginning
+                // and increment left tuple
+                else {
+                    rightChild.initialize();
+                    rightTuple = rightChild.getNextTuple();
+                    leftTuple = leftChild.getNextTuple();
                 }
+            }
         }
         return false;
     }
