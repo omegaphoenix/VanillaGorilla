@@ -2,6 +2,7 @@ package edu.caltech.nanodb.queryeval;
 
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -109,7 +110,19 @@ public abstract class AbstractPlannerImpl implements Planner {
         JoinType joinType = fromClause.getJoinType();
         PlanNode left = makeJoinPlan(selClause, fromClause.getLeftChild());
         PlanNode right = makeJoinPlan(selClause, fromClause.getRightChild());
-        Expression predicate = fromClause.getOnExpression();
+        FromClause.JoinConditionType condType = fromClause.getConditionType();
+        Expression predicate;
+        List<SelectValue> projectVals = null;
+        Boolean needProject = false;
+        if (condType == FromClause.JoinConditionType.NATURAL_JOIN ||
+                condType == FromClause.JoinConditionType.JOIN_USING) {
+            predicate = fromClause.getComputedJoinExpr();
+            projectVals = fromClause.getComputedSelectValues();
+            needProject = true;
+        }
+        else {
+            predicate = fromClause.getOnExpression();
+        }
         switch (joinType) {
         case CROSS:
             result = new NestedLoopJoinNode(left, right, joinType, null);
@@ -138,6 +151,12 @@ public abstract class AbstractPlannerImpl implements Planner {
             result = new NestedLoopJoinNode(left, right, joinType, predicate);
             result.prepare();
             break;
+        }
+        if (needProject) {
+            if (projectVals == null) {
+                projectVals = fromClause.getComputedSelectValues();
+                result = new ProjectNode(result, projectVals);
+            }
         }
         return result;
     }
