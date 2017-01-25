@@ -74,6 +74,7 @@ public class SimplePlanner extends AbstractPlannerImpl {
                         "Not implemented: subqueries in FROM clause");
             }
         }
+
         // Check to see for trivial project (SELECT * FROM ...)
         if (!selClause.isTrivialProject()) {
             List<SelectValue> selectValues = selClause.getSelectValues();
@@ -89,7 +90,21 @@ public class SimplePlanner extends AbstractPlannerImpl {
             Expression e = havingExpr.traverse(processor);
             selClause.setHavingExpr(e);
 
-            // TODO: check WHERE, ON for aggregates
+            Expression whereExpr = selClause.getWhereExpr();
+            whereExpr.traverse(processor);
+            if (processor.currentHasAggregate()) {
+                throw new IOException("Where expression contains aggregate function");
+            }
+
+            try {
+                e = selClause.getFromClause().getOnExpression();
+                e.traverse(processor);
+                if (processor.currentHasAggregate()) {
+                    throw new IOException("Join on expression contains aggregate function");
+                }
+            }
+            catch (IllegalStateException err) { }
+
 
             // If there is no FROM clause, make a trivial ProjectNode()
             if (fromClause == null) {
