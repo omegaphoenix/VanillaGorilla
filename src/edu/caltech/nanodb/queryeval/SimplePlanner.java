@@ -11,10 +11,12 @@ import edu.caltech.nanodb.queryast.SelectClause;
 import edu.caltech.nanodb.queryast.SelectValue;
 
 import edu.caltech.nanodb.expressions.Expression;
+import edu.caltech.nanodb.expressions.OrderByExpression;
 
 import edu.caltech.nanodb.plannodes.FileScanNode;
 import edu.caltech.nanodb.plannodes.PlanNode;
 import edu.caltech.nanodb.plannodes.ProjectNode;
+import edu.caltech.nanodb.plannodes.SortNode;
 import edu.caltech.nanodb.plannodes.SelectNode;
 
 import edu.caltech.nanodb.plannodes.SimpleFilterNode;
@@ -83,6 +85,13 @@ public class SimplePlanner extends AbstractPlannerImpl {
             }
             result.prepare();
         }
+
+        List<OrderByExpression> orderByExprs = selClause.getOrderByExprs();
+        if (orderByExprs.size() > 0) {
+            result = new SortNode(result, orderByExprs);
+            result.prepare();
+        }
+
         return result;
     }
 
