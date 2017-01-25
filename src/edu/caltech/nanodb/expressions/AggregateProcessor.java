@@ -12,25 +12,28 @@ import edu.caltech.nanodb.expressions.ColumnValue;
 
 public class AggregateProcessor implements ExpressionProcessor {
 
-    private Map<String, FunctionCall> aggregates;
-    private boolean currentExprHasAggr;
+    public Map<String, FunctionCall> aggregates;
+    public boolean currentExprHasAggr;
 
     public AggregateProcessor() {
         aggregates = new HashMap<>();
     }
 
-    public void enter(Expression e) {
+    public void resetCurrent() {
         currentExprHasAggr = false;
+    }
+
+    public void enter(Expression e) {
         return;
     }
 
-    public Expression leave(Expression e) throws IOException {
+    public Expression leave(Expression e) throws IllegalArgumentException{
         if (e instanceof FunctionCall) {
             FunctionCall call = (FunctionCall) e;
             ScalarFunction f = call.getFunction();
             if (f instanceof AggregateFunction) {
                 if (currentExprHasAggr) {
-                    throw new IOException("Aggregate function contains another aggregate function");
+                    throw new IllegalArgumentException("Aggregate function in aggregate function");
                 }
                 currentExprHasAggr = true;
                 int count = aggregates.size();
@@ -41,13 +44,5 @@ public class AggregateProcessor implements ExpressionProcessor {
             }
         }
         return e;
-    }
-
-    public boolean currentHasAggregate() {
-        return currentExprHasAggr;
-    }
-
-    public Map<String, FunctionCall> getAllAggregates() {
-        return aggregates;
     }
 }

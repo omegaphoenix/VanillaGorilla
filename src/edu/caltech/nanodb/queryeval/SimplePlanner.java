@@ -1,6 +1,5 @@
 package edu.caltech.nanodb.queryeval;
 
-
 import java.io.IOException;
 import java.util.List;
 
@@ -49,7 +48,7 @@ public class SimplePlanner extends AbstractPlannerImpl {
      */
     @Override
     public PlanNode makePlan(SelectClause selClause,
-        List<SelectClause> enclosingSelects) throws IOException {
+        List<SelectClause> enclosingSelects) throws IOException, IllegalArgumentException {
         AggregateProcessor processor = new AggregateProcessor();
 
         // PlanNode to return.
@@ -60,11 +59,22 @@ public class SimplePlanner extends AbstractPlannerImpl {
                 "Not implemented:  enclosing queries");
         }
         FromClause fromClause = selClause.getFromClause();
+        Expression whereExpr = selClause.getWhereExpr();
         if (fromClause != null) {
+
+            if (fromClause.getClauseType() == FromClause.ClauseType.JOIN_EXPR) {
+                Expression e = fromClause.getOnExpression();
+                processor.resetCurrent();
+                e.traverse(processor);
+                if (processor.currentExprHasAggr) {
+                    throw new IllegalArgumentException("Join on expression contains aggregate function");
+                }
+            }
+
             // If from clause is a base table, simply do a file scan.
             if (fromClause.isBaseTable()) {
                 result = makeSimpleSelect(fromClause.getTableName(),
-                        selClause.getWhereExpr(), null);
+                        whereExpr, null);
             }
             else if (fromClause.isJoinExpr()) {
                 result = makeJoinPlan(selClause, fromClause);
@@ -82,29 +92,26 @@ public class SimplePlanner extends AbstractPlannerImpl {
             for (SelectValue sv : selectValues) {
                 if (!sv.isExpression())
                     continue;
+                processor.resetCurrent();
                 Expression e = sv.getExpression().traverse(processor);
                 sv.setExpression(e);
             }
 
             Expression havingExpr = selClause.getHavingExpr();
-            Expression e = havingExpr.traverse(processor);
-            selClause.setHavingExpr(e);
-
-            Expression whereExpr = selClause.getWhereExpr();
-            whereExpr.traverse(processor);
-            if (processor.currentHasAggregate()) {
-                throw new IOException("Where expression contains aggregate function");
+            processor.resetCurrent();
+            if (havingExpr != null) {
+                Expression e = havingExpr.traverse(processor);
+                selClause.setHavingExpr(e);
             }
 
-            try {
-                e = selClause.getFromClause().getOnExpression();
-                e.traverse(processor);
-                if (processor.currentHasAggregate()) {
-                    throw new IOException("Join on expression contains aggregate function");
+            if (whereExpr != null) {
+                processor.resetCurrent();
+                whereExpr.traverse(processor);
+                if (processor.currentExprHasAggr) {
+                    throw new IllegalArgumentException("Where expression contains aggregate function");
                 }
             }
-            catch (IllegalStateException err) { }
-
+            result = new HashedGroupAggregateNode(result, selClause.getGroupByExprs(), processor.aggregates);
 
             // If there is no FROM clause, make a trivial ProjectNode()
             if (fromClause == null) {

@@ -34,5 +34,5 @@ public interface ExpressionProcessor {
      *         either {@code node} if no changes are to be made, or a new
      *         {@code Expression} object if {@code node} should be replaced.
      */
-    Expression leave(Expression node) throws IOException;
+    Expression leave(Expression node);
 }
