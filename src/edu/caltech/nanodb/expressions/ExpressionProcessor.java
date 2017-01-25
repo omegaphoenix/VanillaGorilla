@@ -1,5 +1,6 @@
 package edu.caltech.nanodb.expressions;
 
+import java.io.IOException;
 
 /**
  * This interface is used to implement scans or transformations of expression
@@ -33,5 +34,5 @@ public interface ExpressionProcessor {
      *         either {@code node} if no changes are to be made, or a new
      *         {@code Expression} object if {@code node} should be replaced.
      */
-    Expression leave(Expression node);
+    Expression leave(Expression node) throws IOException;
 }

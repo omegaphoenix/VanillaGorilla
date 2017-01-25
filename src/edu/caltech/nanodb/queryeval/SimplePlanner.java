@@ -50,6 +50,8 @@ public class SimplePlanner extends AbstractPlannerImpl {
     @Override
     public PlanNode makePlan(SelectClause selClause,
         List<SelectClause> enclosingSelects) throws IOException {
+        AggregateProcessor processor = new AggregateProcessor();
+
         // PlanNode to return.
         PlanNode result = null;
 
@@ -79,10 +81,15 @@ public class SimplePlanner extends AbstractPlannerImpl {
             for (SelectValue sv : selectValues) {
                 if (!sv.isExpression())
                     continue;
-                AggregateProcessor processor = new AggregateProcessor();
                 Expression e = sv.getExpression().traverse(processor);
                 sv.setExpression(e);
             }
+
+            Expression havingExpr = selClause.getHavingExpr();
+            Expression e = havingExpr.traverse(processor);
+            selClause.setHavingExpr(e);
+
+            // TODO: check WHERE, ON for aggregates
 
             // If there is no FROM clause, make a trivial ProjectNode()
             if (fromClause == null) {
