@@ -89,6 +89,13 @@ C1.  The join algorithm stated in class is really only suitable for
 C2.  What tweaks did you need to introduce into the implementation for
      left outer joins?  Keep your answer brief, but please also be specific.
 
+     We just added rightTuple == null to the predicate check and kept track
+     of the last leftTuple that we joined so that if we did not join the
+     current leftTuple when we finish iterating through the rightChild's
+     rows, then we will return a new tuple of (leftTuple, null). This
+     introduces a new state we have to keep track of which we call
+     prevLeftTuple.
+
 C3.  Same question as for C2, but for semijoins.
 
 C4.  Same question as for C2, but for antijoins.
