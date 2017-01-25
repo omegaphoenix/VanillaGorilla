@@ -76,14 +76,13 @@ public class SimplePlanner extends AbstractPlannerImpl {
         if (!selClause.isTrivialProject()) {
             List<SelectValue> selectValues = selClause.getSelectValues();
 
-        for (SelectValue sv : selectValues) {
-            if (!sv.isExpression())
-                continue;
-            AggregateProcessor processor = new AggregateProcessor();
-            Expression e = sv.getExpression().traverse(processor);
-            sv.setExpression(e);
-        }
-
+            for (SelectValue sv : selectValues) {
+                if (!sv.isExpression())
+                    continue;
+                AggregateProcessor processor = new AggregateProcessor();
+                Expression e = sv.getExpression().traverse(processor);
+                sv.setExpression(e);
+            }
 
             // If there is no FROM clause, make a trivial ProjectNode()
             if (fromClause == null) {
