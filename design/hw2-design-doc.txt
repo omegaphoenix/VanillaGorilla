@@ -98,6 +98,10 @@ C2.  What tweaks did you need to introduce into the implementation for
 
 C3.  Same question as for C2, but for semijoins.
 
+     For semijoins, we increment leftTuple and reset rightTuple to the
+     first rightTuple as soon as we get one set of tuples that satisfy
+     the predicate.
+
 C4.  Same question as for C2, but for antijoins.
 
 C5.  Enumerate your nested-loop join test cases, following this form:
