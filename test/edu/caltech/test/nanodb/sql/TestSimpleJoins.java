@@ -235,7 +235,7 @@ public class TestSimpleJoins extends SqlTestCase {
     public void testSimpleJoinEdgeCases() throws Throwable {
         CommandResult result;
 
-        // For A = 3, 2 * 2 = 4 total rows should be generated, since there are two rows in T1
+        // For A = 3, 2 * 2 = 4 total rows should be generated in the left join, since there are two rows in T1
         // and two rows in T2 with A = 3.
         result = server.doCommand(
                 "SELECT * FROM test_sj_t1 t1 LEFT JOIN test_sj_t2 t2 ON t1.a = t2.a",
@@ -257,7 +257,7 @@ public class TestSimpleJoins extends SqlTestCase {
         assert checkUnorderedResults(expected1, result);
         checkResultSchema(result, "T1.A", "T1.B", "T2.A", "T2.B", "T2.C");
 
-        // Now try the RIGHT JOIN version.
+        // Now try the right join version.
         result = server.doCommand(
                 "SELECT * FROM test_sj_t1 t1 RIGHT JOIN test_sj_t2 t2 ON t1.a = t2.a",
                 true);
@@ -276,6 +276,44 @@ public class TestSimpleJoins extends SqlTestCase {
         };
         assert checkSizeResults(expected2, result);
         assert checkUnorderedResults(expected2, result);
+        checkResultSchema(result, "T1.A", "T1.B", "T2.A", "T2.B", "T2.C");
+
+        // Same left join, but with an additional column in the predicate
+        result = server.doCommand(
+                "SELECT * FROM test_sj_t1 t1 LEFT JOIN test_sj_t2 t2 ON t1.a = t2.a AND t1.b = t2.b",
+                true);
+        TupleLiteral[] expected3 = {
+                new TupleLiteral(1, 10, null, null, null),
+                new TupleLiteral(2, 20, null, null, null),
+                new TupleLiteral(3, 30, null, null, null),
+                new TupleLiteral(3, 0, null, null, null),
+                new TupleLiteral(4, 40, null, null, null),
+                new TupleLiteral(5, 50, null, null, null),
+                new TupleLiteral(6, 60, null, null, null),
+                new TupleLiteral(7, 70, 7, 70, 700),
+                new TupleLiteral(8, 80, 8, 80, 800)
+        };
+        assert checkSizeResults(expected3, result);
+        assert checkUnorderedResults(expected3, result);
+        checkResultSchema(result, "T1.A", "T1.B", "T2.A", "T2.B", "T2.C");
+
+        // Right join version
+        result = server.doCommand(
+                "SELECT * FROM test_sj_t1 t1 RIGHT JOIN test_sj_t2 t2 ON t1.a = t2.a AND t1.b = t2.b",
+                true);
+        TupleLiteral[] expected4 = {
+                new TupleLiteral(null, null, 3, -1, -1),
+                new TupleLiteral(null, null, 3, 40, 300),
+                new TupleLiteral(null, null, 4, 30, 400),
+                new TupleLiteral(null, null, 5, 60, 500),
+                new TupleLiteral(null, null, 6, 50, 600),
+                new TupleLiteral(7, 70, 7, 70, 700),
+                new TupleLiteral(8, 80, 8, 80, 800),
+                new TupleLiteral(null, null, 9, 100, 900),
+                new TupleLiteral(null, null, 10, 90, 1000)
+        };
+        assert checkSizeResults(expected4, result);
+        assert checkUnorderedResults(expected4, result);
         checkResultSchema(result, "T1.A", "T1.B", "T2.A", "T2.B", "T2.C");
     }
 }
