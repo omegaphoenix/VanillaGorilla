@@ -2,6 +2,7 @@ package edu.caltech.nanodb.queryeval;
 
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -107,15 +108,27 @@ public abstract class AbstractPlannerImpl implements Planner {
 
             if (fromClause.isRenamed()) {
                 result = new RenameNode(result, fromClause.getResultName());
-                result.prepare();
             }
+            result.prepare();
             return result;
         }
 
         JoinType joinType = fromClause.getJoinType();
         PlanNode left = makeJoinPlan(selClause, fromClause.getLeftChild());
         PlanNode right = makeJoinPlan(selClause, fromClause.getRightChild());
-        Expression predicate = fromClause.getOnExpression();
+        FromClause.JoinConditionType condType = fromClause.getConditionType();
+        Expression predicate;
+        List<SelectValue> projectVals = null;
+        Boolean needPostProject = false;
+        if (condType == FromClause.JoinConditionType.NATURAL_JOIN ||
+                condType == FromClause.JoinConditionType.JOIN_USING) {
+            predicate = fromClause.getComputedJoinExpr();
+            projectVals = fromClause.getComputedSelectValues();
+            needPostProject = true;
+        }
+        else {
+            predicate = fromClause.getOnExpression();
+        }
         switch (joinType) {
         case CROSS:
         case INNER:
@@ -123,12 +136,10 @@ public abstract class AbstractPlannerImpl implements Planner {
         case ANTIJOIN:
         case SEMIJOIN:
             result = new NestedLoopJoinNode(left, right, joinType, predicate);
-            result.prepare();
             break;
         case RIGHT_OUTER:
             result = new NestedLoopJoinNode(left, right, joinType.LEFT_OUTER, predicate);
             ((ThetaJoinNode) result).swap();
-            result.prepare();
             break;
         case FULL_OUTER:
             throw new UnsupportedOperationException(
@@ -136,6 +147,13 @@ public abstract class AbstractPlannerImpl implements Planner {
         default:
             throw new UnsupportedOperationException("Not a valid JoinType.");
         }
+        if (needPostProject) {
+            projectVals = fromClause.getComputedSelectValues();
+            if (projectVals != null) {
+                result = new ProjectNode(result, projectVals);
+            }
+        }
+        result.prepare();
         return result;
     }
 }

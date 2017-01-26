@@ -81,7 +81,7 @@ public class TestNaturalUsingJoins extends SqlTestCase {
             "SELECT * FROM test_nuj_t2 t2 JOIN test_nuj_t3 t3 USING (a, c)", true);
         assert checkSizeResults(expected2, result);
         assert checkUnorderedResults(expected2, result);
-        checkResultSchema(result, "A", "C", "T1.B", "T3.D");
+        checkResultSchema(result, "A", "C", "T2.B", "T3.D");
 
         // USING with only one of the common columns:  C
         result = server.doCommand(

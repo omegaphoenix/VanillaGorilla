@@ -64,11 +64,6 @@ public class SimplePlanner extends AbstractPlannerImpl {
         Expression whereExpr = selClause.getWhereExpr();
         if (fromClause != null) {
 
-            if (fromClause.getClauseType() == FromClause.ClauseType.JOIN_EXPR) {
-                Expression e = fromClause.getOnExpression();
-                e.traverse(noAggregateProcessor);
-            }
-
             // If from clause is a base table, simply do a file scan.
             if (fromClause.isBaseTable()) {
                 result = makeSimpleSelect(fromClause.getTableName(),
@@ -76,6 +71,11 @@ public class SimplePlanner extends AbstractPlannerImpl {
             }
             // Handle joins.
             else if (fromClause.isJoinExpr()) {
+                Expression e = fromClause.getOnExpression();
+                if (e == null) {
+                    e = fromClause.getComputedJoinExpr();
+                }
+                e.traverse(noAggregateProcessor);
                 result = makeJoinPlan(selClause, fromClause);
             }
             // Handle derived table recursively.
@@ -133,15 +133,14 @@ public class SimplePlanner extends AbstractPlannerImpl {
             else {
                 result = new ProjectNode(result, selectValues);
             }
-            result.prepare();
         }
 
         List<OrderByExpression> orderByExprs = selClause.getOrderByExprs();
         if (orderByExprs.size() > 0) {
             result = new SortNode(result, orderByExprs);
-            result.prepare();
         }
 
+        result.prepare();
         return result;
     }
 
