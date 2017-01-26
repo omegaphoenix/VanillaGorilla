@@ -219,15 +219,15 @@ public class TestSimpleJoins extends SqlTestCase {
         // The first two tables are joined first, which means there will be
         // a column "A" without a table name, joined to the third table.
         result = server.doCommand(
-            "SELECT * FROM (test_sj_t1 t1 JOIN test_sj_t4 t4 ON t1.a = t4.a) LEFT JOIN test_empty1",
+            "SELECT * FROM (test_sj_t1 t1 JOIN test_sj_t4 t4 ON t1.a = t4.a) LEFT JOIN test_empty1 e ON t1.a = e.a",
             true);
         TupleLiteral[] expected1 = {
-            new TupleLiteral(2, 20, 200, 2000),
-            new TupleLiteral(5, 50, 600, 5000),
-            new TupleLiteral(6, 60, 500, 6000)
+            new TupleLiteral(2, 20, 2, 200, null, null),
+            new TupleLiteral(5, 50, 5, 600, null, null),
+            new TupleLiteral(6, 60, 6, 500, null, null)
         };
         assert checkSizeResults(expected1, result);
         assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "A", "T1.B", "T4.C", "T5.D");
+        checkResultSchema(result, "T1.A", "T1.B", "T4.A", "T4.C", "E.A", "E.D");
     }
 }
