@@ -82,9 +82,9 @@ public class TestSimpleJoins extends SqlTestCase {
             new TupleLiteral(3, 30, 3, 300, 3000),
             new TupleLiteral(5, 50, 5, 500, 5000),
             new TupleLiteral(6, 60, 6, 600, 6000),
-            new TupleLiteral(8, 80, 7, 800, 8000),
-            new TupleLiteral(null, null, 900, 9000),
-            new TupleLiteral(null, null, 1100, 11000)
+            new TupleLiteral(8, 80, 8, 800, 8000),
+            new TupleLiteral(null, null, 9, 900, 9000),
+            new TupleLiteral(null, null, 11, 1100, 11000)
         };
         assert checkSizeResults(expected3, result);
         assert checkUnorderedResults(expected3, result);
@@ -275,7 +275,7 @@ public class TestSimpleJoins extends SqlTestCase {
                 new TupleLiteral(null, null, 10, 90, 1000)
         };
         assert checkSizeResults(expected2, result);
-        assert checkUnorderedResults(expected1, result);
+        assert checkUnorderedResults(expected2, result);
         checkResultSchema(result, "T1.A", "T1.B", "T2.A", "T2.B", "T2.C");
     }
 }

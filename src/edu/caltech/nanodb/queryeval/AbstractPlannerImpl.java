@@ -149,6 +149,7 @@ public abstract class AbstractPlannerImpl implements Planner {
             }
             */
             ((ThetaJoinNode) result).swap();
+            result.prepare();
             break;
         case FULL_OUTER:
             throw new UnsupportedOperationException(
