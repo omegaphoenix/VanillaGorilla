@@ -191,15 +191,26 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
                 case INNER:
                     return joinTuples(leftTuple, rightTuple);
                 case LEFT_OUTER:
-                    if (rightTuple == null && leftTuple != prevLeftTuple) {
-                        prevLeftTuple = leftTuple;
-                        return joinTuples(leftTuple,
-                                new TupleLiteral(rightSchema.numColumns()));
+                    // Check if we finished iterating through rightChild
+                    if (rightTuple == null) {
+                        // Output leftTuple attached null values if this
+                        // leftTuple hasn't been returned
+                        if (leftTuple != prevLeftTuple) {
+                            prevLeftTuple = leftTuple;
+                            return joinTuples(leftTuple,
+                                    new TupleLiteral(rightSchema.numColumns()));
+                        }
+                        else {
+                            return null;
+                        }
                     }
-                    prevLeftTuple = leftTuple;
-                    return joinTuples(leftTuple, rightTuple);
+                    else {
+                        prevLeftTuple = leftTuple;
+                        return joinTuples(leftTuple, rightTuple);
+                    }
                 case SEMIJOIN:
                 case ANTIJOIN:
+                    // Return current tuple and increment leftTuple
                     Tuple currLeft = leftTuple;
                     leftTuple = leftChild.getNextTuple();
                     rightChild.initialize();
