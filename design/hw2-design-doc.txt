@@ -6,7 +6,7 @@ A:  Logistics
 
 A1.  List your team name and the people who worked on this assignment.
 
-    VanillaGorilla 
+    VanillaGorilla
 
     Justin Leong
     Matthew Jin
@@ -46,6 +46,16 @@ B3.  Describe how you generate the execution-plan fragment for the query's
 B4.  Describe how you implemented support for grouping and aggregation.
      Be sure to note any variations from the approach outlined in class,
      if there are any.
+
+     AggregateProcessor implements ExpressionProcessor, giving us a way of
+     traversing expressions and looking for aggregate functions.
+     AggregateProcessor can raise IllegalArgumentExceptions if it finds
+     aggregate functions where they should not be (inside other aggregate
+     functions or when used to traverse WHERE/ON clauses). Other than this, it
+     renames aggregate functions with a ColumnValue, which can later be
+     resolved with the ProjectNode's evaluate. The processor keeps track of all
+     the renamed aggregate functions, which is then plugged into a
+     HashedGroupAggregateNode along with the corresponding group by values.
 
 B5.  Describe how you implemented support for natural joins, and joins with
      a USING clause.  Focus on how you handle challenging cases, such as
