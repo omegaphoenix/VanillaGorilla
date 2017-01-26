@@ -205,10 +205,7 @@ public class TestSimpleJoins extends SqlTestCase {
     }
 
     /**
-     * This test performs natural joins with three or more tables, verifying
-     * both the schema and the data that is returned.  Joining this many
-     * tables ensures that joins will operate against columns without table
-     * names.
+     * This test performs a combination of inner and outer joins.
      *
      * @throws Exception if any query parsing or execution issues occur.
      **/
