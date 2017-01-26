@@ -225,4 +225,57 @@ public class TestSimpleJoins extends SqlTestCase {
         assert checkUnorderedResults(expected1, result);
         checkResultSchema(result, "T1.A", "T1.B", "T4.A", "T4.C", "E.A", "E.D");
     }
+
+    /**
+     * This test goes through some basic edge cases for outer joins including tables with multiple rows
+     * that match the same join predicate, and multi-column join predicates.
+     *
+     * @throws Exception if any query parsing or execution issues occur.
+     **/
+    public void testSimpleJoinEdgeCases() throws Throwable {
+        CommandResult result;
+
+        // For A = 3, 2 * 2 = 4 total rows should be generated, since there are two rows in T1
+        // and two rows in T2 with A = 3.
+        result = server.doCommand(
+                "SELECT * FROM test_sj_t1 t1 LEFT JOIN test_sj_t2 t2 ON t1.a = t2.a",
+                true);
+        TupleLiteral[] expected1 = {
+                new TupleLiteral(1, 10, null, null, null),
+                new TupleLiteral(2, 20, null, null, null),
+                new TupleLiteral(3, 30, 3, -1, -1),
+                new TupleLiteral(3, 30, 3, 40, 300),
+                new TupleLiteral(3, 0, 3, -1, -1),
+                new TupleLiteral(3, 0, 3, 40, 300),
+                new TupleLiteral(4, 40, 4, 30, 400),
+                new TupleLiteral(5, 50, 5, 60, 500),
+                new TupleLiteral(6, 60, 6, 50, 600),
+                new TupleLiteral(7, 70, 7, 70, 700),
+                new TupleLiteral(8, 80, 8, 80, 800),
+        };
+        assert checkSizeResults(expected1, result);
+        assert checkUnorderedResults(expected1, result);
+        checkResultSchema(result, "T1.A", "T1.B", "T2.A", "T2.B", "T2.C");
+
+        // Now try the RIGHT JOIN version.
+        result = server.doCommand(
+                "SELECT * FROM test_sj_t1 t1 RIGHT JOIN test_sj_t2 t2 ON t1.a = t2.a",
+                true);
+        TupleLiteral[] expected2 = {
+                new TupleLiteral(3, 30, 3, -1, -1),
+                new TupleLiteral(3, 30, 3, 40, 300),
+                new TupleLiteral(3, 0, 3, -1, -1),
+                new TupleLiteral(3, 0, 3, 40, 300),
+                new TupleLiteral(4, 40, 4, 30, 400),
+                new TupleLiteral(5, 50, 5, 60, 500),
+                new TupleLiteral(6, 60, 6, 50, 600),
+                new TupleLiteral(7, 70, 7, 70, 700),
+                new TupleLiteral(8, 80, 8, 80, 800),
+                new TupleLiteral(null, null, 9, 100, 900),
+                new TupleLiteral(null, null, 10, 90, 1000),
+        };
+        assert checkSizeResults(expected2, result);
+        assert checkUnorderedResults(expected1, result);
+        checkResultSchema(result, "T1.A", "T1.B", "T2.A", "T2.B", "T2.C");
+    }
 }
