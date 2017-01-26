@@ -25,6 +25,12 @@ A3.  Specify any late tokens you are applying to this assignment, or
 
 A4.  Briefly describe what parts of the assignment each teammate focused on.
 
+     Matthew focused on grouping and aggregation and some simple parts of
+     SimplePlanner.
+     David focused on unit tests and the other parts of SimplePlanner.
+     Justin focused on nested loop join and natural join.
+     Everyone helped debug each other's problems.
+
 B:  Simple Planner
 ------------------
 
@@ -32,6 +38,13 @@ B1.  Without going into the details of how you handle grouping and
      aggregation or joins, list the general sequence of steps that your
      planner's makePlan() method follows to translate a SQL query into
      an execution plan.
+
+     First, we create the select or join nodes by looking at the FROM clause.
+     Then, we look for aggregate functions and group by expressions, creating a
+     HashedGroupAggregateNode. Then, we create a ProjectNode, and lastly a
+     SortNode for the ORDER BY expression (if it exists). At each stage, the
+     node takes in the previously created nodes, so that the top level node is
+     the SortNode.
 
 B2.  Does your planner try to simplify plans in specific circumstances,
      e.g. when a "trivial project" is used (i.e. "SELECT * FROM ...") in
@@ -42,6 +55,14 @@ B3.  Describe how you generate the execution-plan fragment for the query's
      FromClause.  Make sure to touch on what you do in the three cases your
      planner is expected to handle - tables, subqueries in the FROM clause,
      and joins.
+
+     If the FROM clause is present, we conduct a few checks. If the FROM clause
+     is a base table, then we make a select node to pull the relevant
+     tuples from the table. If it is a join expression, then we traverse it to
+     make sure there are no aggregate functions within the ON clause, and then
+     make our join plan from the clause. If there is a subquery nested within,
+     then we recursively create the subquery plan. These nodes are passed into
+     whatever other plan nodes that come next.
 
 B4.  Describe how you implemented support for grouping and aggregation.
      Be sure to note any variations from the approach outlined in class,
