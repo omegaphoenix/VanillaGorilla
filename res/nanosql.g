@@ -581,6 +581,7 @@ join_expr returns [FromClause fc]
   :
   fc=from_expr
   (
+    { natural = false; /* Reset for subsequent joins parsed by this rule. */ }
     ( CROSS { type = JoinType.CROSS; }
     | ( NATURAL { natural = true; } )?
       ( INNER   { type = JoinType.INNER;       }

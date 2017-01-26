@@ -2831,6 +2831,7 @@ public NanoSqlParser(ParserSharedInputState state) {
 			_loop103:
 			do {
 				if ((_tokenSet_13.member(LA(1)))) {
+					natural = false; /* Reset for subsequent joins parsed by this rule. */
 					{
 					switch ( LA(1)) {
 					case CROSS:

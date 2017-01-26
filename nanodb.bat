@@ -4,6 +4,7 @@ set CPATH=.
 set CPATH=%CPATH%;lib\log4j-1.2.13.jar
 set CPATH=%CPATH%;lib\antlr-3.2.jar
 set CPATH=%CPATH%;lib\commons-io-2.1.jar
+set CPATH=%CPATH%;lib\commons-lang-2.4.jar
 set CPATH=%CPATH%;build\classes
 
 rem To set the page-size to use, add "-Dnanodb.pagesize=2048" to JAVA_OPTS.

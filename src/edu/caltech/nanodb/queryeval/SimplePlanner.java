@@ -2,7 +2,9 @@ package edu.caltech.nanodb.queryeval;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.ArrayList;
 
+import edu.caltech.nanodb.plannodes.*;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.queryast.FromClause;
@@ -19,6 +21,8 @@ import edu.caltech.nanodb.plannodes.SelectNode;
 import edu.caltech.nanodb.plannodes.HashedGroupAggregateNode;
 
 import edu.caltech.nanodb.plannodes.SimpleFilterNode;
+import edu.caltech.nanodb.expressions.OrderByExpression;
+
 import edu.caltech.nanodb.relations.TableInfo;
 
 
@@ -54,10 +58,6 @@ public class SimplePlanner extends AbstractPlannerImpl {
         // PlanNode to return.
         PlanNode result = null;
 
-        if (enclosingSelects != null && !enclosingSelects.isEmpty()) {
-            throw new UnsupportedOperationException(
-                "Not implemented:  enclosing queries");
-        }
         FromClause fromClause = selClause.getFromClause();
         Expression whereExpr = selClause.getWhereExpr();
         if (fromClause != null) {
@@ -76,12 +76,26 @@ public class SimplePlanner extends AbstractPlannerImpl {
                 result = makeSimpleSelect(fromClause.getTableName(),
                         whereExpr, null);
             }
+            // Handle joins.
             else if (fromClause.isJoinExpr()) {
                 result = makeJoinPlan(selClause, fromClause);
             }
+            // Handle derived table recursively.
             else if (fromClause.isDerivedTable()) {
-                throw new UnsupportedOperationException(
-                        "Not implemented: subqueries in FROM clause");
+                SelectClause subClause = fromClause.getSelectClause();
+
+                // Enclosing selects for sub-query.
+                List<SelectClause> enclosing = null;
+                if (enclosingSelects != null) {
+                    enclosing = new ArrayList<SelectClause>(enclosingSelects);
+                    enclosing.add(selClause);
+                }
+                else {
+                    enclosing = new ArrayList<SelectClause>();
+                    enclosing.add(selClause);
+                }
+                result = makePlan(subClause, enclosing);
+                result = new RenameNode(result, fromClause.getResultName());
             }
         }
 
@@ -111,7 +125,10 @@ public class SimplePlanner extends AbstractPlannerImpl {
                     throw new IllegalArgumentException("Where expression contains aggregate function");
                 }
             }
-            result = new HashedGroupAggregateNode(result, selClause.getGroupByExprs(), processor.aggregates);
+
+            if (processor.aggregates.size() != 0) {
+                result = new HashedGroupAggregateNode(result, selClause.getGroupByExprs(), processor.aggregates);
+            }
 
             // If there is no FROM clause, make a trivial ProjectNode()
             if (fromClause == null) {
@@ -122,6 +139,13 @@ public class SimplePlanner extends AbstractPlannerImpl {
             }
             result.prepare();
         }
+
+        List<OrderByExpression> orderByExprs = selClause.getOrderByExprs();
+        if (orderByExprs.size() > 0) {
+            result = new SortNode(result, orderByExprs);
+            result.prepare();
+        }
+
         return result;
     }
 
