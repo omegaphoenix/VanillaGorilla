@@ -242,7 +242,8 @@ public class SqlTestCase {
             ColumnInfo colInfo = schema.getColumnInfo(i);
             assert ObjectUtils.equals(colInfo.getTableName(), tblName) :
                 "Expected column " + i + " to have table-name " + tblName;
-            assert ObjectUtils.equals(colInfo.getColumnName(), new ColumnName(tblName, colName)) :
+
+            assert ObjectUtils.equals(colInfo.getColumnName().getColumnName(), colName) :
                 "Expected column " + i + " to have column-name " + colName;
         }
     }
