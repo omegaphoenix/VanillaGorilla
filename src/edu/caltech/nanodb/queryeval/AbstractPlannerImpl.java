@@ -102,8 +102,14 @@ public abstract class AbstractPlannerImpl implements Planner {
         PlanNode result = null;
         // Base case for recursion.
         if (fromClause.isBaseTable()) {
-            return makeSimpleSelect(fromClause.getTableName(),
+            result = makeSimpleSelect(fromClause.getTableName(),
                     selClause.getWhereExpr(), null);
+
+            if (fromClause.isRenamed()) {
+                result = new RenameNode(result, fromClause.getResultName());
+                result.prepare();
+            }
+            return result;
         }
 
         JoinType joinType = fromClause.getJoinType();
