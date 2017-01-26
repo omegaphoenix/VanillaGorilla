@@ -119,12 +119,12 @@ public abstract class AbstractPlannerImpl implements Planner {
         FromClause.JoinConditionType condType = fromClause.getConditionType();
         Expression predicate;
         List<SelectValue> projectVals = null;
-        Boolean needProject = false;
+        Boolean needPostProject = false;
         if (condType == FromClause.JoinConditionType.NATURAL_JOIN ||
                 condType == FromClause.JoinConditionType.JOIN_USING) {
             predicate = fromClause.getComputedJoinExpr();
-            projectVals = fromClause.getComputedSelectValues();
-            needProject = true;
+            // projectVals = fromClause.getComputedSelectValues();
+            needPostProject = true;
         }
         else {
             predicate = fromClause.getOnExpression();
@@ -141,6 +141,14 @@ public abstract class AbstractPlannerImpl implements Planner {
         case RIGHT_OUTER:
             result = new NestedLoopJoinNode(right, left, joinType.LEFT_OUTER, predicate);
             result.prepare();
+            /*
+            if (!needPostProject) {
+                // TODO: set project for right outer join
+                projectVals = new ArrayList<SelectValue>();
+                needPostProject = true;
+            }
+            ((ThetaJoinNode)result).swap();
+            */
             break;
         case FULL_OUTER:
             throw new UnsupportedOperationException(
@@ -148,9 +156,9 @@ public abstract class AbstractPlannerImpl implements Planner {
         default:
             throw new UnsupportedOperationException("Not a valid JoinType.");
         }
-        if (needProject) {
-            if (projectVals == null) {
-                projectVals = fromClause.getComputedSelectValues();
+        if (needPostProject) {
+            projectVals = fromClause.getComputedSelectValues();
+            if (projectVals != null) {
                 result = new ProjectNode(result, projectVals);
             }
         }
