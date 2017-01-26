@@ -133,15 +133,14 @@ public class SimplePlanner extends AbstractPlannerImpl {
             else {
                 result = new ProjectNode(result, selectValues);
             }
-            result.prepare();
         }
 
         List<OrderByExpression> orderByExprs = selClause.getOrderByExprs();
         if (orderByExprs.size() > 0) {
             result = new SortNode(result, orderByExprs);
-            result.prepare();
         }
 
+        result.prepare();
         return result;
     }
 
