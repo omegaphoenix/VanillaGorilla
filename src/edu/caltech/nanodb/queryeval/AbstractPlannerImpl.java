@@ -123,7 +123,7 @@ public abstract class AbstractPlannerImpl implements Planner {
         if (condType == FromClause.JoinConditionType.NATURAL_JOIN ||
                 condType == FromClause.JoinConditionType.JOIN_USING) {
             predicate = fromClause.getComputedJoinExpr();
-            // projectVals = fromClause.getComputedSelectValues();
+            projectVals = fromClause.getComputedSelectValues();
             needPostProject = true;
         }
         else {
@@ -140,14 +140,6 @@ public abstract class AbstractPlannerImpl implements Planner {
             break;
         case RIGHT_OUTER:
             result = new NestedLoopJoinNode(left, right, joinType.LEFT_OUTER, predicate);
-            result.prepare();
-            /*
-            if (!needPostProject) {
-                // TODO: set project for right outer join
-                projectVals = new ArrayList<SelectValue>();
-                needPostProject = true;
-            }
-            */
             ((ThetaJoinNode) result).swap();
             result.prepare();
             break;
