@@ -53,7 +53,7 @@ public class SimplePlanner extends AbstractPlannerImpl {
     @Override
     public PlanNode makePlan(SelectClause selClause,
         List<SelectClause> enclosingSelects) throws IOException, IllegalArgumentException {
-        AggregateProcessor processor = new AggregateProcessor();
+        AggregateProcessor aggregateProcessor = new AggregateProcessor();
 
         // PlanNode to return.
         PlanNode result = null;
@@ -64,9 +64,9 @@ public class SimplePlanner extends AbstractPlannerImpl {
 
             if (fromClause.getClauseType() == FromClause.ClauseType.JOIN_EXPR) {
                 Expression e = fromClause.getOnExpression();
-                processor.resetCurrent();
-                e.traverse(processor);
-                if (processor.currentExprHasAggr) {
+                aggregateProcessor.resetCurrent();
+                e.traverse(aggregateProcessor);
+                if (aggregateProcessor.currentExprHasAggr) {
                     throw new IllegalArgumentException("Join on expression contains aggregate function");
                 }
             }
@@ -106,28 +106,32 @@ public class SimplePlanner extends AbstractPlannerImpl {
             for (SelectValue sv : selectValues) {
                 if (!sv.isExpression())
                     continue;
-                processor.resetCurrent();
-                Expression e = sv.getExpression().traverse(processor);
+                aggregateProcessor.resetCurrent();
+                Expression e = sv.getExpression().traverse(aggregateProcessor);
                 sv.setExpression(e);
             }
 
             Expression havingExpr = selClause.getHavingExpr();
-            processor.resetCurrent();
+            aggregateProcessor.resetCurrent();
             if (havingExpr != null) {
-                Expression e = havingExpr.traverse(processor);
+                Expression e = havingExpr.traverse(aggregateProcessor);
                 selClause.setHavingExpr(e);
             }
 
             if (whereExpr != null) {
-                processor.resetCurrent();
-                whereExpr.traverse(processor);
-                if (processor.currentExprHasAggr) {
+                aggregateProcessor.resetCurrent();
+                whereExpr.traverse(aggregateProcessor);
+                if (aggregateProcessor.currentExprHasAggr) {
                     throw new IllegalArgumentException("Where expression contains aggregate function");
                 }
             }
 
-            if (processor.aggregates.size() != 0) {
-                result = new HashedGroupAggregateNode(result, selClause.getGroupByExprs(), processor.aggregates);
+            if (selClause.getGroupByExprs().size() != 0 || aggregateProcessor.aggregates.size() != 0) {
+                result = new HashedGroupAggregateNode(result, selClause.getGroupByExprs(), aggregateProcessor.aggregates);
+            }
+
+            if (havingExpr != null) {
+                result = new SimpleFilterNode(result, havingExpr);
             }
 
             // If there is no FROM clause, make a trivial ProjectNode()
