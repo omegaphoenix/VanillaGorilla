@@ -66,11 +66,11 @@ public class TestNaturalUsingJoins extends SqlTestCase {
         result = server.doCommand(
             "SELECT * FROM test_nuj_t2 t2 NATURAL JOIN test_nuj_t3 t3", true);
         TupleLiteral[] expected2 = {
-            new TupleLiteral(3, 40, 300, 3000),
-            new TupleLiteral(5, 60, 500, 5000),
-            new TupleLiteral(6, 50, 600, 6000),
-            new TupleLiteral(8, 80, 800, 8000),
-            new TupleLiteral(9, 100, 900, 9000)
+            new TupleLiteral(3, 300, 40, 3000),
+            new TupleLiteral(5, 500, 60, 5000),
+            new TupleLiteral(6, 600, 50, 6000),
+            new TupleLiteral(8, 800, 80, 8000),
+            new TupleLiteral(9, 900, 100, 9000)
         };
         assert checkSizeResults(expected2, result);
         assert checkUnorderedResults(expected2, result);
@@ -78,7 +78,7 @@ public class TestNaturalUsingJoins extends SqlTestCase {
 
         // USING with both common columns:  A, C
         result = server.doCommand(
-            "SELECT * FROM test_nuj_t1 t1 JOIN test_nuj_t3 t3 USING (a, c)", true);
+            "SELECT * FROM test_nuj_t2 t2 JOIN test_nuj_t3 t3 USING (a, c)", true);
         assert checkSizeResults(expected2, result);
         assert checkUnorderedResults(expected2, result);
         checkResultSchema(result, "A", "C", "T1.B", "T3.D");
