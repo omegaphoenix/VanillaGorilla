@@ -53,7 +53,8 @@ public class SimplePlanner extends AbstractPlannerImpl {
     @Override
     public PlanNode makePlan(SelectClause selClause,
         List<SelectClause> enclosingSelects) throws IOException, IllegalArgumentException {
-        AggregateProcessor aggregateProcessor = new AggregateProcessor();
+        AggregateProcessor aggregateProcessor = new AggregateProcessor(true);
+        AggregateProcessor noAggregateProcessor = new AggregateProcessor(false);
 
         // PlanNode to return.
         PlanNode result = null;
@@ -64,7 +65,6 @@ public class SimplePlanner extends AbstractPlannerImpl {
 
             if (fromClause.getClauseType() == FromClause.ClauseType.JOIN_EXPR) {
                 Expression e = fromClause.getOnExpression();
-                aggregateProcessor.resetCurrent();
                 e.traverse(aggregateProcessor);
                 if (aggregateProcessor.currentExprHasAggr) {
                     throw new IllegalArgumentException("Join on expression contains aggregate function");
@@ -106,20 +106,17 @@ public class SimplePlanner extends AbstractPlannerImpl {
             for (SelectValue sv : selectValues) {
                 if (!sv.isExpression())
                     continue;
-                aggregateProcessor.resetCurrent();
                 Expression e = sv.getExpression().traverse(aggregateProcessor);
                 sv.setExpression(e);
             }
 
             Expression havingExpr = selClause.getHavingExpr();
-            aggregateProcessor.resetCurrent();
             if (havingExpr != null) {
                 Expression e = havingExpr.traverse(aggregateProcessor);
                 selClause.setHavingExpr(e);
             }
 
             if (whereExpr != null) {
-                aggregateProcessor.resetCurrent();
                 whereExpr.traverse(aggregateProcessor);
                 if (aggregateProcessor.currentExprHasAggr) {
                     throw new IllegalArgumentException("Where expression contains aggregate function");
