@@ -191,7 +191,7 @@ public class TestSimpleJoins extends SqlTestCase {
 
         // Right Join should be empty.
         result = server.doCommand(
-                "SELECT * FROM test_empty1 t1 RIGHT JOIN test_empty2 t1 on t1.a = t2.a", true);
+                "SELECT * FROM test_empty1 t1 RIGHT JOIN test_empty2 t2 on t1.a = t2.a", true);
         assert checkSizeResults(expected1, result);
         assert checkUnorderedResults(expected1, result);
         checkResultSchema(result, "T1.A", "T1.D", "T2.A", "T2.E");
