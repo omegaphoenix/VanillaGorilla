@@ -126,8 +126,9 @@ public abstract class AbstractPlannerImpl implements Planner {
             result.prepare();
             break;
         case RIGHT_OUTER:
-            result = new NestedLoopJoinNode(right, left, joinType.LEFT_OUTER, predicate);
+            result = new NestedLoopJoinNode(left, right, joinType.LEFT_OUTER, predicate);
             result.prepare();
+            ((ThetaJoinNode) result).swap();
             break;
         case FULL_OUTER:
             throw new UnsupportedOperationException(

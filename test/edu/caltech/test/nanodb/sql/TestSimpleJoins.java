@@ -121,7 +121,7 @@ public class TestSimpleJoins extends SqlTestCase {
             new TupleLiteral(null, null, 2, 20),
             new TupleLiteral(null, null, 3, 30),
             new TupleLiteral(null, null, 3, 0),
-            new TupleLiteral(null, null, 4, 10),
+            new TupleLiteral(null, null, 4, 40),
             new TupleLiteral(null, null, 5, 50),
             new TupleLiteral(null, null, 6, 60),
             new TupleLiteral(null, null, 7, 70),
@@ -153,7 +153,7 @@ public class TestSimpleJoins extends SqlTestCase {
                 "SELECT * FROM test_sj_t1 t1 RIGHT JOIN test_empty1 e ON t1.a = e.a", true);
         assert checkSizeResults(expected1, result);
         assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "E.A", "E.D", "T1.A", "T1.B");
+        checkResultSchema(result, "T1.A", "T1.B", "E.A", "E.D");
 
         // Left join contain the values in T1, with nulls with the empty table columns.
         result = server.doCommand(
