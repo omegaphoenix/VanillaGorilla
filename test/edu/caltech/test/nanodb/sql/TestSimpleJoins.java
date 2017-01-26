@@ -70,7 +70,7 @@ public class TestSimpleJoins extends SqlTestCase {
         };
         assert checkSizeResults(expected2, result);
         assert checkUnorderedResults(expected2, result);
-        checkResultSchema(result, "A", "T1.B", "T3.C", "T3.D");
+        checkResultSchema(result, "T1.A", "T1.B", "T3.A", "T3.C", "T3.D");
     }
 
     /**
@@ -90,14 +90,14 @@ public class TestSimpleJoins extends SqlTestCase {
 
         // Left Join should be empty.
         result = server.doCommand(
-                "SELECT * FROM test_empty1 e LEFT JOIN test_sj_t1 t1;", true);
+                "SELECT * FROM test_empty1 e LEFT JOIN test_sj_t1 t1", true);
         assert checkSizeResults(expected1, result);
         assert checkUnorderedResults(expected1, result);
         checkResultSchema(result, "E.A", "E.D", "T1.A", "T1.B");
 
         // Right join contain the values in T1, with nulls with the empty table columns.
         result = server.doCommand(
-                "SELECT * FROM test_empty1 e RIGHT JOIN test_sj_t1 t1;", true);
+                "SELECT * FROM test_empty1 e RIGHT JOIN test_sj_t1 t1", true);
         TupleLiteral[] expected2 = {
             new TupleLiteral(null, null, 1, 10),
             new TupleLiteral(null, null, 2, 20),
@@ -132,14 +132,14 @@ public class TestSimpleJoins extends SqlTestCase {
 
         // Right Join should be empty.
         result = server.doCommand(
-                "SELECT * FROM test_sj_t1 t1 RIGHT JOIN test_empty1 e;", true);
+                "SELECT * FROM test_sj_t1 t1 RIGHT JOIN test_empty1 e", true);
         assert checkSizeResults(expected1, result);
         assert checkUnorderedResults(expected1, result);
         checkResultSchema(result, "T1.A", "T1.B", "E.A", "E.D");
 
         // Left join contain the values in T1, with nulls with the empty table columns.
         result = server.doCommand(
-                "SELECT * FROM test_sj_t1 t1 LEFT JOIN test_empty1 e;", true);
+                "SELECT * FROM test_sj_t1 t1 LEFT JOIN test_empty1 e", true);
         TupleLiteral[] expected2 = {
             new TupleLiteral(1, 10, null, null),
             new TupleLiteral(2, 20, null, null),
@@ -171,7 +171,8 @@ public class TestSimpleJoins extends SqlTestCase {
         // The first two tables are joined first, which means there will be
         // a column "A" without a table name, joined to the third table.
         result = server.doCommand(
-            "SELECT * FROM (test_sj_t1 t1 JOIN test_sj_t4 t4 ON t1.a = t4.a) JOIN test_sj_t5 t5", true);
+            "SELECT * FROM (test_sj_t1 t1 JOIN test_sj_t4 t4 ON t1.a = t4.a) LEFT JOIN test_empty1",
+            true);
         TupleLiteral[] expected1 = {
             new TupleLiteral(2, 20, 200, 2000),
             new TupleLiteral(5, 50, 600, 5000),
@@ -180,49 +181,5 @@ public class TestSimpleJoins extends SqlTestCase {
         assert checkSizeResults(expected1, result);
         assert checkUnorderedResults(expected1, result);
         checkResultSchema(result, "A", "T1.B", "T4.C", "T5.D");
-    }
-
-
-    /**
-     * This test performs joins with a <tt>USING</tt> clause, with three or
-     * more tables, verifying both the schema and the data that is returned.
-     * Joining this many tables ensures that joins will operate against
-     * columns without table names.
-     *
-     * @throws Exception if any query parsing or execution issues occur.
-     **/
-    public void testUsingJoinMultiTables() throws Throwable {
-        CommandResult result;
-
-        result = server.doCommand(
-            "SELECT * FROM (test_sj_t1 t1 JOIN test_sj_t4 t4 USING (A)) JOIN test_sj_t5 t5 USING (A)", true);
-        TupleLiteral[] expected1 = {
-            new TupleLiteral(2, 20, 200, 2000),
-            new TupleLiteral(5, 50, 600, 5000),
-            new TupleLiteral(6, 60, 500, 6000)
-        };
-        assert checkSizeResults(expected1, result);
-        assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "A", "T1.B", "T4.C", "T5.D");
-
-
-        result = server.doCommand(
-            "SELECT * FROM test_sj_t1 t1 JOIN (test_sj_t4 t4 JOIN test_sj_t5 t5 USING (A)) USING (A)", true);
-        assert checkSizeResults(expected1, result);
-        assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "A", "T1.B", "T4.C", "T5.D");
-
-
-        result = server.doCommand(
-            "SELECT * FROM (test_sj_t1 t1 JOIN test_sj_t4 t4 USING (A)) " +
-                "JOIN (test_sj_t5 t5 JOIN test_sj_t6 t6 USING (A)) USING (A)", true);
-        TupleLiteral[] expected2 = {
-            new TupleLiteral(2, 20, 200, 2000, 20000),
-            new TupleLiteral(5, 50, 600, 5000, 60000),
-            new TupleLiteral(6, 60, 500, 6000, 50000)
-        };
-        assert checkSizeResults(expected2, result);
-        assert checkUnorderedResults(expected2, result);
-        checkResultSchema(result, "A", "T1.B", "T4.C", "T5.D", "T6.E");
     }
 }
