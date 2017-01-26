@@ -212,9 +212,7 @@ public class TestSimpleJoins extends SqlTestCase {
     public void testSimpleJoinMultiTables() throws Throwable {
         CommandResult result;
 
-        // NATURAL JOIN three tables with a common column name A.
-        // The first two tables are joined first, which means there will be
-        // a column "A" without a table name, joined to the third table.
+        // Join T1 and T4 first, then left join with an empty table.
         result = server.doCommand(
             "SELECT * FROM (test_sj_t1 t1 JOIN test_sj_t4 t4 ON t1.a = t4.a) LEFT JOIN test_empty1 e ON t1.a = e.a",
             true);
