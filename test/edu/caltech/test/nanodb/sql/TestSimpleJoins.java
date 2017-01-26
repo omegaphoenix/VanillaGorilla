@@ -198,7 +198,7 @@ public class TestSimpleJoins extends SqlTestCase {
 
         // Left join contain the values in T1, with nulls with the empty table columns.
         result = server.doCommand(
-                "SELECT * FROM test_empty1 t1 LEFT JOIN test_empty2 t1 on t1.a = t2.a", true);
+                "SELECT * FROM test_empty1 t1 LEFT JOIN test_empty2 t2 on t1.a = t2.a", true);
         assert checkSizeResults(expected1, result);
         assert checkUnorderedResults(expected1, result);
         checkResultSchema(result, "T1.A", "T1.D", "T2.A", "T2.E");
@@ -251,7 +251,7 @@ public class TestSimpleJoins extends SqlTestCase {
                 new TupleLiteral(5, 50, 5, 60, 500),
                 new TupleLiteral(6, 60, 6, 50, 600),
                 new TupleLiteral(7, 70, 7, 70, 700),
-                new TupleLiteral(8, 80, 8, 80, 800),
+                new TupleLiteral(8, 80, 8, 80, 800)
         };
         assert checkSizeResults(expected1, result);
         assert checkUnorderedResults(expected1, result);
@@ -272,7 +272,7 @@ public class TestSimpleJoins extends SqlTestCase {
                 new TupleLiteral(7, 70, 7, 70, 700),
                 new TupleLiteral(8, 80, 8, 80, 800),
                 new TupleLiteral(null, null, 9, 100, 900),
-                new TupleLiteral(null, null, 10, 90, 1000),
+                new TupleLiteral(null, null, 10, 90, 1000)
         };
         assert checkSizeResults(expected2, result);
         assert checkUnorderedResults(expected1, result);
