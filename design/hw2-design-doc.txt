@@ -1,0 +1,252 @@
+CS122 Assignment 2 - SQL Planning and Joins - Design Document
+=============================================================
+
+A:  Logistics
+-------------
+
+A1.  List your team name and the people who worked on this assignment.
+
+    VanillaGorilla
+
+    Justin Leong
+    Matthew Jin
+    David Qu
+
+A2.  Specify the repository URL, tag name and commit-hash of the Git version
+     you are submitting for your assignment.  (You can list the commit hashes
+     of your repository tags with this command:  git show-ref --tags)
+
+     Repository URL:  https://github.com/omegaphoenix/VanillaGorilla
+     Tag name:        hw2
+     Commit hash:     fb37a52b4e5ed4e0f9aa8235ead4b82948222d29
+
+
+A3.  Specify any late tokens you are applying to this assignment, or
+     "none" if no late tokens.
+
+     None.
+
+A4.  Briefly describe what parts of the assignment each teammate focused on.
+
+     Matthew focused on grouping and aggregation and some simple parts of
+     SimplePlanner.
+     David focused on unit tests and the other parts of SimplePlanner
+     including project, makeJoinPlan(), as well as debugging nested loop join.
+     Justin focused on nested loop join and natural join.
+     Everyone helped debug each other's problems.
+
+B:  Simple Planner
+------------------
+
+B1.  Without going into the details of how you handle grouping and
+     aggregation or joins, list the general sequence of steps that your
+     planner's makePlan() method follows to translate a SQL query into
+     an execution plan.
+
+     First, we create the select or join nodes by looking at the FROM clause.
+     Then, we look for aggregate functions and group by expressions, creating a
+     HashedGroupAggregateNode. Then, we create a ProjectNode, and lastly a
+     SortNode for the ORDER BY expression (if it exists). At each stage, the
+     node takes in the previously created nodes, so that the top level node is
+     the SortNode.
+
+B2.  Does your planner try to simplify plans in specific circumstances,
+     e.g. when a "trivial project" is used (i.e. "SELECT * FROM ...") in
+     your planner?  Briefly enumerate all simplifications and optimizations
+     your planner employs.
+
+     If there is no from clause, our planner detects this immediately and then
+     looks for a trivial project, and proceeds from there. In the case there
+     is a from clause but there is a trivial project, the project logic is
+     skipped by a selClause.isTrivialProject() check. There are null checks
+     for having expressions as well. Additionally, if there is a from clause,
+     cases are split by join expression type, so if there is a simple select,
+     it uses the makeSimpleSelect() function.
+
+B3.  Describe how you generate the execution-plan fragment for the query's
+     FromClause.  Make sure to touch on what you do in the three cases your
+     planner is expected to handle - tables, subqueries in the FROM clause,
+     and joins.
+
+     If the FROM clause is present, we conduct a few checks. If the FROM clause
+     is a base table, then we make a select node to pull the relevant
+     tuples from the table. If it is a join expression, then we traverse it to
+     make sure there are no aggregate functions within the ON clause, and then
+     make our join plan from the clause. If there is a subquery nested within,
+     then we recursively create the subquery plan. These nodes are passed into
+     whatever other plan nodes that come next.
+
+B4.  Describe how you implemented support for grouping and aggregation.
+     Be sure to note any variations from the approach outlined in class,
+     if there are any.
+
+     AggregateProcessor implements ExpressionProcessor, giving us a way of
+     traversing expressions and looking for aggregate functions.
+     AggregateProcessor can raise IllegalArgumentExceptions if it finds
+     aggregate functions where they should not be (inside other aggregate
+     functions or when used to traverse WHERE/ON clauses). Other than this, it
+     renames aggregate functions with a ColumnValue, which can later be
+     resolved with the ProjectNode's evaluate. The processor keeps track of all
+     the renamed aggregate functions, which is then plugged into a
+     HashedGroupAggregateNode along with the corresponding group by values.
+
+B5.  Describe how you implemented support for natural joins, and joins with
+     a USING clause.  Focus on how you handle challenging cases, such as
+     t1(a, b) NATURAL JOIN t2(a, c) NATURAL JOIN t3(a, d).
+
+     We implemented a project operation which would modify the table names
+     which are determined from the FromClause when it parses the two schemas.
+     After the nested-loop join is performed, if it was a natural join or
+     had the using keyword, the project node is created using the nested-loop
+     join node as one of its children.
+
+C:  Nested-Loop Join
+--------------------
+
+C1.  The join algorithm stated in class is really only suitable for
+     materialized evaluation, where the entire result is generated by the
+     algorithm.  It is completely unsuitable for pipelined evaluation,
+     where results are generated row by row.
+
+     Summarize how your implementation works for inner joins, using
+     pseudocode to show how rows are considered and returned as the
+     algorithm executes, and what state must be saved so that the
+     operation can resume at the appropriate place when the next row
+     must be returned.
+
+     Pseudo-code in Nested Loop format:
+     leftChild.init
+     leftTuple = leftChild.next()
+     while leftTuple is not null:
+         rightChild.init
+         leftTuple = leftChild.next()
+         while rightTuple is not null:
+             if pred(leftTuple, rightTuple):
+                 return join(leftTuple, rightTuple) // Continue after returning
+                 rightTuple = rightChild.next()
+         leftTuple = leftChild.next()
+
+     Pseudo-code as two functions (same logic flow but closer to how we implement it):
+     // Global variables
+     rightTuple, leftTuple, leftChild, rightChild
+
+     getNextTuple:
+     // Set leftTuple and rightTuple to be next tuples to be joined
+     while (getTuplesToJoin())
+         join(lefttuple, rightTuple)
+
+     getTuplesToJoin:
+     if leftTuple is not null and not done:
+         leftChild.init
+         leftTuple = leftChild.next()
+     while leftTuple is not null:
+         rightChild.init
+         leftTuple = leftChild.next()
+         while rightTuple is not null
+             if pred(leftTuple, rightTuple):
+                 return join(leftTuple, rightTuple)
+             else:
+                 rightTuple = rightChild.next()
+         leftTuple = leftChild.next()
+
+     The leftTuple and rightTuple must be saved so that the algorithm can
+     resume at the appropriate place when the next row must be returned.
+
+     The leftTuple is incremented when rightTuple can't be incremented
+     anymore which means there are no rows left from rightChild and we
+     reset rightChild to iterate through it's tuples again.
+
+C2.  What tweaks did you need to introduce into the implementation for
+     left outer joins?  Keep your answer brief, but please also be specific.
+
+     We just added rightTuple == null to the predicate check and kept track
+     of the last leftTuple that we joined so that if we did not join the
+     current leftTuple when we finish iterating through the rightChild's
+     rows, then we will return a new tuple of (leftTuple, null). This
+     introduces a new state we have to keep track of which we call
+     prevLeftTuple.
+
+C3.  Same question as for C2, but for semijoins.
+
+     For semijoins, we increment leftTuple and reset rightTuple to the
+     first rightTuple as soon as we get one set of tuples that satisfy
+     the predicate.
+
+C4.  Same question as for C2, but for antijoins.
+
+     For antijoin, we only return if we reach the end of the inner loop
+     and no previous rightTuple has satisfied the predicate with the
+     current leftTuple. If any rightTuple satisfies the predicate,
+     we increment leftTuple and reset rightTuple.
+
+C5.  Enumerate your nested-loop join test cases, following this form:
+
+     * <test-case class name>.<test function>
+       <brief one-sentence description of what the test exercises>
+
+    TestSimpleJoins.testSimpleTablesNotEmpty()
+        Makes sure the data in test_sql.props has loaded properly.
+
+    TestSimpleJoins.testSimpleJoinTwoTables()
+        Tests inner joins, left joins, and right joins with two tables.
+
+    TestSimpleJoins.testSimpleJoinEmptyLeft()
+        Tests inner joins, left joins, and right joins when the left table is
+        empty.
+
+    TestSimpleJoins.testSimpleJoinEmptyRight()
+        Tests inner joins, left joins, and right joins when the right table is
+        empty.
+
+    TestSimpleJoins.testSimpleJoinBothEmpty()
+        Tests inner joins, left joins, and right joins when both tables are
+        empty.
+
+    TestSimpleJoins.testSimpleJoinMultiTables()
+        Tests a combination of inner join and outer joins.
+
+    TestSimpleJoins.testSimpleJoinEdgeCases()
+        Tests special cases including tables with multiple rows that match the
+        same join predicate, and multi-column join predicates.
+
+D:  Extra Credit [OPTIONAL]
+---------------------------
+
+If you implemented any extra-credit tasks for this assignment, describe
+them here.  The description should be like this, with stuff in "<>" replaced.
+(The value i starts at 1 and increments...)
+
+D<i>:  <one-line description>
+
+     <brief summary of what you did, including the specific classes that
+     we should look at for your implementation>
+
+     <brief summary of test-cases that demonstrate/exercise your extra work>
+
+E:  Feedback [OPTIONAL]
+-----------------------
+
+WE NEED YOUR FEEDBACK!  Thoughtful and constructive input will help us to
+improve future versions of the course.  These questions are OPTIONAL, and
+they obviously won't affect your grade in any way (including if you hate
+everything about the assignment and databases in general, or Donnie and/or
+the TAs in particular).  Feel free to answer as many or as few of them as
+you wish.
+
+NOTE:  If you wish to give anonymous feedback, a similar survey will be
+       made available on the Moodle.
+
+E1.  How many hours total did your team spend on this assignment?
+     (That is, the sum of each teammate's time spent on the assignment.)
+
+E2.  What parts of the assignment were most time-consuming?  Why?
+
+E3.  Did you find any parts of the assignment particularly instructive?
+     Correspondingly, did any parts feel like unnecessary busy-work?
+
+E4.  Did you particularly enjoy any parts of the assignment?  Were there
+     any parts that you particularly disliked?
+
+E5.  Do you have any suggestions for how future versions of the
+     assignment can be improved?
+

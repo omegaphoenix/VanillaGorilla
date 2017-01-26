@@ -4,6 +4,7 @@ package edu.caltech.nanodb.plannodes;
 import java.io.IOException;
 import java.util.List;
 
+import edu.caltech.nanodb.expressions.TupleLiteral;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.expressions.Expression;
@@ -28,6 +29,7 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
 
     /** Most recently retrieved tuple of the left relation. */
     private Tuple leftTuple;
+    private Tuple prevLeftTuple;
 
     /** Most recently retrieved tuple of the right relation. */
     private Tuple rightTuple;
@@ -167,6 +169,7 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
 
         done = false;
         leftTuple = null;
+        prevLeftTuple = null;
         rightTuple = null;
     }
 
@@ -181,12 +184,46 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
     public Tuple getNextTuple() throws IOException {
         if (done)
             return null;
-
         while (getTuplesToJoin()) {
-            if (canJoinTuples())
-                return joinTuples(leftTuple, rightTuple);
+            switch (joinType) {
+                case CROSS:
+                    return joinTuples(leftTuple, rightTuple);
+                case INNER:
+                    return joinTuples(leftTuple, rightTuple);
+                case LEFT_OUTER:
+                    // Check if we finished iterating through rightChild
+                    if (rightTuple == null) {
+                        // Output leftTuple attached null values if this
+                        // leftTuple hasn't been returned
+                        rightChild.initialize();
+                        Tuple currLeft = leftTuple;
+                        leftTuple = leftChild.getNextTuple();
+                        if (currLeft != prevLeftTuple) {
+                            prevLeftTuple = currLeft;
+                            return joinTuples(currLeft,
+                                    new TupleLiteral(rightSchema.numColumns()));
+                        }
+                        else {
+                            continue;
+                        }
+                    }
+                    else {
+                        prevLeftTuple = leftTuple;
+                        return joinTuples(leftTuple, rightTuple);
+                    }
+                case SEMIJOIN:
+                case ANTIJOIN:
+                    // Return current tuple and increment leftTuple
+                    Tuple currLeft = leftTuple;
+                    leftTuple = leftChild.getNextTuple();
+                    rightChild.initialize();
+                    return leftTuple;
+                case RIGHT_OUTER:
+                case FULL_OUTER:
+                default:
+                    throw new IOException("This type of join not supported by node.");
+            }
         }
-
         return null;
     }
 
@@ -199,8 +236,78 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
      *         {@code false} if no more pairs of tuples are available to join.
      */
     private boolean getTuplesToJoin() throws IOException {
-        // TODO:  Implement
+        if (done) {
+            return false;
+        }
+        // Initialize leftTuple
+        if (leftTuple == null) {
+            leftTuple = leftChild.getNextTuple();
+            if (leftTuple == null) {
+                return false;
+            }
+        }
+
+        // Get next rightTuple
+        rightTuple = rightChild.getNextTuple();
+
+        if (joinType == joinType.ANTIJOIN) {
+            while (leftTuple != null && rightTuple != null) {
+                // Matches at least one tuple on right
+                if (validTuples()) {
+                    // Check next left tuple
+                    leftTuple = leftChild.getNextTuple();
+                    rightChild.initialize();
+                }
+                rightTuple = rightChild.getNextTuple();
+            }
+            // No matches
+            return leftTuple != null;
+        }
+        else {
+            while (leftTuple != null) {
+                if (validTuples()) {
+                    return true;
+                }
+                // Increment rightTuple
+                if (rightTuple != null) {
+                    rightTuple = rightChild.getNextTuple();
+                }
+                // If we reached the end of rightChild, go back to to beginning
+                // and increment left tuple
+                else {
+                    rightChild.initialize();
+                    rightTuple = rightChild.getNextTuple();
+                    leftTuple = leftChild.getNextTuple();
+                }
+            }
+        }
         return false;
+    }
+
+
+    /**
+     * This helper function implements the logic that checks {@link #leftTuple}
+     * and {@link #rightTuple} based on the nested-loop logic.
+     *
+     * @return {@code true} if current tuples can be joined
+     *         {@code false} current tuples cannot be joined
+     */
+    private boolean validTuples() throws IOException {
+        switch (joinType) {
+            case CROSS:
+                return rightTuple != null;
+            case INNER:
+                return rightTuple != null && canJoinTuples();
+            case LEFT_OUTER:
+                return rightTuple == null || canJoinTuples();
+            case SEMIJOIN:
+                return rightTuple != null && canJoinTuples();
+            case ANTIJOIN:
+                return canJoinTuples();
+            default:
+                throw new IOException("This type of join not supported by node.");
+
+        }
     }
 
 
