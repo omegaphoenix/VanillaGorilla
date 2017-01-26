@@ -96,12 +96,70 @@ C1.  The join algorithm stated in class is really only suitable for
      operation can resume at the appropriate place when the next row
      must be returned.
 
+     Pseudo-code in Nested Loop format:
+     leftChild.init
+     leftTuple = leftChild.next()
+     while leftTuple is not null:
+         rightChild.init
+         leftTuple = leftChild.next()
+         while rightTuple is not null:
+             if pred(leftTuple, rightTuple):
+                 return join(leftTuple, rightTuple) // Continue after returning
+                 rightTuple = rightChild.next()
+         leftTuple = leftChild.next()
+
+     Pseudo-code as two functions (same logic flow but closer to how we implement it):
+     // Global variables
+     rightTuple, leftTuple, leftChild, rightChild
+
+     getNextTuple:
+     // Set leftTuple and rightTuple to be next tuples to be joined
+     while (getTuplesToJoin())
+         join(lefttuple, rightTuple)
+
+     getTuplesToJoin:
+     if leftTuple is not null and not done:
+         leftChild.init
+         leftTuple = leftChild.next()
+     while leftTuple is not null:
+         rightChild.init
+         leftTuple = leftChild.next()
+         while rightTuple is not null
+             if pred(leftTuple, rightTuple):
+                 return join(leftTuple, rightTuple)
+             else:
+                 rightTuple = rightChild.next()
+         leftTuple = leftChild.next()
+
+     The leftTuple and rightTuple must be saved so that the algorithm can
+     resume at the appropriate place when the next row must be returned.
+
+     The leftTuple is incremented when rightTuple can't be incremented
+     anymore which means there are no rows left from rightChild and we
+     reset rightChild to iterate through it's tuples again.
+
 C2.  What tweaks did you need to introduce into the implementation for
      left outer joins?  Keep your answer brief, but please also be specific.
 
+     We just added rightTuple == null to the predicate check and kept track
+     of the last leftTuple that we joined so that if we did not join the
+     current leftTuple when we finish iterating through the rightChild's
+     rows, then we will return a new tuple of (leftTuple, null). This
+     introduces a new state we have to keep track of which we call
+     prevLeftTuple.
+
 C3.  Same question as for C2, but for semijoins.
 
+     For semijoins, we increment leftTuple and reset rightTuple to the
+     first rightTuple as soon as we get one set of tuples that satisfy
+     the predicate.
+
 C4.  Same question as for C2, but for antijoins.
+
+     For antijoin, we only return if we reach the end of the inner loop
+     and no previous rightTuple has satisfied the predicate with the
+     current leftTuple. If any rightTuple satisfies the predicate,
+     we increment leftTuple and reset rightTuple.
 
 C5.  Enumerate your nested-loop join test cases, following this form:
 

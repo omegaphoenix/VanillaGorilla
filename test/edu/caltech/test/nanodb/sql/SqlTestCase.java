@@ -20,6 +20,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import edu.caltech.nanodb.expressions.ColumnName;
 import edu.caltech.nanodb.expressions.TupleComparator;
 import edu.caltech.nanodb.expressions.TupleLiteral;
 import edu.caltech.nanodb.relations.Tuple;
@@ -241,6 +242,7 @@ public class SqlTestCase {
             ColumnInfo colInfo = schema.getColumnInfo(i);
             assert ObjectUtils.equals(colInfo.getTableName(), tblName) :
                 "Expected column " + i + " to have table-name " + tblName;
+
             assert ObjectUtils.equals(colInfo.getColumnName().getColumnName(), colName) :
                 "Expected column " + i + " to have column-name " + colName;
         }
