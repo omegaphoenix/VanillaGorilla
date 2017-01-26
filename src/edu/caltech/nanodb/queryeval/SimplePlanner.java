@@ -1,5 +1,6 @@
 package edu.caltech.nanodb.queryeval;
 
+
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public class SimplePlanner extends AbstractPlannerImpl {
      */
     @Override
     public PlanNode makePlan(SelectClause selClause,
-        List<SelectClause> enclosingSelects) throws IOException, IllegalArgumentException {
+        List<SelectClause> enclosingSelects) throws IOException {
         AggregateProcessor aggregateProcessor = new AggregateProcessor(true);
         AggregateProcessor noAggregateProcessor = new AggregateProcessor(false);
 
@@ -65,10 +66,7 @@ public class SimplePlanner extends AbstractPlannerImpl {
 
             if (fromClause.getClauseType() == FromClause.ClauseType.JOIN_EXPR) {
                 Expression e = fromClause.getOnExpression();
-                e.traverse(aggregateProcessor);
-                if (aggregateProcessor.currentExprHasAggr) {
-                    throw new IllegalArgumentException("Join on expression contains aggregate function");
-                }
+                e.traverse(noAggregateProcessor);
             }
 
             // If from clause is a base table, simply do a file scan.
@@ -117,10 +115,7 @@ public class SimplePlanner extends AbstractPlannerImpl {
             }
 
             if (whereExpr != null) {
-                whereExpr.traverse(aggregateProcessor);
-                if (aggregateProcessor.currentExprHasAggr) {
-                    throw new IllegalArgumentException("Where expression contains aggregate function");
-                }
+                whereExpr.traverse(noAggregateProcessor);
             }
 
             if (selClause.getGroupByExprs().size() != 0 || aggregateProcessor.aggregates.size() != 0) {

@@ -1,7 +1,5 @@
 package edu.caltech.nanodb.expressions;
 
-import java.io.IOException;
-
 import java.util.Map;
 import java.util.HashMap;
 
@@ -23,7 +21,7 @@ public class AggregateProcessor implements ExpressionProcessor {
         }
     }
 
-    public void enter(Expression e) throws IllegalArgumentException {
+    public void enter(Expression e) {
         if (e instanceof FunctionCall) {
             FunctionCall call = (FunctionCall) e;
             ScalarFunction f = call.getFunction();
@@ -40,7 +38,7 @@ public class AggregateProcessor implements ExpressionProcessor {
         return;
     }
 
-    public Expression leave(Expression e) throws IllegalArgumentException{
+    public Expression leave(Expression e) {
         if (e instanceof FunctionCall) {
             FunctionCall call = (FunctionCall) e;
             ScalarFunction f = call.getFunction();
