@@ -27,7 +27,8 @@ A4.  Briefly describe what parts of the assignment each teammate focused on.
 
      Matthew focused on grouping and aggregation and some simple parts of
      SimplePlanner.
-     David focused on unit tests and the other parts of SimplePlanner.
+     David focused on unit tests and the other parts of SimplePlanner
+     including project, makeJoinPlan(), as well as debugging nested loop join.
      Justin focused on nested loop join and natural join.
      Everyone helped debug each other's problems.
 
@@ -50,6 +51,14 @@ B2.  Does your planner try to simplify plans in specific circumstances,
      e.g. when a "trivial project" is used (i.e. "SELECT * FROM ...") in
      your planner?  Briefly enumerate all simplifications and optimizations
      your planner employs.
+
+     If there is no from clause, our planner detects this immediately and then
+     looks for a trivial project, and proceeds from there. In the case there
+     is a from clause but there is a trivial project, the project logic is
+     skipped by a selClause.isTrivialProject() check. There are null checks
+     for having expressions as well. Additionally, if there is a from clause,
+     cases are split by join expression type, so if there is a simple select,
+     it uses the makeSimpleSelect() function.
 
 B3.  Describe how you generate the execution-plan fragment for the query's
      FromClause.  Make sure to touch on what you do in the three cases your
