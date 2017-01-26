@@ -139,7 +139,7 @@ public abstract class AbstractPlannerImpl implements Planner {
             result.prepare();
             break;
         case RIGHT_OUTER:
-            result = new NestedLoopJoinNode(right, left, joinType.LEFT_OUTER, predicate);
+            result = new NestedLoopJoinNode(left, right, joinType.LEFT_OUTER, predicate);
             result.prepare();
             /*
             if (!needPostProject) {
@@ -147,8 +147,8 @@ public abstract class AbstractPlannerImpl implements Planner {
                 projectVals = new ArrayList<SelectValue>();
                 needPostProject = true;
             }
-            ((ThetaJoinNode)result).swap();
             */
+            ((ThetaJoinNode) result).swap();
             break;
         case FULL_OUTER:
             throw new UnsupportedOperationException(

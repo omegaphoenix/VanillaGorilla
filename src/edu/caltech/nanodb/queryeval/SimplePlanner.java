@@ -13,6 +13,15 @@ import edu.caltech.nanodb.queryast.SelectClause;
 import edu.caltech.nanodb.queryast.SelectValue;
 
 import edu.caltech.nanodb.expressions.Expression;
+import edu.caltech.nanodb.expressions.AggregateProcessor;
+
+import edu.caltech.nanodb.plannodes.FileScanNode;
+import edu.caltech.nanodb.plannodes.PlanNode;
+import edu.caltech.nanodb.plannodes.ProjectNode;
+import edu.caltech.nanodb.plannodes.SelectNode;
+import edu.caltech.nanodb.plannodes.HashedGroupAggregateNode;
+
+import edu.caltech.nanodb.plannodes.SimpleFilterNode;
 import edu.caltech.nanodb.expressions.OrderByExpression;
 
 import edu.caltech.nanodb.relations.TableInfo;
@@ -45,15 +54,25 @@ public class SimplePlanner extends AbstractPlannerImpl {
     @Override
     public PlanNode makePlan(SelectClause selClause,
         List<SelectClause> enclosingSelects) throws IOException {
+        AggregateProcessor aggregateProcessor = new AggregateProcessor(true);
+        AggregateProcessor noAggregateProcessor = new AggregateProcessor(false);
+
         // PlanNode to return.
         PlanNode result = null;
 
         FromClause fromClause = selClause.getFromClause();
+        Expression whereExpr = selClause.getWhereExpr();
         if (fromClause != null) {
+
+            if (fromClause.getClauseType() == FromClause.ClauseType.JOIN_EXPR) {
+                Expression e = fromClause.getOnExpression();
+                e.traverse(noAggregateProcessor);
+            }
+
             // If from clause is a base table, simply do a file scan.
             if (fromClause.isBaseTable()) {
                 result = makeSimpleSelect(fromClause.getTableName(),
-                        selClause.getWhereExpr(), null);
+                        whereExpr, null);
             }
             // Handle joins.
             else if (fromClause.isJoinExpr()) {
@@ -81,6 +100,32 @@ public class SimplePlanner extends AbstractPlannerImpl {
         // Check to see for trivial project (SELECT * FROM ...)
         if (!selClause.isTrivialProject()) {
             List<SelectValue> selectValues = selClause.getSelectValues();
+
+            for (SelectValue sv : selectValues) {
+                if (!sv.isExpression())
+                    continue;
+                Expression e = sv.getExpression().traverse(aggregateProcessor);
+                sv.setExpression(e);
+            }
+
+            Expression havingExpr = selClause.getHavingExpr();
+            if (havingExpr != null) {
+                Expression e = havingExpr.traverse(aggregateProcessor);
+                selClause.setHavingExpr(e);
+            }
+
+            if (whereExpr != null) {
+                whereExpr.traverse(noAggregateProcessor);
+            }
+
+            if (selClause.getGroupByExprs().size() != 0 || aggregateProcessor.aggregates.size() != 0) {
+                result = new HashedGroupAggregateNode(result, selClause.getGroupByExprs(), aggregateProcessor.aggregates);
+            }
+
+            if (havingExpr != null) {
+                result = new SimpleFilterNode(result, havingExpr);
+            }
+
             // If there is no FROM clause, make a trivial ProjectNode()
             if (fromClause == null) {
                 result = new ProjectNode(selectValues);

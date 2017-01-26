@@ -195,13 +195,16 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
                     if (rightTuple == null) {
                         // Output leftTuple attached null values if this
                         // leftTuple hasn't been returned
-                        if (leftTuple != prevLeftTuple) {
-                            prevLeftTuple = leftTuple;
-                            return joinTuples(leftTuple,
+                        rightChild.initialize();
+                        Tuple currLeft = leftTuple;
+                        leftTuple = leftChild.getNextTuple();
+                        if (currLeft != prevLeftTuple) {
+                            prevLeftTuple = currLeft;
+                            return joinTuples(currLeft,
                                     new TupleLiteral(rightSchema.numColumns()));
                         }
                         else {
-                            return null;
+                            continue;
                         }
                     }
                     else {
