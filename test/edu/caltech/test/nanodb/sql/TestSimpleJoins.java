@@ -58,14 +58,14 @@ public class TestSimpleJoins extends SqlTestCase {
         result = server.doCommand(
             "SELECT * FROM test_sj_t1 t1 LEFT JOIN test_sj_t3 t3 ON t1.a = t3.a", true);
         TupleLiteral[] expected2 = {
-            new TupleLiteral(1, 10, 1, null, null),
+            new TupleLiteral(1, 10, null, null, null),
             new TupleLiteral(2, 20, 2, 200, 2000),
             new TupleLiteral(3, 0, 3, 300, 3000),
             new TupleLiteral(3, 30, 3, 300, 3000),
-            new TupleLiteral(4, 40, 4, null, null),
+            new TupleLiteral(4, 40, null, null, null),
             new TupleLiteral(5, 50, 5, 500, 5000),
             new TupleLiteral(6, 60, 6, 600, 6000),
-            new TupleLiteral(7, 70, 7, null, null),
+            new TupleLiteral(7, 70, null, null, null),
             new TupleLiteral(8, 80, 8, 800, 8000)
         };
         assert checkSizeResults(expected2, result);
@@ -76,15 +76,15 @@ public class TestSimpleJoins extends SqlTestCase {
         result = server.doCommand(
                 "SELECT * FROM test_sj_t1 t1 RIGHT JOIN test_sj_t3 t3 ON t1.a = t3.a", true);
         TupleLiteral[] expected3 = {
-            new TupleLiteral(0, null, 0, 0),
-            new TupleLiteral(2, 20, 200, 2000),
-            new TupleLiteral(3, 0, 300, 3000),
-            new TupleLiteral(3, 30, 300, 3000),
-            new TupleLiteral(5, 50, 500, 5000),
-            new TupleLiteral(6, 60, 600, 6000),
-            new TupleLiteral(8, 80, 800, 8000),
-            new TupleLiteral(9, null, 900, 9000),
-            new TupleLiteral(11, null, 1100, 11000)
+            new TupleLiteral(null, null, 0, 0, 0),
+            new TupleLiteral(2, 20, 2, 200, 2000),
+            new TupleLiteral(3, 0, 3, 300, 3000),
+            new TupleLiteral(3, 30, 3, 300, 3000),
+            new TupleLiteral(5, 50, 5, 500, 5000),
+            new TupleLiteral(6, 60, 6, 600, 6000),
+            new TupleLiteral(8, 80, 7, 800, 8000),
+            new TupleLiteral(null, null, 900, 9000),
+            new TupleLiteral(null, null, 1100, 11000)
         };
         assert checkSizeResults(expected3, result);
         assert checkUnorderedResults(expected3, result);
@@ -129,7 +129,7 @@ public class TestSimpleJoins extends SqlTestCase {
         };
         assert checkSizeResults(expected2, result);
         assert checkUnorderedResults(expected2, result);
-        checkResultSchema(result, "T1.A", "T1.B", "E.A", "E.D");
+        checkResultSchema(result, "E.A", "E.D", "T1.A", "T1.B");
     }
 
 
