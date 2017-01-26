@@ -108,8 +108,8 @@ public abstract class AbstractPlannerImpl implements Planner {
 
             if (fromClause.isRenamed()) {
                 result = new RenameNode(result, fromClause.getResultName());
-                result.prepare();
             }
+            result.prepare();
             return result;
         }
 
@@ -136,12 +136,10 @@ public abstract class AbstractPlannerImpl implements Planner {
         case ANTIJOIN:
         case SEMIJOIN:
             result = new NestedLoopJoinNode(left, right, joinType, predicate);
-            result.prepare();
             break;
         case RIGHT_OUTER:
             result = new NestedLoopJoinNode(left, right, joinType.LEFT_OUTER, predicate);
             ((ThetaJoinNode) result).swap();
-            result.prepare();
             break;
         case FULL_OUTER:
             throw new UnsupportedOperationException(
@@ -153,9 +151,9 @@ public abstract class AbstractPlannerImpl implements Planner {
             projectVals = fromClause.getComputedSelectValues();
             if (projectVals != null) {
                 result = new ProjectNode(result, projectVals);
-                result.prepare();
             }
         }
+        result.prepare();
         return result;
     }
 }
