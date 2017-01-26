@@ -65,26 +65,47 @@ C1.  The join algorithm stated in class is really only suitable for
      operation can resume at the appropriate place when the next row
      must be returned.
 
+     Pseudo-code in Nested Loop format:
      leftChild.init
      leftTuple = leftChild.next()
-     MainLoop:
-     while leftTuple is not null
+     while leftTuple is not null:
+         rightChild.init
+         leftTuple = leftChild.next()
+         while rightTuple is not null:
+             if pred(leftTuple, rightTuple):
+                 return join(leftTuple, rightTuple) // Continue after returning
+                 rightTuple = rightChild.next()
+         leftTuple = leftChild.next()
+
+     Pseudo-code as two functions (same logic flow but closer to how we implement it):
+     // Global variables
+     rightTuple, leftTuple, leftChild, rightChild
+
+     getNextTuple:
+     // Set leftTuple and rightTuple to be next tuples to be joined
+     while (getTuplesToJoin())
+         join(lefttuple, rightTuple)
+
+     getTuplesToJoin:
+     if leftTuple is not null and not done:
+         leftChild.init
+         leftTuple = leftChild.next()
+     while leftTuple is not null:
          rightChild.init
          leftTuple = leftChild.next()
          while rightTuple is not null
-             if pred(leftTuple, rightTuple)
-                 return join(leftTuple, rightTuple) // Continue after returning
+             if pred(leftTuple, rightTuple):
+                 return join(leftTuple, rightTuple)
+             else:
                  rightTuple = rightChild.next()
-                 GOTO MainLoop
          leftTuple = leftChild.next()
-         GOTO MainLoop
 
-    The leftTuple and rightTuple must be saved so that the algorithm can
-    resume at the appropriate place when the next row must be returned.
+     The leftTuple and rightTuple must be saved so that the algorithm can
+     resume at the appropriate place when the next row must be returned.
 
-    The leftTuple is incremented when rightTuple can't be incremented
-    anymore which means there are no rows left from rightChild and we
-    reset rightChild to iterate through it's tuples again.
+     The leftTuple is incremented when rightTuple can't be incremented
+     anymore which means there are no rows left from rightChild and we
+     reset rightChild to iterate through it's tuples again.
 
 C2.  What tweaks did you need to introduce into the implementation for
      left outer joins?  Keep your answer brief, but please also be specific.
