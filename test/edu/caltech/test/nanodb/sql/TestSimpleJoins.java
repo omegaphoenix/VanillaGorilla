@@ -175,6 +175,36 @@ public class TestSimpleJoins extends SqlTestCase {
     }
 
     /**
+     * This test checks for joins where both tables are empty.
+     *
+     * @throws Exception if any query parsing or execution issues occur.
+     **/
+    public void testSimpleJoinBothEmpty() throws Throwable {
+        CommandResult result;
+        // Inner Join
+        result = server.doCommand(
+                "SELECT * FROM test_empty1 t1 JOIN test_empty2 t2 ON t1.a = t2.a", true);
+        TupleLiteral[] expected1 = {};
+        assert checkSizeResults(expected1, result);
+        assert checkUnorderedResults(expected1, result);
+        checkResultSchema(result, "T1.A", "T1.D", "T2.A", "T2.E");
+
+        // Right Join should be empty.
+        result = server.doCommand(
+                "SELECT * FROM test_empty1 t1 RIGHT JOIN test_empty2 t1 on t1.a = t2.a", true);
+        assert checkSizeResults(expected1, result);
+        assert checkUnorderedResults(expected1, result);
+        checkResultSchema(result, "T1.A", "T1.D", "T2.A", "T2.E");
+
+        // Left join contain the values in T1, with nulls with the empty table columns.
+        result = server.doCommand(
+                "SELECT * FROM test_empty1 t1 LEFT JOIN test_empty2 t1 on t1.a = t2.a", true);
+        assert checkSizeResults(expected1, result);
+        assert checkUnorderedResults(expected1, result);
+        checkResultSchema(result, "T1.A", "T1.D", "T2.A", "T2.E");
+    }
+
+    /**
      * This test performs natural joins with three or more tables, verifying
      * both the schema and the data that is returned.  Joining this many
      * tables ensures that joins will operate against columns without table
