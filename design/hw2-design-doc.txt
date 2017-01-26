@@ -166,6 +166,31 @@ C5.  Enumerate your nested-loop join test cases, following this form:
      * <test-case class name>.<test function>
        <brief one-sentence description of what the test exercises>
 
+    TestSimpleJoins.testSimpleTablesNotEmpty()
+        Makes sure the data in test_sql.props has loaded properly.
+
+    TestSimpleJoins.testSimpleJoinTwoTables()
+        Tests inner joins, left joins, and right joins with two tables.
+
+    TestSimpleJoins.testSimpleJoinEmptyLeft()
+        Tests inner joins, left joins, and right joins when the left table is
+        empty.
+
+    TestSimpleJoins.testSimpleJoinEmptyRight()
+        Tests inner joins, left joins, and right joins when the right table is
+        empty.
+
+    TestSimpleJoins.testSimpleJoinBothEmpty()
+        Tests inner joins, left joins, and right joins when both tables are
+        empty.
+
+    TestSimpleJoins.testSimpleJoinMultiTables()
+        Tests a combination of inner join and outer joins.
+
+    TestSimpleJoins.testSimpleJoinEdgeCases()
+        Tests special cases including tables with multiple rows that match the
+        same join predicate, and multi-column join predicates.
+
 D:  Extra Credit [OPTIONAL]
 ---------------------------
 
