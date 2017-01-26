@@ -153,6 +153,7 @@ public abstract class AbstractPlannerImpl implements Planner {
             projectVals = fromClause.getComputedSelectValues();
             if (projectVals != null) {
                 result = new ProjectNode(result, projectVals);
+                result.prepare();
             }
         }
         return result;
