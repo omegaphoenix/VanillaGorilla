@@ -91,6 +91,12 @@ B5.  Describe how you implemented support for natural joins, and joins with
      a USING clause.  Focus on how you handle challenging cases, such as
      t1(a, b) NATURAL JOIN t2(a, c) NATURAL JOIN t3(a, d).
 
+     We implemented a project operation which would modify the table names
+     which are determined from the FromClause when it parses the two schemas.
+     After the nested-loop join is performed, if it was a natural join or
+     had the using keyword, the project node is created using the nested-loop
+     join node as one of its children.
+
 C:  Nested-Loop Join
 --------------------
 
