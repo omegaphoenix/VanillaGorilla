@@ -194,7 +194,7 @@ public class HashedGroupAggregateNode extends GroupAggregateNode {
             updateAggregates(groupAggregates);
 
             // Now that we are done with the current tuple, unpin it.
-            inputTuple.unpin();
+            // inputTuple.unpin();
         }
     }
 
