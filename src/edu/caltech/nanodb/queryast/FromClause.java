@@ -7,11 +7,15 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.caltech.nanodb.expressions.*;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.commands.InsertCommand;
 import edu.caltech.nanodb.commands.SelectCommand;
+import edu.caltech.nanodb.expressions.BooleanOperator;
+import edu.caltech.nanodb.expressions.ColumnValue;
+import edu.caltech.nanodb.expressions.CompareOperator;
+import edu.caltech.nanodb.expressions.Expression;
+import edu.caltech.nanodb.expressions.FunctionCall;
 import edu.caltech.nanodb.relations.ColumnInfo;
 import edu.caltech.nanodb.relations.JoinType;
 import edu.caltech.nanodb.relations.Schema;
@@ -840,6 +844,7 @@ public class FromClause {
             // Handle the shared columns.  We need to check that the
             // names aren't ambiguous on one or the other side.
             for (String name: commonCols) {
+                String finalName = "#T1." + name;
                 checkJoinColumn(context, "left", leftSchema, name);
                 checkJoinColumn(context, "right", leftSchema, name);
 
@@ -861,27 +866,21 @@ public class FromClause {
                 // Add a select-value that projects the appropriate source
                 // column down to the common column.
                 SelectValue selVal;
-                ColumnValue colVal;
-                ColumnName colName;
                 switch (joinType) {
                 case INNER:
                 case LEFT_OUTER:
                     // We can use the left column in the result, as it will
                     // always be non-NULL.
-                    colName = new ColumnName("#T1", lhsColInfo.getColumnName().getColumnName());
-                    colVal = new ColumnValue(colName);
                     selVal = new SelectValue(
-                        colVal, name);
+                        new ColumnValue(lhsColInfo.getColumnName()), finalName);
                     computedSelectValues.add(selVal);
                     break;
 
                 case RIGHT_OUTER:
                     // We can use the right column in the result, as it will
                     // always be non-NULL.
-                    colName = new ColumnName("#T1", lhsColInfo.getColumnName().getColumnName());
-                    colVal = new ColumnValue(colName);
                     selVal = new SelectValue(
-                        colVal, name);
+                        new ColumnValue(rhsColInfo.getColumnName()), finalName);
                     computedSelectValues.add(selVal);
                     break;
 
