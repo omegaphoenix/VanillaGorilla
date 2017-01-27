@@ -63,9 +63,7 @@ public class LimitOffsetNode extends PlanNode {
     }
 
     public void prepare(){
-        if (leftChild != null) {
-            leftChild.prepare();
-        }
+        leftChild.prepare();
         schema = leftChild.getSchema();
         cost = leftChild.getCost();
         stats = leftChild.getStats();
