@@ -17,14 +17,14 @@ A2.  Specify the repository URL, tag name and commit-hash of the Git version
      of your repository tags with this command:  git show-ref --tags)
 
      Repository URL:  https://github.com/omegaphoenix/VanillaGorilla
-     Tag name:        hw2
-     Commit hash:     fb37a52b4e5ed4e0f9aa8235ead4b82948222d29
+     Tag name:        hw2-1
+     Commit hash:     cf63c899e4e2fd3d6287694e18382d77cd73e081  
 
 
 A3.  Specify any late tokens you are applying to this assignment, or
      "none" if no late tokens.
 
-     None.
+     1
 
 A4.  Briefly describe what parts of the assignment each teammate focused on.
 
