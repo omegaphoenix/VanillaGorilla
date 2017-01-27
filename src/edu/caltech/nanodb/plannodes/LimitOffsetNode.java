@@ -67,6 +67,8 @@ public class LimitOffsetNode extends PlanNode {
             leftChild.prepare();
         }
         schema = leftChild.getSchema();
+        cost = leftChild.getCost();
+        stats = leftChild.getStats();
     }
 
     public Tuple getNextTuple() throws IOException {
