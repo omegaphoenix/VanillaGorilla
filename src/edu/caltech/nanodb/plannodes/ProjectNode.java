@@ -253,8 +253,15 @@ public class ProjectNode extends PlanNode {
 
                 // Apply any aliases here...
                 String alias = selVal.getAlias();
-                if (alias != null)
-                    colInfo = new ColumnInfo(alias, colInfo.getType());
+                if (alias != null) {
+                    if (alias.startsWith("#T")) {
+                        String[] names = alias.split("\\.");
+                        colInfo = new ColumnInfo(names[1], names[0], colInfo.getType());
+                    }
+                    else {
+                        colInfo = new ColumnInfo(alias, colInfo.getType());
+                    }
+                }
 
                 schema.addColumnInfo(colInfo);
                 nonWildcardColumnInfos.add(colInfo);
