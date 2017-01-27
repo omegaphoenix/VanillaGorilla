@@ -69,7 +69,6 @@ public class LimitOffsetNode extends PlanNode {
         schema = leftChild.getSchema();
     }
 
-
     public Tuple getNextTuple() throws IOException {
         while (offsetCount < offset) {
             advanceCurrentTuple();
@@ -122,7 +121,7 @@ public class LimitOffsetNode extends PlanNode {
 
     public int hashCode(){
         int hash = 17;
-        hash = 31 * hash + leftChild.hashCode();
+        hash = 31 * hash + leftChild.hashCode() + 23 * limit + 29 * offset;
         return hash;
     }
 
