@@ -225,6 +225,11 @@ public class ProjectNode extends PlanNode {
                     // This is a simple column-reference.  Pull out the schema
                     // and the statistics from the input.
                     ColumnValue colValue = (ColumnValue) expr;
+                    String alias = selVal.getAlias();
+                    String tableName = colValue.getColumnName().getTableName();
+                    if (alias != null && alias.startsWith("#T") && tableName != null && tableName.startsWith("#T")) {
+                        colValue.getColumnName().setTableName("T1");
+                    }
                     int colIndex = inputSchema.getColumnIndex(colValue.getColumnName());
                     colInfo = inputSchema.getColumnInfo(colIndex);
                     stats.add(inputStats.get(colIndex));
@@ -257,7 +262,7 @@ public class ProjectNode extends PlanNode {
                     if (alias.startsWith("#T")) {
                         String[] names = alias.split("\\.");
                         // colInfo = new ColumnInfo(names[1], names[0], colInfo.getType());
-                        colInfo = new ColumnInfo(names[1], colInfo.getTableName(), colInfo.getType());
+                        colInfo = new ColumnInfo(names[1], null, colInfo.getType());
                     }
                     else {
                         colInfo = new ColumnInfo(alias, colInfo.getType());
