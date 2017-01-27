@@ -100,6 +100,11 @@ B5.  Describe how you implemented support for natural joins, and joins with
      had the using keyword, the project node is created using the nested-loop
      join node as one of its children.
 
+     We partially implemented the nested natural joins but did not complete
+     it because we didn't remove the table name.  See commit hash
+     fcf4fa2e63d326eb554b5a9fd6f91ebe85ac484c
+     We added placeholder table names but didn't remove them in the results.
+
 C:  Nested-Loop Join
 --------------------
 
