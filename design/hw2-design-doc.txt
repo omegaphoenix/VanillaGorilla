@@ -223,6 +223,14 @@ D<i>:  <one-line description>
 
      <brief summary of test-cases that demonstrate/exercise your extra work>
 
+D1: Implemented LimitOffsetNode
+
+    Added LimitOffsetNode class under plannodes package that handles getting
+    limits and integrated into SimplePlanner's makePlan() function.
+
+    TestLimitOffset provides some tests for different limit and offset
+    values.
+
 E:  Feedback [OPTIONAL]
 -----------------------
 
