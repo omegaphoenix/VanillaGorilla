@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import edu.caltech.nanodb.expressions.ColumnName;
+import edu.caltech.nanodb.expressions.ColumnValue;
 import edu.caltech.nanodb.plannodes.*;
+import edu.caltech.nanodb.relations.ColumnInfo;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.queryast.FromClause;
