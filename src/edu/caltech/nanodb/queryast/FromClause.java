@@ -840,6 +840,7 @@ public class FromClause {
             // Handle the shared columns.  We need to check that the
             // names aren't ambiguous on one or the other side.
             for (String name: commonCols) {
+                ColumnName newCol;
                 checkJoinColumn(context, "left", leftSchema, name);
                 checkJoinColumn(context, "right", leftSchema, name);
 
@@ -852,16 +853,23 @@ public class FromClause {
 
                 // Add an equality test between the common columns to the join
                 // condition.
+                if (lhsColInfo.getColumnName().getTableName() == null) {
+                    newCol = lhsColInfo.getColumnName();
+                    lhsColInfo = new ColumnInfo(newCol.getColumnName(), "T1", lhsColInfo.getType());
+                }
+                if (rhsColInfo.getColumnName().getTableName() == null) {
+                    newCol = rhsColInfo.getColumnName();
+                    rhsColInfo = new ColumnInfo(newCol.getColumnName(), "T1", rhsColInfo.getType());
+                }
                 CompareOperator eq = new CompareOperator(CompareOperator.Type.EQUALS,
-                    new ColumnValue(lhsColInfo.getColumnName()),
-                    new ColumnValue(rhsColInfo.getColumnName()));
+                        new ColumnValue(lhsColInfo.getColumnName()),
+                        new ColumnValue(rhsColInfo.getColumnName()));
 
                 andOp.addTerm(eq);
 
                 // Add a select-value that projects the appropriate source
                 // column down to the common column.
                 SelectValue selVal;
-                ColumnName newCol;
                 switch (joinType) {
                 case INNER:
                 case LEFT_OUTER:

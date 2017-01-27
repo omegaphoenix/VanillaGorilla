@@ -256,7 +256,8 @@ public class ProjectNode extends PlanNode {
                 if (alias != null) {
                     if (alias.startsWith("#T")) {
                         String[] names = alias.split("\\.");
-                        colInfo = new ColumnInfo(names[1], names[0], colInfo.getType());
+                        // colInfo = new ColumnInfo(names[1], names[0], colInfo.getType());
+                        colInfo = new ColumnInfo(names[1], colInfo.getTableName(), colInfo.getType());
                     }
                     else {
                         colInfo = new ColumnInfo(alias, colInfo.getType());
