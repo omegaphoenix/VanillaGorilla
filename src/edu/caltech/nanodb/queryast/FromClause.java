@@ -61,6 +61,10 @@ import edu.caltech.nanodb.storage.TableManager;
  */
 public class FromClause {
 
+
+    /** The next placeholder table name number */
+    private int placeholder_num = 1;
+
     /**
      * This enumeration specifies the overall type of the <tt>FROM</tt>
      * clause.  Since different kinds of FROM clauses have different
@@ -825,6 +829,7 @@ public class FromClause {
      */
     private void buildJoinSchema(String context, Schema leftSchema,
         Schema rightSchema, Set<String> commonCols, Schema result) {
+        String num = Integer.toString(placeholder_num);
 
         computedJoinExpr = null;
         computedSelectValues = null;
@@ -855,11 +860,13 @@ public class FromClause {
                 // condition.
                 if (lhsColInfo.getColumnName().getTableName() == null) {
                     newCol = lhsColInfo.getColumnName();
-                    lhsColInfo = new ColumnInfo(newCol.getColumnName(), "T1", lhsColInfo.getType());
+                    lhsColInfo = new ColumnInfo(newCol.getColumnName(), "#T" + num, lhsColInfo.getType());
+                    placeholder_num++;
                 }
                 if (rhsColInfo.getColumnName().getTableName() == null) {
                     newCol = rhsColInfo.getColumnName();
-                    rhsColInfo = new ColumnInfo(newCol.getColumnName(), "T1", rhsColInfo.getType());
+                    rhsColInfo = new ColumnInfo(newCol.getColumnName(), "#T" + num, rhsColInfo.getType());
+                    placeholder_num++;
                 }
                 CompareOperator eq = new CompareOperator(CompareOperator.Type.EQUALS,
                         new ColumnValue(lhsColInfo.getColumnName()),
@@ -876,7 +883,7 @@ public class FromClause {
                     // We can use the left column in the result, as it will
                     // always be non-NULL.
                     newCol = lhsColInfo.getColumnName();
-                    name = "#T." + name;
+                    name = "#T" + num + "." + name;
                     selVal = new SelectValue(
                         new ColumnValue(newCol), name);
                     computedSelectValues.add(selVal);
@@ -886,7 +893,7 @@ public class FromClause {
                     // We can use the right column in the result, as it will
                     // always be non-NULL.
                     newCol = lhsColInfo.getColumnName();
-                    name = "#T." + name;
+                    name = "#T" + num + "." + name;
                     selVal = new SelectValue(
                         new ColumnValue(newCol), name);
                     computedSelectValues.add(selVal);

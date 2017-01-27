@@ -36,6 +36,10 @@ public abstract class AbstractPlannerImpl implements Planner {
     protected StorageManager storageManager;
 
 
+    /** The next placeholder table name number */
+    private int placeholder_num = 0;
+
+
     /** Sets the storage manager to be used during query planning. */
     public void setStorageManager(StorageManager storageManager) {
         this.storageManager = storageManager;
@@ -149,7 +153,8 @@ public abstract class AbstractPlannerImpl implements Planner {
         if (needPostProject) {
             projectVals = fromClause.getComputedSelectValues();
             if (projectVals != null) {
-                result = new ProjectNode(result, projectVals);
+                result = new ProjectNode(result, projectVals, placeholder_num);
+                placeholder_num++;
             }
         }
         result.prepare();
