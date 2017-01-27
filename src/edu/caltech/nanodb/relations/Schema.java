@@ -111,6 +111,16 @@ public class Schema implements Serializable, Iterable<ColumnInfo> {
     }
 
 
+    public void cleanPlaceholderNames() {
+        for (ColumnInfo col : columnInfos) {
+            String tableName = col.getTableName();
+            if (tableName.startsWith("#T")) {
+                col.getColumnName().setTableName(null);
+            }
+        }
+    }
+
+
     /**
      * Returns the number of columns in the schema.
      *
