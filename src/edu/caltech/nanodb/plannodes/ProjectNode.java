@@ -63,8 +63,32 @@ public class ProjectNode extends PlanNode {
     private Tuple currentTuple;
 
 
+    /** The next placeholder table name number */
+    private int placeholder_num = 0;
+
+
     /** True if we have finished pulling tuples from children. */
     private boolean done;
+
+
+    /**
+     * Constructs a ProjectNode that pulls tuples from a child node.
+     *
+     * @param leftChild the child to pull tuples from
+     * @param projectionSpec the set of expressions specifying how to project
+     *                       input tuples.
+     */
+    public ProjectNode(PlanNode leftChild, List<SelectValue> projectionSpec, int placeholder_num) {
+        // This node is a Project node.
+        super(OperationType.PROJECT);
+
+        // This node has a child, load child information.
+        this.leftChild = leftChild;
+
+        this.projectionSpec = projectionSpec;
+
+        this.placeholder_num = placeholder_num;
+    }
 
 
     /**
@@ -253,8 +277,20 @@ public class ProjectNode extends PlanNode {
 
                 // Apply any aliases here...
                 String alias = selVal.getAlias();
-                if (alias != null)
-                    colInfo = new ColumnInfo(alias, colInfo.getType());
+                if (alias != null) {
+                    if (alias.startsWith("#T")) {
+                        String[] names = alias.split("\\.");
+                        if (placeholder_num > 0) {
+                            colInfo = new ColumnInfo(names[1], names[0], colInfo.getType());
+                        }
+                        else {
+                            colInfo = new ColumnInfo(names[1], null, colInfo.getType());
+                        }
+                    }
+                    else {
+                        colInfo = new ColumnInfo(alias, colInfo.getType());
+                    }
+                }
 
                 schema.addColumnInfo(colInfo);
                 nonWildcardColumnInfos.add(colInfo);

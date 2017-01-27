@@ -7,15 +7,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import edu.caltech.nanodb.expressions.*;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.commands.InsertCommand;
 import edu.caltech.nanodb.commands.SelectCommand;
-import edu.caltech.nanodb.expressions.BooleanOperator;
-import edu.caltech.nanodb.expressions.ColumnValue;
-import edu.caltech.nanodb.expressions.CompareOperator;
-import edu.caltech.nanodb.expressions.Expression;
-import edu.caltech.nanodb.expressions.FunctionCall;
 import edu.caltech.nanodb.relations.ColumnInfo;
 import edu.caltech.nanodb.relations.JoinType;
 import edu.caltech.nanodb.relations.Schema;
@@ -64,6 +60,10 @@ import edu.caltech.nanodb.storage.TableManager;
  * @see SelectClause
  */
 public class FromClause {
+
+
+    /** The next placeholder table name number */
+    private int placeholder_num = 1;
 
     /**
      * This enumeration specifies the overall type of the <tt>FROM</tt>
@@ -829,6 +829,7 @@ public class FromClause {
      */
     private void buildJoinSchema(String context, Schema leftSchema,
         Schema rightSchema, Set<String> commonCols, Schema result) {
+        String num = Integer.toString(placeholder_num);
 
         computedJoinExpr = null;
         computedSelectValues = null;
@@ -844,6 +845,7 @@ public class FromClause {
             // Handle the shared columns.  We need to check that the
             // names aren't ambiguous on one or the other side.
             for (String name: commonCols) {
+                ColumnName newCol;
                 checkJoinColumn(context, "left", leftSchema, name);
                 checkJoinColumn(context, "right", leftSchema, name);
 
@@ -856,9 +858,19 @@ public class FromClause {
 
                 // Add an equality test between the common columns to the join
                 // condition.
+                if (lhsColInfo.getColumnName().getTableName() == null) {
+                    newCol = lhsColInfo.getColumnName();
+                    lhsColInfo = new ColumnInfo(newCol.getColumnName(), "#T" + num, lhsColInfo.getType());
+                    placeholder_num++;
+                }
+                if (rhsColInfo.getColumnName().getTableName() == null) {
+                    newCol = rhsColInfo.getColumnName();
+                    rhsColInfo = new ColumnInfo(newCol.getColumnName(), "#T" + num, rhsColInfo.getType());
+                    placeholder_num++;
+                }
                 CompareOperator eq = new CompareOperator(CompareOperator.Type.EQUALS,
-                    new ColumnValue(lhsColInfo.getColumnName()),
-                    new ColumnValue(rhsColInfo.getColumnName()));
+                        new ColumnValue(lhsColInfo.getColumnName()),
+                        new ColumnValue(rhsColInfo.getColumnName()));
 
                 andOp.addTerm(eq);
 
@@ -870,16 +882,20 @@ public class FromClause {
                 case LEFT_OUTER:
                     // We can use the left column in the result, as it will
                     // always be non-NULL.
+                    newCol = lhsColInfo.getColumnName();
+                    name = "#T" + num + "." + name;
                     selVal = new SelectValue(
-                        new ColumnValue(lhsColInfo.getColumnName()), name);
+                        new ColumnValue(newCol), name);
                     computedSelectValues.add(selVal);
                     break;
 
                 case RIGHT_OUTER:
                     // We can use the right column in the result, as it will
                     // always be non-NULL.
+                    newCol = lhsColInfo.getColumnName();
+                    name = "#T" + num + "." + name;
                     selVal = new SelectValue(
-                        new ColumnValue(rhsColInfo.getColumnName()), name);
+                        new ColumnValue(newCol), name);
                     computedSelectValues.add(selVal);
                     break;
 

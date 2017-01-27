@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import edu.caltech.nanodb.expressions.ColumnName;
+import edu.caltech.nanodb.expressions.ColumnValue;
 import edu.caltech.nanodb.plannodes.*;
+import edu.caltech.nanodb.relations.ColumnInfo;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.queryast.FromClause;
@@ -34,6 +37,10 @@ public abstract class AbstractPlannerImpl implements Planner {
 
     /** The storage manager used during query planning. */
     protected StorageManager storageManager;
+
+
+    /** The next placeholder table name number */
+    private int placeholder_num = 0;
 
 
     /** Sets the storage manager to be used during query planning. */
@@ -149,7 +156,8 @@ public abstract class AbstractPlannerImpl implements Planner {
         if (needPostProject) {
             projectVals = fromClause.getComputedSelectValues();
             if (projectVals != null) {
-                result = new ProjectNode(result, projectVals);
+                result = new ProjectNode(result, projectVals, placeholder_num);
+                placeholder_num++;
             }
         }
         result.prepare();
