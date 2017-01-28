@@ -1,0 +1,142 @@
+CS122 Assignment 3 - Table Statistics and Plan Costing - Design Document
+========================================================================
+
+A:  Logistics
+-------------
+
+A1.  List your team name and the people who worked on this assignment.
+
+     <team name>
+
+     <name>
+     <name>
+     ...
+
+A2.  Specify the repository URL, tag name and commit-hash of the Git version
+     you are submitting for your assignment.  (You can list the commit hashes
+     of your repository tags with this command:  git show-ref --tags)
+
+     Repository URL:  <url>
+     Tag name:        <tag>
+     Commit hash:     <hash>
+
+A3.  Specify any late tokens you are applying to this assignment, or
+     "none" if no late tokens.
+
+A4.  Briefly describe what parts of the assignment each teammate focused on.
+
+B:  Statistics Collection
+-------------------------
+
+B1.  Using pseudocode, summarize the implementation of your HeapTupleFile
+     analyze() function.
+
+C:  Plan Costing Implementation
+-------------------------------
+
+C1.  Briefly describe how you estimate the number of tuples and the cost
+     of a file-scan plan node.  What factors does your cost include?
+
+C2.  Same question as for C1, but for simple filter nodes.
+
+C3.  Same question as for C1, but for nested-loop joins.
+
+D:  Costing SQL Queries
+-----------------------
+
+Answer these questions after you have loaded the stores-28K.sql data, and
+have analyzed all of the tables in that schema.
+
+D1.  Paste the output of running:  EXPLAIN SELECT * FROM cities;
+     Do not include debug lines, just the output of the command itself.
+
+D2.  What is the estimated number of tuples that will be produced by each
+     of these queries:
+
+     SELECT * FROM cities WHERE population > 1000000;
+
+     <paste output here>
+
+     SELECT * FROM cities WHERE population > 5000000;
+
+     <paste output here>
+
+     SELECT * FROM cities WHERE population > 8000000;
+
+     <paste output here>
+
+     How many tuples does each query produce?
+
+     Briefly explain the difference between the estimated number of tuples
+     and the actual number of tuples for these queries.
+
+D3.  Paste the output of running these commands:
+
+     EXPLAIN SELECT store_id FROM stores, cities     WHERE stores.city_id = cities.city_id AND
+           cities.population > 1000000;
+
+     <paste output here>
+
+     EXPLAIN SELECT store_id FROM stores JOIN                    (SELECT city_id FROM cities                     WHERE population > 1000000) AS big_cities                    ON stores.city_id = big_cities.city_id;
+
+     <paste output here>
+
+     The estimated number of tuples produced should be the same, but the
+     costs should be different.  Explain why.
+
+D4.  The assignment gives this example "slow" query:
+
+     SELECT store_id, property_costs     FROM stores, cities, states     WHERE stores.city_id = cities.city_id AND
+           cities.state_id = states.state_id AND           state_name = 'Oregon' AND property_costs > 500000;
+
+     How long does this query take to run, in seconds?
+
+     Include the EXPLAIN output for the above query here.
+
+     <paste output here>
+
+     How would you rewrite this query (e.g. using ON clauses, subqueries
+     in the FROM clause, etc.) to be as optimal as possible?  Also include
+     the result of EXPLAINing your query.
+
+E:  Extra Credit [OPTIONAL]
+---------------------------
+
+If you implemented any extra-credit tasks for this assignment, describe
+them here.  The description should be like this, with stuff in "<>" replaced.
+(The value i starts at 1 and increments...)
+
+E<i>:  <one-line description>
+
+     <brief summary of what you did, including the specific classes that
+     we should look at for your implementation>
+
+     <brief summary of test-cases that demonstrate/exercise your extra work>
+
+F:  Feedback [OPTIONAL]
+-----------------------
+
+WE NEED YOUR FEEDBACK!  Thoughtful and constructive input will help us to
+improve future versions of the course.  These questions are OPTIONAL, and
+they obviously won't affect your grade in any way (including if you hate
+everything about the assignment and databases in general, or Donnie and/or
+the TAs in particular).  Feel free to answer as many or as few of them as
+you wish.
+
+NOTE:  If you wish to give anonymous feedback, a similar survey will be
+       made available on the Moodle.
+
+F1.  How many hours total did your team spend on this assignment?
+     (That is, the sum of each teammate's time spent on the assignment.)
+
+F2.  What parts of the assignment were most time-consuming?  Why?
+
+F3.  Did you find any parts of the assignment particularly instructive?
+     Correspondingly, did any parts feel like unnecessary busy-work?
+
+F4.  Did you particularly enjoy any parts of the assignment?  Were there
+     any parts that you particularly disliked?
+
+F5.  Do you have any suggestions for how future versions of the
+     assignment can be improved?
+
