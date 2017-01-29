@@ -519,8 +519,47 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
 
     @Override
     public void analyze() throws IOException {
-        // TODO:  Complete this implementation.
-        throw new UnsupportedOperationException("Not yet implemented!");
+        dbFile.getDataFile();
+
+        HeapFilePageTuple cur = null;
+        int totalBytes = 0;
+        int numDataPages = 0;
+        int numTuples = 0;
+        ArrayList<ColumnStats> columnStats;
+
+        try {
+            // Scan through the data pages until we hit the end of the table
+            // file.  It may be that the first run of data pages is empty,
+            // so just keep looking until we hit the end of the file.
+
+            // Header page is page 0, so first data page is page 1.
+            for (int iPage = 1; /* nothing */ ; iPage++) {
+                // Look for data on this page.
+                DBPage dbPage = storageManager.loadDBPage(dbFile, iPage);
+                int numSlots = DataPage.getNumSlots(dbPage);
+                if (numSlots > 0) {
+                    numDataPages++;
+                    totalBytes += DataPage.getTupleDataEnd(dbPage) - DataPage.getTupleDataStart(dbPage);
+                }
+                for (int iSlot = 0; iSlot < numSlots; iSlot++) {
+                    // Get the offset of the tuple in the page.  If it's 0 then
+                    // the slot is empty, and we skip to the next slot.
+                    int offset = DataPage.getSlotValue(dbPage, iSlot);
+                    if (offset == DataPage.EMPTY_SLOT)
+                        continue;
+
+                    // This is the first tuple in the file.  Build up the
+                    // HeapFilePageTuple object and return it.
+                    cur = new HeapFilePageTuple(schema, dbPage, iSlot, offset);
+                    numTuples++;
+                    dbPage.unpin();
+                }
+                dbPage.unpin();
+            }
+        }
+        catch (EOFException e) {
+            logger.debug("Reached end of " + dbFile);
+        }
     }
 
 
