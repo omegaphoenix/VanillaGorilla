@@ -519,13 +519,12 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
 
     @Override
     public void analyze() throws IOException {
-        dbFile.getDataFile();
-
         HeapFilePageTuple cur = null;
         int totalBytes = 0;
         int numDataPages = 0;
         int numTuples = 0;
         ArrayList<ColumnStats> columnStats = new ArrayList<ColumnStats>();
+        ArrayList<ColumnStatsCollector> csc = new ArrayList<ColumnStatsCollector>();
 
         try {
             // Scan through the data pages until we hit the end of the table
