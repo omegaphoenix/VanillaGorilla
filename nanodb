@@ -11,6 +11,7 @@ CPATH=$CPATH:build/classes
 # To enable transaction processing, add "-Dnanodb.txns=on" to JAVA_OPTS.
 JAVA_OPTS="-Dlog4j.configuration=logging.conf"
 
+# Enable remote debugging with -d flag (wait for Intellij to attach).
 if [ "$1" = "-d" ];
 then
     JAVA_OPTS="$JAVA_OPTS -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"
