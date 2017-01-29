@@ -525,7 +525,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         int totalBytes = 0;
         int numDataPages = 0;
         int numTuples = 0;
-        ArrayList<ColumnStats> columnStats;
+        ArrayList<ColumnStats> columnStats = new ArrayList<ColumnStats>();
 
         try {
             // Scan through the data pages until we hit the end of the table
@@ -560,6 +560,11 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         catch (EOFException e) {
             logger.debug("Reached end of " + dbFile);
         }
+
+        TableStats tableStats = new TableStats(numDataPages, numTuples, (float) totalBytes / numTuples,
+                                               columnStats);
+        stats = tableStats;
+        heapFileManager.saveMetadata(this);
     }
 
 
