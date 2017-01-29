@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import edu.caltech.nanodb.relations.ColumnInfo;
 import edu.caltech.nanodb.queryeval.ColumnStats;
 import edu.caltech.nanodb.queryeval.ColumnStatsCollector;
 import edu.caltech.nanodb.queryeval.TableStats;
@@ -525,6 +526,14 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         int numTuples = 0;
         ArrayList<ColumnStats> columnStats = new ArrayList<ColumnStats>();
         ArrayList<ColumnStatsCollector> csc = new ArrayList<ColumnStatsCollector>();
+        TableSchema schema = getSchema();
+
+        // Construct ColumnStatsCollectors.
+        int numColumns = schema.numColumns();
+        for (int i = 0; i < numColumns; i++) {
+            ColumnInfo columnInfo = schema.getColumnInfo(i);
+            csc.add(new ColumnStatsCollector(columnInfo.getType().getBaseType()));
+        }
 
         try {
             // Scan through the data pages until we hit the end of the table
@@ -550,6 +559,10 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
                     // This is the first tuple in the file.  Build up the
                     // HeapFilePageTuple object and return it.
                     cur = new HeapFilePageTuple(schema, dbPage, iSlot, offset);
+
+                    for (int iCol = 0; iCol < numColumns; iCol++) {
+                        csc.get(iCol).addValue(cur.getColumnValue(iCol));
+                    }
                     numTuples++;
                     dbPage.unpin();
                 }
@@ -557,9 +570,15 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             }
         }
         catch (EOFException e) {
-            logger.debug("Reached end of " + dbFile);
+            logger.debug("Reached end of " + dbFile + " while calling analyze().");
         }
 
+        // Compute columnStats using ColumnStatsCollectors.
+        for (int iCol = 0; iCol < numColumns; iCol++) {
+            columnStats.add(csc.get(iCol).getColumnStats());
+        }
+
+        // Save table stats.
         TableStats tableStats = new TableStats(numDataPages, numTuples, (float) totalBytes / numTuples,
                                                columnStats);
         stats = tableStats;
