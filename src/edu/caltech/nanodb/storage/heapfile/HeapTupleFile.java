@@ -544,7 +544,9 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             // Header page is page 0, so first data page is page 1.
             for (int iPage = 1; /* nothing */ ; iPage++) {
                 // Look for data on this page.
+                // An EOFException will be thrown when we read the end, bringing us to the catch block.
                 DBPage dbPage = storageManager.loadDBPage(dbFile, iPage);
+
                 int numSlots = DataPage.getNumSlots(dbPage);
                 if (numSlots > 0) {
                     numDataPages++;
