@@ -165,7 +165,8 @@ public class SelectivityEstimator {
             break;
 
         case NOT_EXPR:
-            // TODO:  Compute selectivity of NOT expression.
+            // 1 - selectivity_of_expr
+            selectivity -= estimateSelectivity(bool.getTerm(0), exprSchema, stats);
             break;
 
         default:
