@@ -557,8 +557,6 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
                     if (offset == DataPage.EMPTY_SLOT)
                         continue;
 
-                    // This is the first tuple in the file.  Build up the
-                    // HeapFilePageTuple object and return it.
                     cur = new HeapFilePageTuple(schema, dbPage, iSlot, offset);
 
                     for (int iCol = 0; iCol < numColumns; iCol++) {
@@ -578,7 +576,6 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         for (int iCol = 0; iCol < numColumns; iCol++) {
             columnStats.add(csc.get(iCol).getColumnStats());
         }
-
 
         // Check for division by 0 before computing average tuple size.
         if (numTuples != 0) {
