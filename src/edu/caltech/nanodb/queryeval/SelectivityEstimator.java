@@ -146,18 +146,22 @@ public class SelectivityEstimator {
         Schema exprSchema, ArrayList<ColumnStats> stats) {
 
         float selectivity = 1.0f;
-        selectivity *= estimateSelectivity(bool.getTerm(0), exprSchema, stats);
 
         switch (bool.getType()) {
         case AND_EXPR:
             // Assume conditions independent
-            for (int i = 1; i < bool.getNumTerms(); i++) {
+            for (int i = 0; i < bool.getNumTerms(); i++) {
                 selectivity *= estimateSelectivity(bool.getTerm(i), exprSchema, stats);
             }
             break;
 
         case OR_EXPR:
-            // TODO:  Compute selectivity of OR expression.
+            // Calculate probability it satisfies none of the components
+            float noneSelectivity = 1.0f
+            for (int i = 0; i < bool.getNumTerms(); i++) {
+                noneSelectivity *= 1.0f - estimateSelectivity(bool.getTerm(i), exprSchema, stats);
+            }
+            selectivity -= noneSelectivity;
             break;
 
         case NOT_EXPR:
