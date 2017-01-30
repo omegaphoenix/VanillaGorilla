@@ -524,6 +524,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         int totalBytes = 0;
         int numDataPages = 0;
         int numTuples = 0;
+        float avgTupleSize = 0;
         ArrayList<ColumnStats> columnStats = new ArrayList<ColumnStats>();
         ArrayList<ColumnStatsCollector> csc = new ArrayList<ColumnStatsCollector>();
         TableSchema schema = getSchema();
@@ -578,9 +579,14 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             columnStats.add(csc.get(iCol).getColumnStats());
         }
 
+
+        // Check for division by 0 before computing average tuple size.
+        if (numTuples != 0) {
+            avgTupleSize = (float) totalBytes / numTuples;
+        }
+
         // Save table stats.
-        TableStats tableStats = new TableStats(numDataPages, numTuples, (float) totalBytes / numTuples,
-                                               columnStats);
+        TableStats tableStats = new TableStats(numDataPages, numTuples, avgTupleSize, columnStats);
         stats = tableStats;
         heapFileManager.saveMetadata(this);
     }
