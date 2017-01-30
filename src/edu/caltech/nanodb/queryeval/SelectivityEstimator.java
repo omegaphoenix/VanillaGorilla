@@ -157,7 +157,7 @@ public class SelectivityEstimator {
 
         case OR_EXPR:
             // Calculate probability it satisfies none of the components
-            float noneSelectivity = 1.0f
+            float noneSelectivity = 1.0f;
             for (int i = 0; i < bool.getNumTerms(); i++) {
                 noneSelectivity *= 1.0f - estimateSelectivity(bool.getTerm(i), exprSchema, stats);
             }
