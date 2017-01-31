@@ -386,10 +386,15 @@ public class SelectivityEstimator {
         ColumnStats colOneStats = stats.get(colOneIndex);
         ColumnStats colTwoStats = stats.get(colTwoIndex);
 
-        // TODO:  Compute the selectivity.  Note that the ColumnStats type
-        //        will return special values to indicate "unknown" stats;
-        //        your code should detect when this is the case, and fall
-        //        back on the default selectivity.
+        int v1 = colOneStats.getNumUniqueValues();
+        int v2 = colTwoStats.getNumUniqueValues();
+
+        // Compute the selectivity.
+        if (v1 != ColumnStats.UNKNOWN_NUM_VALUES && v2 != ColumnStats.UNKNOWN_NUM_VALUES) {
+            if (v1 != 0 || v2 != 0) {
+                selectivity = 1.0f / Math.max(v1, v2);
+            }
+        }
 
         return selectivity;
     }
