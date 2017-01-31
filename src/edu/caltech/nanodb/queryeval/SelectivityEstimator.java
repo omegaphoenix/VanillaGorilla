@@ -306,13 +306,15 @@ public class SelectivityEstimator {
 
                 Object min = colStats.getMinValue();
                 Object max = colStats.getMaxValue();
-                float greaterOrEqual = computeRatio(value, max, min, max);
 
-                if (compType == CompareOperator.Type.GREATER_OR_EQUAL) {
-                    selectivity = greaterOrEqual;
-                }
-                else if (compType == CompareOperator.Type.LESS_THAN) {
-                    selectivity = 1 - greaterOrEqual;
+                if (min != ColumnStats.UNKNOWN_OBJECT && max != ColumnStats.UNKNOWN_OBJECT) {
+                    float greaterOrEqual = computeRatio(value, max, min, max);
+
+                    if (compType == CompareOperator.Type.GREATER_OR_EQUAL) {
+                        selectivity = greaterOrEqual;
+                    } else if (compType == CompareOperator.Type.LESS_THAN) {
+                        selectivity = 1 - greaterOrEqual;
+                    }
                 }
             }
             break;
@@ -329,13 +331,14 @@ public class SelectivityEstimator {
 
                 Object min = colStats.getMinValue();
                 Object max = colStats.getMaxValue();
-                float lessOrEqual = computeRatio(min, value, min, max);
+                if (min != ColumnStats.UNKNOWN_OBJECT && max != ColumnStats.UNKNOWN_OBJECT) {
+                    float lessOrEqual = computeRatio(min, value, min, max);
 
-                if (compType == CompareOperator.Type.LESS_OR_EQUAL) {
-                    selectivity = lessOrEqual;
-                }
-                else if (compType == CompareOperator.Type.GREATER_THAN) {
-                    selectivity = 1 - lessOrEqual;
+                    if (compType == CompareOperator.Type.LESS_OR_EQUAL) {
+                        selectivity = lessOrEqual;
+                    } else if (compType == CompareOperator.Type.GREATER_THAN) {
+                        selectivity = 1 - lessOrEqual;
+                    }
                 }
             }
             break;
