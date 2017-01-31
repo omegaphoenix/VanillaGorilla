@@ -306,7 +306,7 @@ public class SelectivityEstimator {
 
                 Object min = colStats.getMinValue();
                 Object max = colStats.getMaxValue();
-                float greaterOrEqual = computeRatio(max, value, max, min);
+                float greaterOrEqual = computeRatio(value, max, min, max);
 
                 if (compType == CompareOperator.Type.GREATER_OR_EQUAL) {
                     selectivity = greaterOrEqual;
@@ -315,7 +315,6 @@ public class SelectivityEstimator {
                     selectivity = 1 - greaterOrEqual;
                 }
             }
-
             break;
 
         case LESS_OR_EQUAL:
@@ -325,14 +324,20 @@ public class SelectivityEstimator {
 
             // Only estimate selectivity for this kind of expression if the
             // column's type supports it.
-
             if (typeSupportsCompareEstimates(sqlType) &&
                 colStats.hasDifferentMinMaxValues()) {
 
-                // TODO:  Compute the selectivity.  Watch out for copy-paste
-                //        bugs...
-            }
+                Object min = colStats.getMinValue();
+                Object max = colStats.getMaxValue();
+                float lessOrEqual = computeRatio(min, value, min, max);
 
+                if (compType == CompareOperator.Type.LESS_OR_EQUAL) {
+                    selectivity = lessOrEqual;
+                }
+                else if (compType == CompareOperator.Type.GREATER_THAN) {
+                    selectivity = 1 - lessOrEqual;
+                }
+            }
             break;
 
         default:
