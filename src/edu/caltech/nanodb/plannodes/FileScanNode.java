@@ -227,7 +227,8 @@ public class FileScanNode extends SelectNode {
         TableStats tableStats = tupleFile.getStats();
         ArrayList<ColumnStats> fileStats = tableStats.getAllColumnStats();
 
-        float numTuples = tableStats.numTuples;
+        float numTuples = SelectivityEstimator.estimateSelectivity(predicate, schema, fileStats) *
+                          tableStats.numTuples;
         float tupleSize = tableStats.avgTupleSize;
         float cpuCost = tableStats.numTuples;
         long numBlockIOs = tableStats.numDataPages;
