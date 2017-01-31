@@ -279,11 +279,18 @@ public class SelectivityEstimator {
             // Compute the equality value.  Then, if inequality, invert the
             // result.
 
-            // TODO:  Compute the selectivity.  Note that the ColumnStats type
-            //        will return special values to indicate "unknown" stats;
-            //        your code should detect when this is the case, and fall
-            //        back on the default selectivity.
-
+            int numValues = colStats.getNumUniqueValues();
+            // Compute the selectivity. Default if numValues is unknown or 0.
+            // Assumes values are uniformly distributed among unique values.
+            // This is a rough approximation.
+            if (numValues != ColumnStats.UNKNOWN_NUM_VALUES && numValues != 0) {
+                if (compType == CompareOperator.Type.EQUALS) {
+                    selectivity = 1.0f / numValues;
+                }
+                else if (compType == CompareOperator.Type.NOT_EQUALS) {
+                    selectivity = 1 - 1.0f / numValues;
+                }
+            }
             break;
 
         case GREATER_OR_EQUAL:
