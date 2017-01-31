@@ -3,6 +3,7 @@ package edu.caltech.nanodb.queryeval;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Objects;
 
 import edu.caltech.nanodb.expressions.ArithmeticOperator;
 import edu.caltech.nanodb.expressions.BooleanOperator;
@@ -300,13 +301,19 @@ public class SelectivityEstimator {
 
             // Only estimate selectivity for this kind of expression if the
             // column's type supports it.
-
             if (typeSupportsCompareEstimates(sqlType) &&
                 colStats.hasDifferentMinMaxValues()) {
 
-                // TODO:  Compute the selectivity.  The if-condition ensures
-                //        that you will only compute selectivities if the type
-                //        supports it, and if there are valid stats.
+                Object min = colStats.getMinValue();
+                Object max = colStats.getMaxValue();
+                float greaterOrEqual = computeRatio(max, value, max, min);
+
+                if (compType == CompareOperator.Type.GREATER_OR_EQUAL) {
+                    selectivity = greaterOrEqual;
+                }
+                else if (compType == CompareOperator.Type.LESS_THAN) {
+                    selectivity = 1 - greaterOrEqual;
+                }
             }
 
             break;
