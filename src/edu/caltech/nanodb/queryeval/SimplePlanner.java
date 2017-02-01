@@ -75,7 +75,9 @@ public class SimplePlanner extends AbstractPlannerImpl {
                 if (e == null) {
                     e = fromClause.getComputedJoinExpr();
                 }
-                e.traverse(noAggregateProcessor);
+                if (e != null) {
+                    e.traverse(noAggregateProcessor);
+                }
                 result = makeJoinPlan(selClause, fromClause);
             }
             // Handle derived table recursively.
