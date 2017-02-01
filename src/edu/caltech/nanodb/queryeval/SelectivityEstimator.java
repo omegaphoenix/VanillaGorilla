@@ -68,6 +68,13 @@ public class SelectivityEstimator {
     public static final float DEFAULT_SELECTIVITY = 0.25f;
 
 
+    /**
+     * This constant specifies the selectivity when there is no filter or
+     * the filter does not filter any nodes.
+     */
+    public static final float NO_SELECTIVITY = 1.0f;
+
+
     /** This class should not be instantiated. */
     private SelectivityEstimator() {
         throw new IllegalArgumentException("This class should not be instantiated.");
@@ -108,6 +115,9 @@ public class SelectivityEstimator {
                                             ArrayList<ColumnStats> stats) {
         float selectivity = DEFAULT_SELECTIVITY;
 
+        if (expr == null) {
+            return NO_SELECTIVITY;
+        }
         if (expr instanceof BooleanOperator) {
             // A Boolean AND, OR, or NOT operation.
             BooleanOperator bool = (BooleanOperator) expr;
