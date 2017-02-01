@@ -42,13 +42,22 @@ public class ColumnStats {
      */
     private Object maxValue;
 
+    /**
+     * Indicates that the number of values is unknown.
+     */
+    public static final int UNKNOWN_NUM_VALUES = -1;
+
+    /**
+     * Value to indicate unknown object.
+     */
+    public static final Object UNKNOWN_OBJECT = null;
 
     /** Initializes a column-stats object to all "unknown" values. */
     public ColumnStats() {
-        numUniqueValues = -1;
-        numNullValues = -1;
-        minValue = null;
-        maxValue = null;
+        numUniqueValues = UNKNOWN_NUM_VALUES;
+        numNullValues = UNKNOWN_NUM_VALUES;
+        minValue = UNKNOWN_OBJECT;
+        maxValue = UNKNOWN_OBJECT;
     }
 
 
