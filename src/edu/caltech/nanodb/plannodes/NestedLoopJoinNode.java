@@ -159,8 +159,12 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
         // Use the parent class' helper-function to prepare the schema.
         prepareSchemaStats();
 
-        // TODO:  Implement the rest
-        cost = null;
+        // Calculate cost
+        float numTuples = leftChild.cost.numTuples + rightChild.cost.numTuples;
+        float tupleSize = leftChild.cost.tupleSize + rightChild.cost.tupleSize;
+        float cpuCost = leftChild.cost.cpuCost + rightChild.cost.cpuCost;
+        float numBlockIOs    = leftChild.cost.numBlockIOs + rightChild.cost.numBlockIOs;
+        cost = new PlanCost(numTuples, tupleSize, cpuCost, numBlockIOs);
     }
 
 
