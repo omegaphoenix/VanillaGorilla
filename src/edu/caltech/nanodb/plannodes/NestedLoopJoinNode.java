@@ -162,23 +162,25 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
         // Calculate cost
         float tupleSize = leftChild.cost.tupleSize + rightChild.cost.tupleSize;
         float selectivity = SelectivityEstimator.estimateSelectivity(predicate, schema, stats);
+        float tupleProd = leftChild.cost.numTuples * rightChild.cost.numTuples;
         float numTuples = 0;
         switch(joinType) {
             case CROSS:
-                numTuples = leftChild.cost.numTuples * rightChild.cost.numTuples;
+                numTuples = tupleProd;
+                break;
             case INNER:
-                numTuples = selectivity * leftChild.cost.numTuples * rightChild.cost.numTuples;
+                numTuples = selectivity * tupleProd;
                 break;
             case LEFT_OUTER:
-                // Assume worst case where one left tuple matches all the right tuples
-                numTuples = selectivity * leftChild.cost.numTuples * rightChild.cost.numTuples;
-                numTuples += leftChild.cost.numTuples;
+                numTuples = selectivity * tupleProd;
+                // Add tuples which didn't have a match on the right
+                numTuples += (1 - selectivity) * leftChild.cost.numTuples;
                 break;
             case SEMIJOIN:
                 numTuples = selectivity * leftChild.cost.numTuples;
                 break;
             case ANTIJOIN:
-                numTuples = leftChild.cost.numTuples - selectivity * leftChild.cost.numTuples;
+                numTuples = (1 - selectivity) * leftChild.cost.numTuples;
                 break;
             case RIGHT_OUTER:
             case FULL_OUTER:
