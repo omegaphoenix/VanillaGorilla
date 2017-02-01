@@ -150,7 +150,7 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
 
 
     @Override
-    public void prepare() throws IOException {
+    public void prepare() {
         // Need to prepare the left and right child-nodes before we can do
         // our own work.
         leftChild.prepare();
@@ -185,7 +185,7 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
             case RIGHT_OUTER:
             case FULL_OUTER:
             default:
-                throw new IOException("This type of join not supported by node.");
+                throw new IllegalArgumentException("This type of join not supported by node.");
         }
 
         // Need to compute child nodes
