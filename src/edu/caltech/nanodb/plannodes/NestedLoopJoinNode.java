@@ -188,8 +188,13 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
                 throw new IOException("This type of join not supported by node.");
         }
         float cpuCost = leftChild.cost.cpuCost + rightChild.cost.cpuCost;
+        // Need to iterate through every possible combination of tuples
         cpuCost += leftChild.cost.numTuples * rightChild.cost.numTuples;
-        long numBlockIOs    = leftChild.cost.numBlockIOs + rightChild.cost.numBlockIOs;
+
+        // Assume base case where inner table fits in memory
+        long numBlockIOs = rightChild.cost.numBlockIOs;
+        numBlockIOs += leftChild.cost.numBlockIOs;
+
         cost = new PlanCost(numTuples, tupleSize, cpuCost, numBlockIOs);
     }
 
