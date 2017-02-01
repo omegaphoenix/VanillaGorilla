@@ -161,6 +161,7 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
 
         // Calculate cost
         float tupleSize = leftChild.cost.tupleSize + rightChild.cost.tupleSize;
+
         float selectivity = SelectivityEstimator.estimateSelectivity(predicate, schema, stats);
         float tupleProd = leftChild.cost.numTuples * rightChild.cost.numTuples;
         float numTuples = 0;
@@ -187,6 +188,8 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
             default:
                 throw new IOException("This type of join not supported by node.");
         }
+
+        // Need to compute child nodes
         float cpuCost = leftChild.cost.cpuCost + rightChild.cost.cpuCost;
         // Need to iterate through every possible combination of tuples
         cpuCost += leftChild.cost.numTuples * rightChild.cost.numTuples;
