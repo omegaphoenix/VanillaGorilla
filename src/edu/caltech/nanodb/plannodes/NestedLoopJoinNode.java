@@ -150,7 +150,7 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
 
 
     @Override
-    public void prepare() {
+    public void prepare() throws IOException {
         // Need to prepare the left and right child-nodes before we can do
         // our own work.
         leftChild.prepare();
@@ -159,8 +159,43 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
         // Use the parent class' helper-function to prepare the schema.
         prepareSchemaStats();
 
-        // TODO:  Implement the rest
-        cost = null;
+        // Calculate cost
+        float tupleSize = leftChild.cost.tupleSize + rightChild.cost.tupleSize;
+        float selectivity = SelectivityEstimator.estimateSelectivity(predicate, schema, stats);
+        float tupleProd = leftChild.cost.numTuples * rightChild.cost.numTuples;
+        float numTuples = 0;
+        switch(joinType) {
+            case CROSS:
+                numTuples = tupleProd;
+                break;
+            case INNER:
+                numTuples = selectivity * tupleProd;
+                break;
+            case LEFT_OUTER:
+                numTuples = selectivity * tupleProd;
+                // Add tuples which didn't have a match on the right
+                numTuples += (1 - selectivity) * leftChild.cost.numTuples;
+                break;
+            case SEMIJOIN:
+                numTuples = selectivity * leftChild.cost.numTuples;
+                break;
+            case ANTIJOIN:
+                numTuples = (1 - selectivity) * leftChild.cost.numTuples;
+                break;
+            case RIGHT_OUTER:
+            case FULL_OUTER:
+            default:
+                throw new IOException("This type of join not supported by node.");
+        }
+        float cpuCost = leftChild.cost.cpuCost + rightChild.cost.cpuCost;
+        // Need to iterate through every possible combination of tuples
+        cpuCost += leftChild.cost.numTuples * rightChild.cost.numTuples;
+
+        // Assume base case where inner table fits in memory
+        long numBlockIOs = rightChild.cost.numBlockIOs;
+        numBlockIOs += leftChild.cost.numBlockIOs;
+
+        cost = new PlanCost(numTuples, tupleSize, cpuCost, numBlockIOs);
     }
 
 
