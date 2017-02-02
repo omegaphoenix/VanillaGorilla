@@ -127,16 +127,16 @@ D3.  Paste the output of running these commands:
            cities.population > 1000000;
 
      We modified the query slightly, and got the following result:
-        CMD> EXPLAIN SELECT store_id FROM stores JOIN cities
-            ON stores.city_id = cities.city_id AND cities.population > 1000000;
-        Explain Plan:
-            Project[values:  [STORES.STORE_ID]] cost=[tuples=1776.2, tupSize=36.8, cpuCost=512030.3, blockIOs=5]
-                NestedLoop[pred:  STORES.CITY_ID == CITIES.CITY_ID AND CITIES.POPULATION > 1000000] cost=[tuples=1776.2, tupSize=36.8, cpuCost=510254.0, blockIOs=5]
-                    FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
-                    FileScan[table:  CITIES] cost=[tuples=254.0, tupSize=23.8, cpuCost=254.0, blockIOs=1]
+CMD> EXPLAIN SELECT store_id FROM stores JOIN cities
+    ON stores.city_id = cities.city_id AND cities.population > 1000000;
+Explain Plan:
+    Project[values:  [STORES.STORE_ID]] cost=[tuples=1776.2, tupSize=36.8, cpuCost=512030.3, blockIOs=5]
+        NestedLoop[pred:  STORES.CITY_ID == CITIES.CITY_ID AND CITIES.POPULATION > 1000000] cost=[tuples=1776.2, tupSize=36.8, cpuCost=510254.0, blockIOs=5]
+            FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
+            FileScan[table:  CITIES] cost=[tuples=254.0, tupSize=23.8, cpuCost=254.0, blockIOs=1]
 
-        Estimated 1776.238159 tuples with average size 36.787399
-        Estimated number of block IOs:  5
+Estimated 1776.238159 tuples with average size 36.787399
+Estimated number of block IOs:  5
 
 
      EXPLAIN SELECT store_id FROM stores JOIN
@@ -144,16 +144,16 @@ D3.  Paste the output of running these commands:
      WHERE population > 1000000) AS big_cities
      ON stores.city_id = big_cities.city_id;
 
-        Explain Plan:
-            Project[values:  [STORES.STORE_ID]] cost=[tuples=1776.2, tupSize=36.8, cpuCost=455420.3, blockIOs=5]
-                NestedLoop[pred:  STORES.CITY_ID == BIG_CITIES.CITY_ID] cost=[tuples=1776.2, tupSize=36.8, cpuCost=453644.1, blockIOs=5]
-                    FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
-                        Rename[resultTableName=BIG_CITIES] cost=[tuples=225.6, tupSize=23.8, cpuCost=479.6, blockIOs=1]
-                            Project[values:  [CITIES.CITY_ID]] cost=[tuples=225.6, tupSize=23.8, cpuCost=479.6, blockIOs=1]
-                                FileScan[table:  CITIES, pred:  CITIES.POPULATION > 1000000] cost=[tuples=225.6, tupSize=23.8, cpuCost=254.0, blockIOs=1]
+Explain Plan:
+    Project[values:  [STORES.STORE_ID]] cost=[tuples=1776.2, tupSize=36.8, cpuCost=455420.3, blockIOs=5]
+        NestedLoop[pred:  STORES.CITY_ID == BIG_CITIES.CITY_ID] cost=[tuples=1776.2, tupSize=36.8, cpuCost=453644.1, blockIOs=5]
+            FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
+                Rename[resultTableName=BIG_CITIES] cost=[tuples=225.6, tupSize=23.8, cpuCost=479.6, blockIOs=1]
+                    Project[values:  [CITIES.CITY_ID]] cost=[tuples=225.6, tupSize=23.8, cpuCost=479.6, blockIOs=1]
+                        FileScan[table:  CITIES, pred:  CITIES.POPULATION > 1000000] cost=[tuples=225.6, tupSize=23.8, cpuCost=254.0, blockIOs=1]
 
-        Estimated 1776.238159 tuples with average size 36.787399
-        Estimated number of block IOs:  5
+Estimated 1776.238159 tuples with average size 36.787399
+Estimated number of block IOs:  5
 
      The estimated number of tuples produced should be the same, but the
      costs should be different.  Explain why.
@@ -179,16 +179,16 @@ D4.  The assignment gives this example "slow" query:
 
      Include the EXPLAIN output for the above query here.
 
-        Explain Plan:
-            Project[values:  [STORES.STORE_ID, STORES.PROPERTY_COSTS]] cost=[tuples=19.6, tupSize=52.5, cpuCost=26418324.0, blockIOs=6]
-                NestedLoop[pred:  STORES.CITY_ID == CITIES.CITY_ID AND CITIES.STATE_ID == STATES.STATE_ID AND STATE_NAME == 'Oregon' AND PROPERTY_COSTS > 500000] cost=[tuples=19.6, tupSize=52.5, cpuCost=26418304.0, blockIOs=6]
-                    NestedLoop[no pred] cost=[tuples=508000.0, tupSize=36.8, cpuCost=510254.0, blockIOs=5]
-                        FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
-                            FileScan[table:  CITIES] cost=[tuples=254.0, tupSize=23.8, cpuCost=254.0, blockIOs=1]
-                                FileScan[table:  STATES] cost=[tuples=51.0, tupSize=15.7, cpuCost=51.0, blockIOs=1]
+Explain Plan:
+    Project[values:  [STORES.STORE_ID, STORES.PROPERTY_COSTS]] cost=[tuples=19.6, tupSize=52.5, cpuCost=26418324.0, blockIOs=6]
+        NestedLoop[pred:  STORES.CITY_ID == CITIES.CITY_ID AND CITIES.STATE_ID == STATES.STATE_ID AND STATE_NAME == 'Oregon' AND PROPERTY_COSTS > 500000] cost=[tuples=19.6, tupSize=52.5, cpuCost=26418304.0, blockIOs=6]
+            NestedLoop[no pred] cost=[tuples=508000.0, tupSize=36.8, cpuCost=510254.0, blockIOs=5]
+                FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
+                    FileScan[table:  CITIES] cost=[tuples=254.0, tupSize=23.8, cpuCost=254.0, blockIOs=1]
+                        FileScan[table:  STATES] cost=[tuples=51.0, tupSize=15.7, cpuCost=51.0, blockIOs=1]
 
-        Estimated 19.588217 tuples with average size 52.454067
-        Estimated number of block IOs:  6
+Estimated 19.588217 tuples with average size 52.454067
+Estimated number of block IOs:  6
 
 
      How would you rewrite this query (e.g. using ON clauses, subqueries
@@ -217,8 +217,8 @@ Explain Plan:
                                         FileScan[table:  STATES, pred:  STATES.STATE_NAME == 'Oregon'] cost=[tuples=1.0, tupSize=15.7, cpuCost=51.0, blockIOs=1]
                                             FileScan[table:  CITIES] cost=[tuples=254.0, tupSize=23.8, cpuCost=254.0, blockIOs=1]
 
-    Estimated 19.588217 tuples with average size 52.454067
-    Estimated number of block IOs:  6
+Estimated 19.588217 tuples with average size 52.454067
+Estimated number of block IOs:  6
 
 
 E:  Extra Credit [OPTIONAL]
