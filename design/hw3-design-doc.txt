@@ -146,14 +146,12 @@ D3.  Paste the output of running these commands:
      WHERE stores.city_id = cities.city_id AND
            cities.population > 1000000;
 
-     We modified the query slightly, and got the following result:
-CMD> EXPLAIN SELECT store_id FROM stores JOIN cities
-    ON stores.city_id = cities.city_id AND cities.population > 1000000;
 Explain Plan:
-    Project[values:  [STORES.STORE_ID]] cost=[tuples=1776.2, tupSize=36.8, cpuCost=512030.3, blockIOs=5]
-        NestedLoop[pred:  STORES.CITY_ID == CITIES.CITY_ID AND CITIES.POPULATION > 1000000] cost=[tuples=1776.2, tupSize=36.8, cpuCost=510254.0, blockIOs=5]
-            FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
-            FileScan[table:  CITIES] cost=[tuples=254.0, tupSize=23.8, cpuCost=254.0, blockIOs=1]
+    Project[values:  [STORES.STORE_ID]] cost=[tuples=1776.2, tupSize=36.8, cpuCost=1020030.3, blockIOs=5]
+        SimpleFilter[pred:  STORES.CITY_ID == CITIES.CITY_ID AND CITIES.POPULATION > 1000000] cost=[tuples=1776.2, tupSize=36.8, cpuCost=1018254.0, blockIOs=5]
+            NestedLoop[no pred] cost=[tuples=508000.0, tupSize=36.8, cpuCost=510254.0, blockIOs=5]
+                FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
+                FileScan[table:  CITIES] cost=[tuples=254.0, tupSize=23.8, cpuCost=254.0, blockIOs=1]
 
 Estimated 1776.238159 tuples with average size 36.787399
 Estimated number of block IOs:  5
