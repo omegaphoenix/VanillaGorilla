@@ -7,7 +7,7 @@ test_datafiles/
 
 # Vim
 *~
-*.swp 
+*.swp
 
 # IntelliJ
 out/
@@ -16,3 +16,6 @@ out/
 
 # Java
 *.class
+
+# Mac
+.DS_Store
