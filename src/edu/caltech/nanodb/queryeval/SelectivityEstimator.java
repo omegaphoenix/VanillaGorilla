@@ -403,6 +403,9 @@ public class SelectivityEstimator {
         if (v1 != ColumnStats.UNKNOWN_NUM_VALUES && v2 != ColumnStats.UNKNOWN_NUM_VALUES) {
             if (v1 != 0 || v2 != 0) {
                 selectivity = 1.0f / Math.max(v1, v2);
+                if (compType == CompareOperator.Type.NOT_EQUALS) {
+                    selectivity = 1.0f - selectivity;
+                }
             }
         }
 
