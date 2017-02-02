@@ -14,6 +14,7 @@ JAVA_OPTS="-Dlog4j.configuration=logging.conf"
 # Enable remote debugging with -d flag (wait for Intellij to attach).
 if [ "$1" = "-d" ];
 then
+    ant compile
     JAVA_OPTS="$JAVA_OPTS -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"
 fi
 
