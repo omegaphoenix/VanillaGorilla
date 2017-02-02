@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import edu.caltech.nanodb.relations.ColumnInfo;
 import edu.caltech.nanodb.queryeval.ColumnStats;
 import edu.caltech.nanodb.queryeval.ColumnStatsCollector;
 import edu.caltech.nanodb.queryeval.TableStats;
@@ -519,8 +520,74 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
 
     @Override
     public void analyze() throws IOException {
-        // TODO:  Complete this implementation.
-        throw new UnsupportedOperationException("Not yet implemented!");
+        HeapFilePageTuple cur = null;
+        int totalBytes = 0;
+        int numDataPages = 0;
+        int numTuples = 0;
+        float avgTupleSize = 0;
+        ArrayList<ColumnStats> columnStats = new ArrayList<ColumnStats>();
+        ArrayList<ColumnStatsCollector> csc = new ArrayList<ColumnStatsCollector>();
+        TableSchema schema = getSchema();
+
+        // Construct ColumnStatsCollectors.
+        int numColumns = schema.numColumns();
+        for (int i = 0; i < numColumns; i++) {
+            ColumnInfo columnInfo = schema.getColumnInfo(i);
+            csc.add(new ColumnStatsCollector(columnInfo.getType().getBaseType()));
+        }
+
+        try {
+            // Scan through the data pages until we hit the end of the table
+            // file.  It may be that the first run of data pages is empty,
+            // so just keep looking until we hit the end of the file.
+
+            // Header page is page 0, so first data page is page 1.
+            for (int iPage = 1; /* nothing */ ; iPage++) {
+                // Look for data on this page.
+                // An EOFException will be thrown when we read the end, bringing us to the catch block.
+                DBPage dbPage = storageManager.loadDBPage(dbFile, iPage);
+
+                int numSlots = DataPage.getNumSlots(dbPage);
+                if (numSlots > 0) {
+                    numDataPages++;
+                    totalBytes += DataPage.getTupleDataEnd(dbPage) - DataPage.getTupleDataStart(dbPage);
+                }
+                for (int iSlot = 0; iSlot < numSlots; iSlot++) {
+                    // Get the offset of the tuple in the page.  If it's 0 then
+                    // the slot is empty, and we skip to the next slot.
+                    int offset = DataPage.getSlotValue(dbPage, iSlot);
+                    if (offset == DataPage.EMPTY_SLOT)
+                        continue;
+
+                    cur = new HeapFilePageTuple(schema, dbPage, iSlot, offset);
+
+                    for (int iCol = 0; iCol < numColumns; iCol++) {
+                        csc.get(iCol).addValue(cur.getColumnValue(iCol));
+                    }
+                    numTuples++;
+                    dbPage.unpin();
+                }
+                dbPage.unpin();
+            }
+        }
+        catch (EOFException e) {
+            logger.debug("Reached end of " + dbFile + " while calling analyze().");
+        }
+
+        // Compute columnStats using ColumnStatsCollectors.
+        for (int iCol = 0; iCol < numColumns; iCol++) {
+            columnStats.add(csc.get(iCol).getColumnStats());
+        }
+
+        // Check for division by 0 before computing average tuple size.
+        if (numTuples != 0) {
+            avgTupleSize = (float) totalBytes / numTuples;
+        }
+
+        // Save table stats.
+        TableStats tableStats = new TableStats(numDataPages, numTuples, avgTupleSize, columnStats);
+        stats = tableStats;
+        heapFileManager.saveMetadata(this);
     }
 
 

@@ -1,0 +1,282 @@
+CS122 Assignment 3 - Table Statistics and Plan Costing - Design Document
+========================================================================
+
+A:  Logistics
+-------------
+
+A1.  List your team name and the people who worked on this assignment.
+
+     VanillaGorilla
+
+     Justin Leong
+     Matthew Jin
+     David Qu
+
+A2.  Specify the repository URL, tag name and commit-hash of the Git version
+     you are submitting for your assignment.  (You can list the commit hashes
+     of your repository tags with this command:  git show-ref --tags)
+
+     Repository URL:  https://github.com/omegaphoenix/VanillaGorilla
+     Tag name:        hw3
+     Commit hash:     afd9e84ef994d6131278a3ad5323cdfe9cd46b4e
+
+A3.  Specify any late tokens you are applying to this assignment, or
+     "none" if no late tokens.
+
+     none
+
+A4.  Briefly describe what parts of the assignment each teammate focused on.
+
+     Justin focused on calculating costs for NestedLoopJoin and computing
+     selectivity for AND, OR, and NOT.
+     Matthew focused on testing explaining queries and fixing minor issues
+     from last week's joins.
+     David focused on calculating costs for SimpleFilterNode and FileScanNode
+     and calculating selectivity for column-value comparisons and column-column
+     comparisons and analyze().
+
+B:  Statistics Collection
+-------------------------
+
+B1.  Using pseudocode, summarize the implementation of your HeapTupleFile
+     analyze() function.
+
+     totalBytes, numDataPages, numTuples, avgTupleSize = 0
+     csc = a list of ColumnStatsCollectors, one for each column
+
+     for page in file:
+         numDataPages++
+         update totalBytes based on page
+         for tuple in page:
+             Record tuple in the appropriate csc collector
+             numTuples++
+     columnStats = list of ColumnStats built from csc
+     if numTuples != 0:
+         avgTupleSize = float(totalBytes) / numTuples
+     Save tableStats(numDataPages, numtuples, avgTupleSize, columnStats)
+
+C:  Plan Costing Implementation
+-------------------------------
+
+C1.  Briefly describe how you estimate the number of tuples and the cost
+     of a file-scan plan node.  What factors does your cost include?
+
+     Get the number of tuples from tableStats and apply selectivity multiplier
+     if there is a predicate. The cpuCost is just the number of tuples in the
+     table and the numBlockIOs is the number of data pages since we assume
+     that there is one block IO for each page that needs to be read since
+     each must be loaded individually.
+
+C2.  Same question as for C1, but for simple filter nodes.
+
+     The tuple size and number of block IOs are the same as the left child's
+     since the left child loads the tuples into memory. For the CPU cost,
+     we add numTuples to the child's CPU cost since we must iterate through
+     each tuple and the numTuples is (selectivity * (the child's numTuples)).
+
+C3.  Same question as for C1, but for nested-loop joins.
+
+     For nested loop joins, the tupleSize is always the sum of the tupleSizes
+     except when it is a natural join where there might be combined columns
+     so we used the sum of the tupleSizes as the approximation.
+
+     The number of tuples is determined based on join type*.
+
+     The cpu cost is the cost of iterating through the nested loop which
+     compares every element in the first table to every element of the second.
+
+     We assume the inner table fits in memory so numBlockIOs is just the sum
+     of the children's numBlockIOs.
+
+     *The number of tuples is just the product for cross join, approximately
+     the selectivity times the product for inner join since a fraction of
+     those pairs will satisfy the condition. Left outer join has the number of
+     tuples the inner join would have plus the number of left tuples not
+     paired which we estimate as (1 - selectivity) * leftTuples.  Semijoin
+     is appoximately the number of leftTuples that have a partner which we
+     underestimate at (selectivity * leftTuples).  To get antijoin just
+     take (1 - selectivity ) * leftTuples.
+
+D:  Costing SQL Queries
+-----------------------
+
+Answer these questions after you have loaded the stores-28K.sql data, and
+have analyzed all of the tables in that schema.
+
+D1.  Paste the output of running:  EXPLAIN SELECT * FROM cities;
+     Do not include debug lines, just the output of the command itself.
+
+Explain Plan:
+    FileScan[table:  CITIES] cost=[tuples=254.0, tupSize=23.8, cpuCost=254.0, blockIOs=1]
+
+    Estimated 254.000000 tuples with average size 23.787401
+    Estimated number of block IOs:  1
+
+D2 . What is the estimated number of tuples that will be produced by each
+     of these queries:
+
+     SELECT * FROM cities WHERE population > 1000000;
+
+     Estimated 225.582245 tuples with average size 23.787401
+
+     SELECT * FROM cities WHERE population > 5000000;
+
+     Estimated 99.262199 tuples with average size 23.787401
+
+     SELECT * FROM cities WHERE population > 8000000;
+
+     Estimated 4.522162 tuples with average size 23.787401
+
+     How many tuples does each query produce?
+
+     The first query produces 9 rows, the second and third one both produce 1 row.
+
+     Briefly explain the difference between the estimated number of tuples
+     and the actual number of tuples for these queries.
+
+     The estimated selectivity assumes a uniform distribution of values
+     between the min and max. Hence, the estimate decreases as the number
+     increases since there are fewer numbers between 8000000 and the max.
+     However, in reality the distribution is not uniform, so the actual
+     results are much lower.
+
+D3.  Paste the output of running these commands:
+
+     EXPLAIN SELECT store_id FROM stores, cities
+     WHERE stores.city_id = cities.city_id AND
+           cities.population > 1000000;
+
+Explain Plan:
+    Project[values:  [STORES.STORE_ID]] cost=[tuples=1776.2, tupSize=36.8, cpuCost=1020030.3, blockIOs=5]
+        SimpleFilter[pred:  STORES.CITY_ID == CITIES.CITY_ID AND CITIES.POPULATION > 1000000] cost=[tuples=1776.2, tupSize=36.8, cpuCost=1018254.0, blockIOs=5]
+            NestedLoop[no pred] cost=[tuples=508000.0, tupSize=36.8, cpuCost=510254.0, blockIOs=5]
+                FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
+                FileScan[table:  CITIES] cost=[tuples=254.0, tupSize=23.8, cpuCost=254.0, blockIOs=1]
+
+Estimated 1776.238159 tuples with average size 36.787399
+Estimated number of block IOs:  5
+
+
+     EXPLAIN SELECT store_id FROM stores JOIN
+     (SELECT city_id FROM cities
+     WHERE population > 1000000) AS big_cities
+     ON stores.city_id = big_cities.city_id;
+
+Explain Plan:
+    Project[values:  [STORES.STORE_ID]] cost=[tuples=1776.2, tupSize=36.8, cpuCost=455420.3, blockIOs=5]
+        NestedLoop[pred:  STORES.CITY_ID == BIG_CITIES.CITY_ID] cost=[tuples=1776.2, tupSize=36.8, cpuCost=453644.1, blockIOs=5]
+            FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
+                Rename[resultTableName=BIG_CITIES] cost=[tuples=225.6, tupSize=23.8, cpuCost=479.6, blockIOs=1]
+                    Project[values:  [CITIES.CITY_ID]] cost=[tuples=225.6, tupSize=23.8, cpuCost=479.6, blockIOs=1]
+                        FileScan[table:  CITIES, pred:  CITIES.POPULATION > 1000000] cost=[tuples=225.6, tupSize=23.8, cpuCost=254.0, blockIOs=1]
+
+Estimated 1776.238159 tuples with average size 36.787399
+Estimated number of block IOs:  5
+
+     The estimated number of tuples produced should be the same, but the
+     costs should be different.  Explain why.
+
+     The queries query for the exact same data, and our estimation techniques
+     reflect that. However, the cpuCost of the first query is higher because
+     it potentially has to be more comparisons. We give all the tuple pairs to
+     the filter, which then processes them. In the second query, we filter some
+     of the tuples first before attempting to join them, so it is more
+     efficient.
+
+D4.  The assignment gives this example "slow" query:
+
+     SELECT store_id, property_costs
+     FROM stores, cities, states
+     WHERE stores.city_id = cities.city_id AND
+           cities.state_id = states.state_id AND
+           state_name = 'Oregon' AND property_costs > 500000;
+
+     How long does this query take to run, in seconds?
+
+     This query took 104.5 seconds to run.
+
+     Include the EXPLAIN output for the above query here.
+
+Explain Plan:
+    Project[values:  [STORES.STORE_ID, STORES.PROPERTY_COSTS]] cost=[tuples=19.6, tupSize=52.5, cpuCost=26418324.0, blockIOs=6]
+        NestedLoop[pred:  STORES.CITY_ID == CITIES.CITY_ID AND CITIES.STATE_ID == STATES.STATE_ID AND STATE_NAME == 'Oregon' AND PROPERTY_COSTS > 500000] cost=[tuples=19.6, tupSize=52.5, cpuCost=26418304.0, blockIOs=6]
+            NestedLoop[no pred] cost=[tuples=508000.0, tupSize=36.8, cpuCost=510254.0, blockIOs=5]
+                FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
+                    FileScan[table:  CITIES] cost=[tuples=254.0, tupSize=23.8, cpuCost=254.0, blockIOs=1]
+                        FileScan[table:  STATES] cost=[tuples=51.0, tupSize=15.7, cpuCost=51.0, blockIOs=1]
+
+Estimated 19.588217 tuples with average size 52.454067
+Estimated number of block IOs:  6
+
+
+     How would you rewrite this query (e.g. using ON clauses, subqueries
+     in the FROM clause, etc.) to be as optimal as possible?  Also include
+     the result of EXPLAINing your query.
+
+     With the following query, we can reduce the runtime to 1.5 seconds.
+
+        SELECT store_id, property_costs
+        FROM (SELECT * FROM stores WHERE property_costs > 500000) AS expensive_stores JOIN
+            (SELECT city_id FROM (SELECT state_id FROM states WHERE state_name = 'Oregon') AS oregon_id JOIN
+                cities
+                ON oregon_id.state_id = cities.state_id) AS oregon_cities
+            ON expensive_stores.city_id = oregon_cities.city_id
+
+Explain Plan:
+    Project[values:  [EXPENSIVE_STORES.STORE_ID, EXPENSIVE_STORES.PROPERTY_COSTS]] cost=[tuples=19.6, tupSize=52.5, cpuCost=7560.0, blockIOs=6]
+        NestedLoop[pred:  EXPENSIVE_STORES.CITY_ID == OREGON_CITIES.CITY_ID] cost=[tuples=19.6, tupSize=52.5, cpuCost=7540.4, blockIOs=6]
+            Rename[resultTableName=EXPENSIVE_STORES] cost=[tuples=999.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
+                FileScan[table:  STORES, pred:  STORES.PROPERTY_COSTS > 500000] cost=[tuples=999.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
+                    Rename[resultTableName=OREGON_CITIES] cost=[tuples=5.0, tupSize=39.5, cpuCost=565.0, blockIOs=2]
+                        Project[values:  [CITIES.CITY_ID]] cost=[tuples=5.0, tupSize=39.5, cpuCost=565.0, blockIOs=2]
+                            NestedLoop[pred:  OREGON_ID.STATE_ID == CITIES.STATE_ID] cost=[tuples=5.0, tupSize=39.5, cpuCost=560.0, blockIOs=2]
+                                Rename[resultTableName=OREGON_ID] cost=[tuples=1.0, tupSize=15.7, cpuCost=52.0, blockIOs=1]
+                                    Project[values:  [STATES.STATE_ID]] cost=[tuples=1.0, tupSize=15.7, cpuCost=52.0, blockIOs=1]
+                                        FileScan[table:  STATES, pred:  STATES.STATE_NAME == 'Oregon'] cost=[tuples=1.0, tupSize=15.7, cpuCost=51.0, blockIOs=1]
+                                            FileScan[table:  CITIES] cost=[tuples=254.0, tupSize=23.8, cpuCost=254.0, blockIOs=1]
+
+Estimated 19.588217 tuples with average size 52.454067
+Estimated number of block IOs:  6
+
+
+E:  Extra Credit [OPTIONAL]
+---------------------------
+
+If you implemented any extra-credit tasks for this assignment, describe
+them here.  The description should be like this, with stuff in "<>" replaced.
+(The value i starts at 1 and increments...)
+
+E<i>:  <one-line description>
+
+     <brief summary of what you did, including the specific classes that
+     we should look at for your implementation>
+
+     <brief summary of test-cases that demonstrate/exercise your extra work>
+
+F:  Feedback [OPTIONAL]
+-----------------------
+
+WE NEED YOUR FEEDBACK!  Thoughtful and constructive input will help us to
+improve future versions of the course.  These questions are OPTIONAL, and
+they obviously won't affect your grade in any way (including if you hate
+everything about the assignment and databases in general, or Donnie and/or
+the TAs in particular).  Feel free to answer as many or as few of them as
+you wish.
+
+NOTE:  If you wish to give anonymous feedback, a similar survey will be
+       made available on the Moodle.
+
+F1.  How many hours total did your team spend on this assignment?
+     (That is, the sum of each teammate's time spent on the assignment.)
+
+F2.  What parts of the assignment were most time-consuming?  Why?
+
+F3.  Did you find any parts of the assignment particularly instructive?
+     Correspondingly, did any parts feel like unnecessary busy-work?
+
+F4.  Did you particularly enjoy any parts of the assignment?  Were there
+     any parts that you particularly disliked?
+
+F5.  Do you have any suggestions for how future versions of the
+     assignment can be improved?
+
