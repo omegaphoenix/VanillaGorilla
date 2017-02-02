@@ -7,7 +7,7 @@ test_datafiles/
 
 # Vim
 *~
-*.swp 
+*.swp
 
 # IntelliJ
 out/
