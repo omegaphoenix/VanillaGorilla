@@ -142,7 +142,11 @@ public class SimplePlanner extends AbstractPlannerImpl {
             result = new SortNode(result, orderByExprs);
         }
 
-        result = new LimitOffsetNode(result, selClause.getOffset(), selClause.getLimit());
+        int limit = selClause.getLimit();
+        int offset = selClause.getOffset();
+        if (limit != 0 || offset != 0) {
+            result = new LimitOffsetNode(result, selClause.getOffset(), selClause.getLimit());
+        }
 
         result.prepare();
         return result;

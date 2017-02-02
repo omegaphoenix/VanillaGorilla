@@ -119,6 +119,13 @@ public abstract class AbstractPlannerImpl implements Planner {
             result.prepare();
             return result;
         }
+        else if (fromClause.isDerivedTable()) {
+            List<SelectClause> enclosing = new ArrayList<SelectClause>();
+            enclosing.add(selClause);
+            result = makePlan(fromClause.getSelectClause(), enclosing);
+            result = new RenameNode(result, fromClause.getResultName());
+            return result;
+        }
 
         JoinType joinType = fromClause.getJoinType();
         PlanNode left = makeJoinPlan(selClause, fromClause.getLeftChild());
