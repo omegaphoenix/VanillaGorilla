@@ -18,7 +18,7 @@ A2.  Specify the repository URL, tag name and commit-hash of the Git version
 
      Repository URL:  https://github.com/omegaphoenix/VanillaGorilla
      Tag name:        hw3
-     Commit hash:     <hash>
+     Commit hash:     afd9e84ef994d6131278a3ad5323cdfe9cd46b4e
 
 A3.  Specify any late tokens you are applying to this assignment, or
      "none" if no late tokens.
