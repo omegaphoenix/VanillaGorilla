@@ -16,3 +16,6 @@ out/
 
 # Java
 *.class
+
+# Mac
+.DS_Store
