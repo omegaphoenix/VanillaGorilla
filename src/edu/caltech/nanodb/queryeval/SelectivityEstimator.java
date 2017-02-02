@@ -278,84 +278,88 @@ public class SelectivityEstimator {
         // Pull out the critical values for making the estimates.
 
         int colIndex = exprSchema.getColumnIndex(columnValue.getColumnName());
-        ColumnInfo colInfo = exprSchema.getColumnInfo(colIndex);
-        SQLDataType sqlType = colInfo.getType().getBaseType();
-        ColumnStats colStats = stats.get(colIndex);
 
-        Object value = literalValue.evaluate();
+        if (colIndex > 0 && colIndex < exprSchema.numColumns()) {
+            ColumnInfo colInfo = exprSchema.getColumnInfo(colIndex);
+            SQLDataType sqlType = colInfo.getType().getBaseType();
+            ColumnStats colStats = stats.get(colIndex);
+            Object value = literalValue.evaluate();
 
-        switch (compType) {
-        case EQUALS:
-        case NOT_EQUALS:
-            // Compute the equality value.  Then, if inequality, invert the
-            // result.
+            switch (compType) {
+            case EQUALS:
+            case NOT_EQUALS:
+                // Compute the equality value.  Then, if inequality, invert the
+                // result.
 
-            int numValues = colStats.getNumUniqueValues();
-            // Compute the selectivity. Default if numValues is unknown or 0.
-            // Assumes values are uniformly distributed among unique values.
-            // This is a rough approximation.
-            if (numValues != ColumnStats.UNKNOWN_NUM_VALUES && numValues != 0) {
-                if (compType == CompareOperator.Type.EQUALS) {
-                    selectivity = 1.0f / numValues;
-                }
-                else if (compType == CompareOperator.Type.NOT_EQUALS) {
-                    selectivity = 1 - 1.0f / numValues;
-                }
-            }
-            break;
-
-        case GREATER_OR_EQUAL:
-        case LESS_THAN:
-            // Compute the greater-or-equal value.  Then, if less-than,
-            // invert the result.
-
-            // Only estimate selectivity for this kind of expression if the
-            // column's type supports it.
-            if (typeSupportsCompareEstimates(sqlType) &&
-                colStats.hasDifferentMinMaxValues()) {
-
-                Object min = colStats.getMinValue();
-                Object max = colStats.getMaxValue();
-
-                if (min != ColumnStats.UNKNOWN_OBJECT && max != ColumnStats.UNKNOWN_OBJECT) {
-                    float greaterOrEqual = computeRatio(value, max, min, max);
-
-                    if (compType == CompareOperator.Type.GREATER_OR_EQUAL) {
-                        selectivity = greaterOrEqual;
-                    } else if (compType == CompareOperator.Type.LESS_THAN) {
-                        selectivity = 1 - greaterOrEqual;
+                int numValues = colStats.getNumUniqueValues();
+                // Compute the selectivity. Default if numValues is unknown or 0.
+                // Assumes values are uniformly distributed among unique values.
+                // This is a rough approximation.
+                if (numValues != ColumnStats.UNKNOWN_NUM_VALUES && numValues != 0) {
+                    if (compType == CompareOperator.Type.EQUALS) {
+                        selectivity = 1.0f / numValues;
+                    } else if (compType == CompareOperator.Type.NOT_EQUALS) {
+                        selectivity = 1 - 1.0f / numValues;
                     }
                 }
-            }
-            break;
+                break;
 
-        case LESS_OR_EQUAL:
-        case GREATER_THAN:
-            // Compute the less-or-equal value.  Then, if greater-than,
-            // invert the result.
+            case GREATER_OR_EQUAL:
+            case LESS_THAN:
+                // Compute the greater-or-equal value.  Then, if less-than,
+                // invert the result.
 
-            // Only estimate selectivity for this kind of expression if the
-            // column's type supports it.
-            if (typeSupportsCompareEstimates(sqlType) &&
-                colStats.hasDifferentMinMaxValues()) {
+                // Only estimate selectivity for this kind of expression if the
+                // column's type supports it.
+                if (typeSupportsCompareEstimates(sqlType) &&
+                        colStats.hasDifferentMinMaxValues()) {
 
-                Object min = colStats.getMinValue();
-                Object max = colStats.getMaxValue();
-                if (min != ColumnStats.UNKNOWN_OBJECT && max != ColumnStats.UNKNOWN_OBJECT) {
-                    float lessOrEqual = computeRatio(min, value, min, max);
+                    Object min = colStats.getMinValue();
+                    Object max = colStats.getMaxValue();
 
-                    if (compType == CompareOperator.Type.LESS_OR_EQUAL) {
-                        selectivity = lessOrEqual;
-                    } else if (compType == CompareOperator.Type.GREATER_THAN) {
-                        selectivity = 1 - lessOrEqual;
+                    if (min != ColumnStats.UNKNOWN_OBJECT && max != ColumnStats.UNKNOWN_OBJECT) {
+                        float greaterOrEqual = computeRatio(value, max, min, max);
+
+                        if (compType == CompareOperator.Type.GREATER_OR_EQUAL) {
+                            selectivity = greaterOrEqual;
+                        } else if (compType == CompareOperator.Type.LESS_THAN) {
+                            selectivity = 1 - greaterOrEqual;
+                        }
                     }
                 }
-            }
-            break;
+                break;
 
-        default:
-            // Shouldn't be any other comparison types...
-            assert false : "Unexpected compare-operator type:  " + compType;
+            case LESS_OR_EQUAL:
+            case GREATER_THAN:
+                // Compute the less-or-equal value.  Then, if greater-than,
+                // invert the result.
+
+                // Only estimate selectivity for this kind of expression if the
+                // column's type supports it.
+                if (typeSupportsCompareEstimates(sqlType) &&
+                        colStats.hasDifferentMinMaxValues()) {
+
+                    Object min = colStats.getMinValue();
+                    Object max = colStats.getMaxValue();
+                    if (min != ColumnStats.UNKNOWN_OBJECT && max != ColumnStats.UNKNOWN_OBJECT) {
+                        float lessOrEqual = computeRatio(min, value, min, max);
+
+                        if (compType == CompareOperator.Type.LESS_OR_EQUAL) {
+                            selectivity = lessOrEqual;
+                        } else if (compType == CompareOperator.Type.GREATER_THAN) {
+                            selectivity = 1 - lessOrEqual;
+                        }
+                    }
+                }
+                break;
+
+            default:
+                // Shouldn't be any other comparison types...
+                assert false : "Unexpected compare-operator type:  " + compType;
+            }
+        }
+        else {
+            selectivity = 1.0f;
         }
 
         return selectivity;
@@ -393,17 +397,26 @@ public class SelectivityEstimator {
         int colOneIndex = exprSchema.getColumnIndex(columnOne.getColumnName());
         int colTwoIndex = exprSchema.getColumnIndex(columnTwo.getColumnName());
 
-        ColumnStats colOneStats = stats.get(colOneIndex);
-        ColumnStats colTwoStats = stats.get(colTwoIndex);
+        if (colOneIndex > 0 && colOneIndex < stats.size() &&
+                colTwoIndex > 0 && colTwoIndex < stats.size()) {
+            ColumnStats colOneStats = stats.get(colOneIndex);
+            ColumnStats colTwoStats = stats.get(colTwoIndex);
 
-        int v1 = colOneStats.getNumUniqueValues();
-        int v2 = colTwoStats.getNumUniqueValues();
+            int v1 = colOneStats.getNumUniqueValues();
+            int v2 = colTwoStats.getNumUniqueValues();
 
-        // Compute the selectivity.
-        if (v1 != ColumnStats.UNKNOWN_NUM_VALUES && v2 != ColumnStats.UNKNOWN_NUM_VALUES) {
-            if (v1 != 0 || v2 != 0) {
-                selectivity = 1.0f / Math.max(v1, v2);
+            // Compute the selectivity.
+            if (v1 != ColumnStats.UNKNOWN_NUM_VALUES && v2 != ColumnStats.UNKNOWN_NUM_VALUES) {
+                if (v1 != 0 || v2 != 0) {
+                    selectivity = 1.0f / Math.max(v1, v2);
+                }
+                if (compType == CompareOperator.Type.NOT_EQUALS) {
+                    selectivity = 1.0f - selectivity;
+                }
             }
+        }
+        else {
+            selectivity = 1.0f;
         }
 
         return selectivity;
