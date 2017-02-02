@@ -92,6 +92,59 @@ public class TestSimpleJoins extends SqlTestCase {
     }
 
     /**
+     * This test performs a cross join with two tables, verifying both the
+     * schema and the data that is returned.
+     *
+     * @throws Exception if any query parsing or execution issues occur.
+     **/
+    public void testSimpleCrossJoinTwoTables() throws Throwable {
+        CommandResult result;
+
+        // Inner join with only one common column.
+        result = server.doCommand(
+                "SELECT * FROM test_sj_t4 t4 CROSS JOIN test_sj_t5 t5", true);
+        TupleLiteral[] expected1 = {
+            new TupleLiteral(2, 200, 1, 1000),
+            new TupleLiteral(2, 200, 2, 2000),
+            new TupleLiteral(2, 200, 3, 3000),
+            new TupleLiteral(2, 200, 4, 4000),
+            new TupleLiteral(2, 200, 5, 5000),
+            new TupleLiteral(2, 200, 6, 6000),
+
+            new TupleLiteral(5, 600, 1, 1000),
+            new TupleLiteral(5, 600, 2, 2000),
+            new TupleLiteral(5, 600, 3, 3000),
+            new TupleLiteral(5, 600, 4, 4000),
+            new TupleLiteral(5, 600, 5, 5000),
+            new TupleLiteral(5, 600, 6, 6000),
+
+            new TupleLiteral(6, 500, 1, 1000),
+            new TupleLiteral(6, 500, 2, 2000),
+            new TupleLiteral(6, 500, 3, 3000),
+            new TupleLiteral(6, 500, 4, 4000),
+            new TupleLiteral(6, 500, 5, 5000),
+            new TupleLiteral(6, 500, 6, 6000),
+
+            new TupleLiteral(9, 1100, 1, 1000),
+            new TupleLiteral(9, 1100, 2, 2000),
+            new TupleLiteral(9, 1100, 3, 3000),
+            new TupleLiteral(9, 1100, 4, 4000),
+            new TupleLiteral(9, 1100, 5, 5000),
+            new TupleLiteral(9, 1100, 6, 6000),
+
+            new TupleLiteral(14, 1000, 1, 1000),
+            new TupleLiteral(14, 1000, 2, 2000),
+            new TupleLiteral(14, 1000, 3, 3000),
+            new TupleLiteral(14, 1000, 4, 4000),
+            new TupleLiteral(14, 1000, 5, 5000),
+            new TupleLiteral(14, 1000, 6, 6000)
+        };
+        assert checkSizeResults(expected1, result);
+        assert checkUnorderedResults(expected1, result);
+        checkResultSchema(result, "T4.A", "T4.C", "T5.A", "T5.D");
+    }
+
+    /**
      * This test checks for joins where the left table is empty.
      *
      * @throws Exception if any query parsing or execution issues occur.

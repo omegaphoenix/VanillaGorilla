@@ -502,6 +502,7 @@ setup_testSimpleJoins = \
     CREATE TABLE test_sj_t2 ( a INTEGER, b INTEGER, c INTEGER ); \
     CREATE TABLE test_sj_t3 ( a INTEGER, c INTEGER, d INTEGER ); \
     CREATE TABLE test_sj_t4 ( a INTEGER, c INTEGER ); \
+    CREATE TABLE test_sj_t5 ( a INTEGER, d INTEGER ); \
     CREATE TABLE test_empty1 ( a INTEGER, d INTEGER ); \
     CREATE TABLE test_empty2 ( a INTEGER, e INTEGER ); \
     INSERT INTO test_sj_t1 VALUES (1, 10); \
@@ -534,4 +535,10 @@ setup_testSimpleJoins = \
     INSERT INTO test_sj_t4 VALUES ( 5,  600); \
     INSERT INTO test_sj_t4 VALUES ( 6,  500); \
     INSERT INTO test_sj_t4 VALUES ( 9, 1100); \
-    INSERT INTO test_sj_t4 VALUES (14, 1000);
+    INSERT INTO test_sj_t4 VALUES (14, 1000); \
+    INSERT INTO test_sj_t5 VALUES (1, 1000); \
+    INSERT INTO test_sj_t5 VALUES (2, 2000); \
+    INSERT INTO test_sj_t5 VALUES (3, 3000); \
+    INSERT INTO test_sj_t5 VALUES (4, 4000); \
+    INSERT INTO test_sj_t5 VALUES (5, 5000); \
+    INSERT INTO test_sj_t5 VALUES (6, 6000);
