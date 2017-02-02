@@ -17,7 +17,7 @@ A2.  Specify the repository URL, tag name and commit-hash of the Git version
      of your repository tags with this command:  git show-ref --tags)
 
      Repository URL:  https://github.com/omegaphoenix/VanillaGorilla
-     Tag name:        <tag>
+     Tag name:        hw3
      Commit hash:     <hash>
 
 A3.  Specify any late tokens you are applying to this assignment, or
