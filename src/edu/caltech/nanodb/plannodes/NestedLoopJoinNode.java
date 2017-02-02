@@ -167,8 +167,6 @@ public class NestedLoopJoinNode extends ThetaJoinNode {
         float numTuples = 0;
         switch(joinType) {
             case CROSS:
-                numTuples = tupleProd;
-                break;
             case INNER:
                 numTuples = selectivity * tupleProd;
                 break;
