@@ -79,6 +79,9 @@ public class SimplePlanner extends AbstractPlannerImpl {
                     e.traverse(noAggregateProcessor);
                 }
                 result = makeJoinPlan(selClause, fromClause);
+                if (whereExpr != null) {
+                    result = new SimpleFilterNode(result, whereExpr);
+                }
             }
             // Handle derived table recursively.
             else if (fromClause.isDerivedTable()) {
