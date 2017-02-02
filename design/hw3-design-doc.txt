@@ -40,6 +40,20 @@ B:  Statistics Collection
 B1.  Using pseudocode, summarize the implementation of your HeapTupleFile
      analyze() function.
 
+     totalBytes, numDataPages, numTuples, avgTupleSize = 0
+     csc = a list of ColumnStatsCollectors, one for each column
+
+     for page in file:
+         numDataPages++
+         update totalBytes based on page
+         for tuple in page:
+             Record tuple in the appropriate csc collector
+             numTuples++
+     columnStats = list of ColumnStats built from csc
+     if numTuples != 0:
+         avgTupleSize = float(totalBytes) / numTuples
+     Save tableStats(numDataPages, numtuples, avgTupleSize, columnStats)
+
 C:  Plan Costing Implementation
 -------------------------------
 
@@ -118,6 +132,12 @@ D2 . What is the estimated number of tuples that will be produced by each
 
      Briefly explain the difference between the estimated number of tuples
      and the actual number of tuples for these queries.
+
+     The estimated selectivity assumes a uniform distribution of values
+     between the min and max. Hence, the estimate decreases as the number
+     increases since there are fewer numbers between 8000000 and the max.
+     However, in reality the distribution is not uniform, so the actual
+     results are much lower.
 
 D3.  Paste the output of running these commands:
 
