@@ -46,7 +46,18 @@ C:  Plan Costing Implementation
 C1.  Briefly describe how you estimate the number of tuples and the cost
      of a file-scan plan node.  What factors does your cost include?
 
+     Get the number of tuples from tableStats and apply selectivity multiplier
+     if there is a predicate. The cpuCost is just the number of tuples in the
+     table and the numBlockIOs is the number of data pages since we assume
+     that there is one block IO for each page that needs to be read since
+     each must be loaded individually.
+
 C2.  Same question as for C1, but for simple filter nodes.
+
+     The tuple size and number of block IOs are the same as the left child's
+     since the left child loads the tuples into memory. For the CPU cost,
+     we add numTuples to the child's CPU cost since we must iterate through
+     each tuple and the numTuples is (selectivity * (the child's numTuples)).
 
 C3.  Same question as for C1, but for nested-loop joins.
 
