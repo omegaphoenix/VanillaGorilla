@@ -246,12 +246,10 @@ If you implemented any extra-credit tasks for this assignment, describe
 them here.  The description should be like this, with stuff in "<>" replaced.
 (The value i starts at 1 and increments...)
 
-E<i>:  <one-line description>
+E<1>:  <Test simple cross join case>
 
-     <brief summary of what you did, including the specific classes that
-     we should look at for your implementation>
-
-     <brief summary of test-cases that demonstrate/exercise your extra work>
+    We wrote a test case for cross joining two tables and then verifying the
+    results in test/edu/caltech/test/nanodb/sql/TestSimpleJoins.java
 
 F:  Feedback [OPTIONAL]
 -----------------------
