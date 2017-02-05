@@ -11,12 +11,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import edu.caltech.nanodb.expressions.AggregateProcessor;
+import edu.caltech.nanodb.expressions.OrderByExpression;
+import edu.caltech.nanodb.plannodes.*;
+import edu.caltech.nanodb.queryast.SelectValue;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.expressions.Expression;
-import edu.caltech.nanodb.plannodes.FileScanNode;
-import edu.caltech.nanodb.plannodes.PlanNode;
-import edu.caltech.nanodb.plannodes.SelectNode;
 import edu.caltech.nanodb.queryast.FromClause;
 import edu.caltech.nanodb.queryast.SelectClause;
 import edu.caltech.nanodb.relations.TableInfo;
@@ -125,6 +126,11 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         List<SelectClause> enclosingSelects) throws IOException {
 
         // TODO:  Implement!
+        AggregateProcessor aggregateProcessor = new AggregateProcessor(true);
+        AggregateProcessor noAggregateProcessor = new AggregateProcessor(false);
+
+        // PlanNode to return.
+        PlanNode result = null;
         //
         // This is a very rough sketch of how this function will work,
         // focusing mainly on join planning:
@@ -132,21 +138,106 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         // 1)  Pull out the top-level conjuncts from the WHERE and HAVING
         //     clauses on the query, since we will handle them in special ways
         //     if we have outer joins.
+        FromClause fromClause = selClause.getFromClause();
+        Expression whereExpr = selClause.getWhereExpr();
         //
         // 2)  Create an optimal join plan from the top-level from-clause and
         //     the top-level conjuncts.
         //
+        if (fromClause != null) {
+
+            // If from clause is a base table, simply do a file scan.
+            if (fromClause.isBaseTable()) {
+                result = makeSimpleSelect(fromClause.getTableName(),
+                        whereExpr, null);
+            }
+            // Handle joins.
+            else if (fromClause.isJoinExpr()) {
+                Expression e = fromClause.getOnExpression();
+                if (e == null) {
+                    e = fromClause.getComputedJoinExpr();
+                }
+                if (e != null) {
+                    e.traverse(noAggregateProcessor);
+                }
+                result = makeJoinPlan(selClause, fromClause);
+                if (whereExpr != null) {
+                    result = new SimpleFilterNode(result, whereExpr);
+                }
+            }
+            // Handle derived table recursively.
+            else if (fromClause.isDerivedTable()) {
+                SelectClause subClause = fromClause.getSelectClause();
+
+                // Enclosing selects for sub-query.
+                List<SelectClause> enclosing = null;
+                if (enclosingSelects != null) {
+                    enclosing = new ArrayList<SelectClause>(enclosingSelects);
+                    enclosing.add(selClause);
+                }
+                else {
+                    enclosing = new ArrayList<SelectClause>();
+                    enclosing.add(selClause);
+                }
+                result = makePlan(subClause, enclosing);
+                result = new RenameNode(result, fromClause.getResultName());
+            }
+        }
         // 3)  If there are any unused conjuncts, determine how to handle them.
         //
         // 4)  Create a project plan-node if necessary.
         //
-        // 5)  Handle other clauses such as ORDER BY, LIMIT/OFFSET, etc.
-        //
-        // Supporting other query features, such as grouping/aggregation,
-        // various kinds of subqueries, queries without a FROM clause, etc.,
-        // can all be incorporated into this sketch relatively easily.
+        // Check to see for trivial project (SELECT * FROM ...)
+        if (!selClause.isTrivialProject()) {
+            List<SelectValue> selectValues = selClause.getSelectValues();
 
-        return null;
+            for (SelectValue sv : selectValues) {
+                if (!sv.isExpression())
+                    continue;
+                Expression e = sv.getExpression().traverse(aggregateProcessor);
+                sv.setExpression(e);
+            }
+
+            Expression havingExpr = selClause.getHavingExpr();
+            if (havingExpr != null) {
+                Expression e = havingExpr.traverse(aggregateProcessor);
+                selClause.setHavingExpr(e);
+            }
+
+            if (whereExpr != null) {
+                whereExpr.traverse(noAggregateProcessor);
+            }
+
+            if (selClause.getGroupByExprs().size() != 0 || aggregateProcessor.aggregates.size() != 0) {
+                result = new HashedGroupAggregateNode(result, selClause.getGroupByExprs(), aggregateProcessor.aggregates);
+            }
+
+            if (havingExpr != null) {
+                result = new SimpleFilterNode(result, havingExpr);
+            }
+
+            // If there is no FROM clause, make a trivial ProjectNode()
+            if (fromClause == null) {
+                result = new ProjectNode(selectValues);
+            }
+            else {
+                result = new ProjectNode(result, selectValues);
+            }
+        }
+        // 5)  Handle other clauses such as ORDER BY, LIMIT/OFFSET, etc.
+        List<OrderByExpression> orderByExprs = selClause.getOrderByExprs();
+        if (orderByExprs.size() > 0) {
+            result = new SortNode(result, orderByExprs);
+        }
+
+        int limit = selClause.getLimit();
+        int offset = selClause.getOffset();
+        if (limit != 0 || offset != 0) {
+            result = new LimitOffsetNode(result, selClause.getOffset(), selClause.getLimit());
+        }
+
+        result.prepare();
+        return result;
     }
 
 
