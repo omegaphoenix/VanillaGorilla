@@ -1,0 +1,113 @@
+CS122 Assignment 4 - Join Optimization - Design Document
+========================================================
+
+A:  Logistics
+-------------
+
+A1.  List your team name and the people who worked on this assignment.
+
+     <team name>
+
+     <name>
+     <name>
+     ...
+
+A2.  Specify the repository URL, tag name and commit-hash of the Git version
+     you are submitting for your assignment.  (You can list the commit hashes
+     of your repository tags with this command:  git show-ref --tags)
+
+     Repository URL:  <url>
+     Tag name:        <tag>
+     Commit hash:     <hash>
+
+A3.  Specify any late tokens you are applying to this assignment, or
+     "none" if no late tokens.
+
+A4.  Briefly describe what parts of the assignment each teammate focused on.
+
+B:  Generating Optimal Joins
+----------------------------
+
+B1.  Briefly describe how you generate an "optimal" access to a base table.
+
+B2.  Briefly describe how you decide when it is acceptable to push
+     conjuncts down through an outer join.
+
+B3.  The planner in this assignment is still somewhat limited; for example,
+     we can't push conjuncts down into subqueries.  Using the stores schema,
+     write an example SQL query that includes a subquery, where it would be
+     beneficial to push a conjunct down into the subquery.  (Your planner
+     obviously doesn't need to perform this optimization.)
+
+B4.  Enumerate the situations where you call prepare() on plans being
+     generated.  Since this operation is somewhat expensive, do you
+     see any ways to reduce the number of times you call prepare() in
+     your implementation?
+
+B5.  In what situations can you end up with unused conjuncts after
+     planning joins.  Illustrate by giving an example SQL statement
+     that would have unused conjuncts after join planning, again using
+     the stores schema.  Then, describe a strategy for where/how these
+     left-over conjuncts should be applied in the plan.
+
+C:  Costing SQL Queries
+-----------------------
+
+After you have loaded the stores-28K.sql data and have analyzed all of
+the tables in that schema, run the following explain operations and paste
+the output from your planner (excluding debug output!).
+
+If there is anything unusual or non-obvious about your output, feel free
+to write explanatory notes after your output.
+
+C1.  EXPLAIN SELECT * FROM cities WHERE population > 5000000;
+
+C2.  EXPLAIN SELECT store_id FROM stores, cities     WHERE stores.city_id = cities.city_id AND
+           cities.population > 1000000;
+
+C3.  EXPLAIN SELECT store_id FROM stores JOIN                    (SELECT city_id FROM cities                     WHERE population > 1000000) AS big_cities                    ON stores.city_id = big_cities.city_id;
+
+C4.  EXPLAIN SELECT store_id, property_costs     FROM stores, cities, states     WHERE stores.city_id = cities.city_id AND
+           cities.state_id = states.state_id AND           state_name = 'Oregon' AND property_costs > 500000;
+
+E:  Extra Credit [OPTIONAL]
+---------------------------
+
+If you implemented any extra-credit tasks for this assignment, describe
+them here.  The description should be like this, with stuff in "<>" replaced.
+(The value i starts at 1 and increments...)
+
+E<i>:  <one-line description>
+
+     <brief summary of what you did, including the specific classes that
+     we should look at for your implementation>
+
+     <brief summary of test-cases that demonstrate/exercise your extra work>
+
+F:  Feedback [OPTIONAL]
+-----------------------
+
+WE NEED YOUR FEEDBACK!  Thoughtful and constructive input will help us to
+improve future versions of the course.  These questions are OPTIONAL, and
+they obviously won't affect your grade in any way (including if you hate
+everything about the assignment and databases in general, or Donnie and/or
+the TAs in particular).  Feel free to answer as many or as few of them as
+you wish.
+
+NOTE:  If you wish to give anonymous feedback, a similar survey will be
+       made available on the Moodle.
+
+F1.  How many hours total did your team spend on this assignment?
+     (That is, the sum of each teammate's time spent on the assignment.)
+
+F2.  What parts of the assignment were most time-consuming?  Why?
+
+F3.  Did you find any parts of the assignment particularly instructive?
+     Correspondingly, did any parts feel like unnecessary busy-work?
+
+F4.  Did you particularly enjoy any parts of the assignment?  Were there
+     any parts that you particularly disliked?
+
+F5.  Do you have any suggestions for how future versions of the
+     assignment can be improved?
+
