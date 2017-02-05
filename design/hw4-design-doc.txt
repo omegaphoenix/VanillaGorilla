@@ -6,22 +6,24 @@ A:  Logistics
 
 A1.  List your team name and the people who worked on this assignment.
 
-     <team name>
+     VanillaGorilla
 
-     <name>
-     <name>
-     ...
+     Justin Leong
+     Matthew Jin
+     David Qu
 
 A2.  Specify the repository URL, tag name and commit-hash of the Git version
      you are submitting for your assignment.  (You can list the commit hashes
      of your repository tags with this command:  git show-ref --tags)
 
-     Repository URL:  <url>
+     Repository URL:  https://github.com/omegaphoenix/VanillaGorilla
      Tag name:        <tag>
      Commit hash:     <hash>
 
 A3.  Specify any late tokens you are applying to this assignment, or
      "none" if no late tokens.
+
+     none
 
 A4.  Briefly describe what parts of the assignment each teammate focused on.
 
@@ -62,13 +64,19 @@ to write explanatory notes after your output.
 
 C1.  EXPLAIN SELECT * FROM cities WHERE population > 5000000;
 
-C2.  EXPLAIN SELECT store_id FROM stores, cities     WHERE stores.city_id = cities.city_id AND
-           cities.population > 1000000;
+C2.  EXPLAIN SELECT store_id FROM stores, cities
+       WHERE stores.city_id = cities.city_id AND cities.population > 1000000;
 
-C3.  EXPLAIN SELECT store_id FROM stores JOIN                    (SELECT city_id FROM cities                     WHERE population > 1000000) AS big_cities                    ON stores.city_id = big_cities.city_id;
+C3.  EXPLAIN SELECT store_id FROM stores JOIN
+       (SELECT city_id FROM cities
+       WHERE population > 1000000) AS big_cities
+       ON stores.city_id = big_cities.city_id;
 
-C4.  EXPLAIN SELECT store_id, property_costs     FROM stores, cities, states     WHERE stores.city_id = cities.city_id AND
-           cities.state_id = states.state_id AND           state_name = 'Oregon' AND property_costs > 500000;
+C4.  EXPLAIN SELECT store_id, property_costs
+       FROM stores, cities, states
+       WHERE stores.city_id = cities.city_id AND
+           cities.state_id = states.state_id AND
+           state_name = 'Oregon' AND property_costs > 500000;
 
 E:  Extra Credit [OPTIONAL]
 ---------------------------
