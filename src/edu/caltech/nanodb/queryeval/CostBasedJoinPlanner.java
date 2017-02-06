@@ -323,7 +323,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
     private void collectDetails(FromClause fromClause,
         HashSet<Expression> conjuncts, ArrayList<FromClause> leafFromClauses) {
 
-        if (isLeaf(fromClause)) {
+        if (fromClause.isLeaf()) {
             leafFromClauses.add(fromClause);
         }
         else {
@@ -342,17 +342,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
     }
 
 
-    /**
-     * Return true if the from-clause is considered a leaf.
-     * Base-tables, subqueries, and outer-joins are leaves.
-     *
-     * @param fromClause the from-clause to check
-     */
-    private boolean isLeaf(FromClause fromClause) {
-        return fromClause.isBaseTable()
-                || fromClause.isDerivedTable()
-                || fromClause.isOuterJoin();
-    }
 
     /**
      * This helper method performs the first step of the dynamic programming
