@@ -433,7 +433,25 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         //        Concentrate on properly handling cases other than outer
         //        joins first, then focus on outer joins once you have the
         //        typical cases supported.
+        if (fromClause == null) {
+            return null;
+        }
 
+        PlanNode resPlan;
+        if (fromClause.isBaseTable()) {
+            TableInfo clauseTableInfo = new TableInfo(fromClause.getTableName(), null);
+            resPlan = new FileScanNode(clauseTableInfo, null);
+        }
+        else if (fromClause.isDerivedTable()) {
+            if (fromClause.getLeftChild() != null) {
+                resPlan = makeLeafPlan(fromClause.getLeftChild(), conjuncts, leafConjuncts);
+            }
+            if (fromClause.getRightChild() != null) {
+                resPlan = makeLeafPlan(fromClause.getLeftChild(), conjuncts, leafConjuncts);
+            }
+        }
+        else if (fromClause.isOuterJoin()) {
+        }
         return null;
     }
 
