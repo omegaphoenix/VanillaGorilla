@@ -439,20 +439,22 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
         PlanNode resPlan;
         if (fromClause.isBaseTable()) {
-            TableInfo clauseTableInfo = new TableInfo(fromClause.getTableName(), null);
-            resPlan = new FileScanNode(clauseTableInfo, null);
+            // Use FileScanNode
+            resPlan = makeSimpleSelect(fromClause.getTableName(),
+                    null, null);
         }
         else if (fromClause.isDerivedTable()) {
-            if (fromClause.getLeftChild() != null) {
-                resPlan = makeLeafPlan(fromClause.getLeftChild(), conjuncts, leafConjuncts);
-            }
-            if (fromClause.getRightChild() != null) {
-                resPlan = makeLeafPlan(fromClause.getLeftChild(), conjuncts, leafConjuncts);
-            }
+            // Get query plan for subquery
+            resPlan = makePlan(fromClause.getSelectClause(), null);
         }
         else if (fromClause.isOuterJoin()) {
+            // Generate optimal plan for each child
+            resPlan = null;
         }
-        return null;
+        else {
+            throw new IOException("makeLeafPlan: Unknown FromClause type");
+        }
+        return resPlan;
     }
 
 
