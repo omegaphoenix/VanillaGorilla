@@ -150,6 +150,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         //     clauses on the query, since we will handle them in special ways
         //     if we have outer joins.
         FromClause fromClause = selClause.getFromClause();
+        Expression havingExpr = selClause.getHavingExpr();
         Expression whereExpr = selClause.getWhereExpr();
         //
         // 2)  Create an optimal join plan from the top-level from-clause and
@@ -172,13 +173,12 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                     e.traverse(noAggregateProcessor);
                 }
                 Collection<Expression> conjuncts = new HashSet<Expression>();
-                PredicateUtils.collectConjuncts(e, conjuncts);
                 PredicateUtils.collectConjuncts(whereExpr, conjuncts);
                 JoinComponent joinResult = makeJoinPlan(fromClause, conjuncts);
                 result = joinResult.joinPlan;
-                if (whereExpr != null) {
-                    result = new SimpleFilterNode(result, whereExpr);
-                }
+                // if (whereExpr != null) {
+                //     result = new SimpleFilterNode(result, whereExpr);
+                // }
             }
             // Handle derived table recursively.
             else if (fromClause.isDerivedTable()) {
@@ -213,7 +213,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 sv.setExpression(e);
             }
 
-            Expression havingExpr = selClause.getHavingExpr();
             if (havingExpr != null) {
                 Expression e = havingExpr.traverse(aggregateProcessor);
                 selClause.setHavingExpr(e);
@@ -544,10 +543,14 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                     HashSet<Expression> tmpConjuncts = new HashSet<Expression>();
                     PredicateUtils.findExprsUsingSchemas(conjuncts, false, tmpConjuncts,
                             plan.joinPlan.getSchema(), leafComponent.joinPlan.getSchema());
+                    // need something similar to ^ line for leaf nodes too...
+
+                    tmpConjuncts.removeAll(plan.conjunctsUsed);
+                    tmpConjuncts.removeAll(leafComponent.conjunctsUsed);
                     Expression pred = PredicateUtils.makePredicate(tmpConjuncts);
 
                     // CROSS join or??
-                    PlanNode tmpPlan = new NestedLoopJoinNode(plan.joinPlan, leafComponent.joinPlan, JoinType.CROSS, pred);
+                    PlanNode tmpPlan = new NestedLoopJoinNode(plan.joinPlan, leafComponent.joinPlan, JoinType.INNER, pred);
                     tmpPlan.prepare();
                     PlanCost tmpPlanCost = tmpPlan.getCost();
 
