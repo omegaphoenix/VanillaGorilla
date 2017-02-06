@@ -437,6 +437,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             return null;
         }
 
+        // Create basic plan based on fromClause type
         PlanNode resPlan;
         if (fromClause.isBaseTable()) {
             // Use FileScanNode
@@ -466,6 +467,11 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         else {
             throw new IOException("makeLeafPlan: Unknown FromClause type");
         }
+
+        // TODO: Optimize to apply selections as early as possible
+        // Note that this is not optimal in presence of indexes
+        resPlan.prepare();
+
         return resPlan;
     }
 
