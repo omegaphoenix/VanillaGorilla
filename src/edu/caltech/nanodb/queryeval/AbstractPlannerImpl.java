@@ -142,22 +142,22 @@ public abstract class AbstractPlannerImpl implements Planner {
             predicate = fromClause.getOnExpression();
         }
         switch (joinType) {
-        case CROSS:
-        case INNER:
-        case LEFT_OUTER:
-        case ANTIJOIN:
-        case SEMIJOIN:
-            resPlan = new NestedLoopJoinNode(left, right, joinType, predicate);
-            break;
-        case RIGHT_OUTER:
-            resPlan = new NestedLoopJoinNode(left, right, joinType.LEFT_OUTER, predicate);
-            ((ThetaJoinNode) resPlan).swap();
-            break;
-        case FULL_OUTER:
-            throw new UnsupportedOperationException(
-                      "Not implemented: FULL_OUTER join");
-        default:
-            throw new UnsupportedOperationException("Not a valid JoinType.");
+            case CROSS:
+            case INNER:
+            case LEFT_OUTER:
+            case ANTIJOIN:
+            case SEMIJOIN:
+                resPlan = new NestedLoopJoinNode(left, right, joinType, predicate);
+                break;
+            case RIGHT_OUTER:
+                resPlan = new NestedLoopJoinNode(left, right, JoinType.LEFT_OUTER, predicate);
+                ((ThetaJoinNode) resPlan).swap();
+                break;
+            case FULL_OUTER:
+                throw new UnsupportedOperationException(
+                          "Not implemented: FULL_OUTER join");
+            default:
+                throw new UnsupportedOperationException("Not a valid JoinType.");
         }
         if (needPostProject) {
             projectVals = fromClause.getComputedSelectValues();
