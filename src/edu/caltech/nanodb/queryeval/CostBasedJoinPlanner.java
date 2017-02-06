@@ -16,6 +16,7 @@ import edu.caltech.nanodb.expressions.OrderByExpression;
 import edu.caltech.nanodb.expressions.PredicateUtils;
 import edu.caltech.nanodb.plannodes.*;
 import edu.caltech.nanodb.queryast.SelectValue;
+import edu.caltech.nanodb.relations.JoinType;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.expressions.Expression;
@@ -108,6 +109,15 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             this.joinPlan = joinPlan;
             this.leavesUsed = leavesUsed;
             this.conjunctsUsed = conjunctsUsed;
+        }
+
+        public PlanNode getLeafPlan() {
+            if (leavesUsed.size() != 1) {
+                throw new IllegalStateException("JoinComponent is not single leaf");
+            }
+            else {
+                return leavesUsed.iterator().next();
+            }
         }
     }
 
@@ -513,6 +523,36 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             // specified leaves, or if they are better than the current plan.
             HashMap<HashSet<PlanNode>, JoinComponent> nextJoinPlans =
                 new HashMap<>();
+
+            for (JoinComponent plan : joinPlans.values()) {
+                for (JoinComponent leafComponent: leafComponents) {
+                    if (plan.leavesUsed.contains(leafComponent.getLeafPlan())) {
+                        continue;
+                    }
+
+                    /*
+                       - Make join between plan and leafComponent
+                       - Calculate cost of new join
+                       - if in nextJoinPlans,
+                            add conditionally on costs
+                       - else
+                            add to nextJoinPlans
+                     */
+                    Set<Expression> tmpConjuncts = new HashSet<Expression>();
+                    PredicateUtils.findExprsUsingSchemas(conjuncts, false, tmpConjuncts,
+                            plan.joinPlan.getSchema(), leafComponent.joinPlan.getSchema());
+                    Expression pred = PredicateUtils.makePredicate(tmpConjuncts);
+
+                    // CROSS join or??
+                    PlanNode tmpPlan = new NestedLoopJoinNode(plan.joinPlan, leafComponent.joinPlan, JoinType.CROSS, pred);
+
+                    tmpPlan.prepare();
+                    PlanCost tmpPlanCost = tmpPlan.getCost();
+
+
+
+                }
+            }
 
             // TODO:  IMPLEMENT THE CODE THAT GENERATES OPTIMAL PLANS THAT
             //        JOIN N + 1 LEAVES
