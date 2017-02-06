@@ -443,8 +443,12 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         PlanNode resPlan;
         if (fromClause.isBaseTable()) {
             // Use FileScanNode
+            PredicateUtils.findExprsUsingSchemas(conjuncts, false,
+                    leafConjuncts, fromClause.getSchema());
+            Expression pred = PredicateUtils.makePredicate(leafConjuncts);
+
             resPlan = makeSimpleSelect(fromClause.getTableName(),
-                    null, null);
+                    pred, null);
         }
         else if (fromClause.isDerivedTable()) {
             // Get query plan for subquery
