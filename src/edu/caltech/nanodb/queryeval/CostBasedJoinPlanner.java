@@ -466,7 +466,14 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             PlanNode rightNode = rightComp.joinPlan;
             JoinType joinType = fromClause.getJoinType();
             Expression predicate = fromClause.getOnExpression();
+            boolean isRightOuterJoin = joinType == JoinType.RIGHT_OUTER;
+            if (isRightOuterJoin) {
+                joinType = JoinType.LEFT_OUTER;
+            }
             resPlan = new NestedLoopJoinNode(leftNode, rightNode, joinType, predicate);
+            if (isRightOuterJoin) {
+                ((ThetaJoinNode) resPlan).swap();
+            }
         }
         else {
             throw new IOException("makeLeafPlan: Unknown FromClause type");
