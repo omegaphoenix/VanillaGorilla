@@ -171,7 +171,11 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 if (e != null) {
                     e.traverse(noAggregateProcessor);
                 }
-                result = makeJoinPlan(selClause, fromClause);
+                Collection<Expression> conjuncts = new HashSet<Expression>();
+                PredicateUtils.collectConjuncts(e, conjuncts);
+                PredicateUtils.collectConjuncts(whereExpr, conjuncts);
+                JoinComponent joinResult = makeJoinPlan(fromClause, conjuncts);
+                result = joinResult.joinPlan;
                 if (whereExpr != null) {
                     result = new SimpleFilterNode(result, whereExpr);
                 }
@@ -562,7 +566,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                     else {
                         nextJoinPlans.put(tmpLeavesUsed, tmpJoin);
                     }
-
 
                 }
             }
