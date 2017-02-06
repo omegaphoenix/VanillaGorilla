@@ -456,23 +456,39 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         }
         else if (fromClause.isOuterJoin()) {
             // Generate optimal plan for each child
-            JoinComponent left, right;
+            JoinComponent leftComp, rightComp;
             if (fromClause.hasOuterJoinOnLeft()) {
-                left = makeJoinPlan(fromClause.getLeftChild(), null);
+                leftComp = makeJoinPlan(fromClause.getLeftChild(), null);
             }
             else {
-                left = makeJoinPlan(fromClause.getLeftChild(), conjuncts);
+                leftComp = makeJoinPlan(fromClause.getLeftChild(), conjuncts);
             }
             if (fromClause.hasOuterJoinOnRight()) {
-                right = makeJoinPlan(fromClause.getRightChild(), null);
+                rightComp = makeJoinPlan(fromClause.getRightChild(), null);
             }
             else {
-                right = makeJoinPlan(fromClause.getRightChild(), conjuncts);
+                rightComp = makeJoinPlan(fromClause.getRightChild(), conjuncts);
             }
-            resPlan = null;
+            PlanNode leftNode = leftComp.joinPlan;
+            PlanNode rightNode = rightComp.joinPlan;
+            JoinType joinType = fromClause.getJoinType();
+            Expression predicate = fromClause.getOnExpression();
+            boolean isRightOuterJoin = joinType == JoinType.RIGHT_OUTER;
+            if (isRightOuterJoin) {
+                joinType = JoinType.LEFT_OUTER;
+            }
+            resPlan = new NestedLoopJoinNode(leftNode, rightNode, joinType, predicate);
+            if (isRightOuterJoin) {
+                ((ThetaJoinNode) resPlan).swap();
+            }
         }
         else {
             throw new IOException("makeLeafPlan: Unknown FromClause type");
+        }
+        // Handle alias
+        if (fromClause.isRenamed()) {
+            String aliasName = fromClause.getResultName();
+            resPlan = new RenameNode(resPlan, aliasName);
         }
 
         // TODO: Optimize to apply selections as early as possible
