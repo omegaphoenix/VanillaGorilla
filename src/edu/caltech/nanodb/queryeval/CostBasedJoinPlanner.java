@@ -463,6 +463,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             else {
                 right = makeJoinPlan(fromClause.getRightChild(), conjuncts);
             }
+            resPlan = null;
         }
         else {
             throw new IOException("makeLeafPlan: Unknown FromClause type");
