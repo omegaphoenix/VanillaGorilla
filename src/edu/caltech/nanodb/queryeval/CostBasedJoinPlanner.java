@@ -449,7 +449,19 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         }
         else if (fromClause.isOuterJoin()) {
             // Generate optimal plan for each child
-            resPlan = null;
+            JoinComponent left, right;
+            if (fromClause.hasOuterJoinOnLeft()) {
+                left = makeJoinPlan(fromClause.getLeftChild(), null);
+            }
+            else {
+                left = makeJoinPlan(fromClause.getLeftChild(), conjuncts);
+            }
+            if (fromClause.hasOuterJoinOnRight()) {
+                right = makeJoinPlan(fromClause.getRightChild(), null);
+            }
+            else {
+                right = makeJoinPlan(fromClause.getRightChild(), conjuncts);
+            }
         }
         else {
             throw new IOException("makeLeafPlan: Unknown FromClause type");
