@@ -92,9 +92,6 @@ public abstract class SelectNode extends PlanNode {
         // Continue to advance the current tuple until it is selected by the
         // predicate.
         do {
-            if (currentTuple != null) {
-                currentTuple.unpin();
-            }
             advanceCurrentTuple();
 
             // If the last tuple in the file (or chain of nodes) did not
@@ -103,6 +100,9 @@ public abstract class SelectNode extends PlanNode {
             if (currentTuple == null) {
                 done = true;
                 return null;
+            }
+            else {
+                currentTuple.unpin();
             }
         }
         while (!isTupleSelected(currentTuple));
