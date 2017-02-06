@@ -529,7 +529,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                     if (plan.leavesUsed.contains(leafComponent.getLeafPlan())) {
                         continue;
                     }
-
                     /*
                        - Make join between plan and leafComponent
                        - Calculate cost of new join
@@ -538,17 +537,31 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                        - else
                             add to nextJoinPlans
                      */
-                    Set<Expression> tmpConjuncts = new HashSet<Expression>();
+                    HashSet<Expression> tmpConjuncts = new HashSet<Expression>();
                     PredicateUtils.findExprsUsingSchemas(conjuncts, false, tmpConjuncts,
                             plan.joinPlan.getSchema(), leafComponent.joinPlan.getSchema());
                     Expression pred = PredicateUtils.makePredicate(tmpConjuncts);
 
                     // CROSS join or??
                     PlanNode tmpPlan = new NestedLoopJoinNode(plan.joinPlan, leafComponent.joinPlan, JoinType.CROSS, pred);
-
                     tmpPlan.prepare();
                     PlanCost tmpPlanCost = tmpPlan.getCost();
 
+                    // collect leaves used
+                    HashSet<PlanNode> tmpLeavesUsed = new HashSet<>();
+                    tmpLeavesUsed.addAll(plan.leavesUsed);
+                    tmpLeavesUsed.addAll(leafComponent.leavesUsed);
+
+                    JoinComponent tmpJoin = new JoinComponent(tmpPlan, tmpLeavesUsed, tmpConjuncts);
+                    if (nextJoinPlans.containsKey(tmpLeavesUsed)) {
+                        PlanCost prevCost = nextJoinPlans.get(tmpLeavesUsed).joinPlan.getCost();
+                        if (prevCost.cpuCost > tmpPlanCost.cpuCost) {
+                            nextJoinPlans.put(tmpLeavesUsed, tmpJoin);
+                        }
+                    }
+                    else {
+                        nextJoinPlans.put(tmpLeavesUsed, tmpJoin);
+                    }
 
 
                 }
