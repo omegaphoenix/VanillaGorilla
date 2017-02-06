@@ -13,6 +13,7 @@ import java.util.Set;
 
 import edu.caltech.nanodb.expressions.AggregateProcessor;
 import edu.caltech.nanodb.expressions.OrderByExpression;
+import edu.caltech.nanodb.expressions.PredicateUtils;
 import edu.caltech.nanodb.plannodes.*;
 import edu.caltech.nanodb.queryast.SelectValue;
 import org.apache.log4j.Logger;
@@ -319,9 +320,36 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
     private void collectDetails(FromClause fromClause,
         HashSet<Expression> conjuncts, ArrayList<FromClause> leafFromClauses) {
 
-        // TODO:  IMPLEMENT
+        if (isLeaf(fromClause)) {
+            leafFromClauses.add(fromClause);
+        }
+        else {
+            // Collect conjuncts
+            PredicateUtils.collectConjuncts(fromClause.getOnExpression(), conjuncts);
+            PredicateUtils.collectConjuncts(fromClause.getComputedJoinExpr(), conjuncts);
+
+            // Recursive call on child nodes
+            if (fromClause.getLeftChild() != null) {
+                collectDetails(fromClause.getLeftChild(), conjuncts, leafFromClauses);
+            }
+            if (fromClause.getRightChild() != null) {
+                collectDetails(fromClause.getRightChild(), conjuncts, leafFromClauses);
+            }
+        }
     }
 
+
+    /**
+     * Return true if the from-clause is considered a leaf.
+     * Base-tables, subqueries, and outer-joins are leaves.
+     *
+     * @param fromClause the from-clause to check
+     */
+    private boolean isLeaf(FromClause fromClause) {
+        return fromClause.isBaseTable()
+                || fromClause.isDerivedTable()
+                || fromClause.isOuterJoin();
+    }
 
     /**
      * This helper method performs the first step of the dynamic programming
