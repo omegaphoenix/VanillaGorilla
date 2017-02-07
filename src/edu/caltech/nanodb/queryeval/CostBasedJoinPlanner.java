@@ -425,16 +425,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
     private PlanNode makeLeafPlan(FromClause fromClause,
         Collection<Expression> conjuncts, HashSet<Expression> leafConjuncts)
         throws IOException {
-
-        // TODO:  IMPLEMENT.
-        //        If you apply any conjuncts then make sure to add them to the
-        //        leafConjuncts collection.
-        //
-        //        Don't forget that all from-clauses can specify an alias.
-        //
-        //        Concentrate on properly handling cases other than outer
-        //        joins first, then focus on outer joins once you have the
-        //        typical cases supported.
         if (fromClause == null) {
             return null;
         }
@@ -443,12 +433,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         PlanNode resPlan;
         if (fromClause.isBaseTable()) {
             // Use FileScanNode
-            PredicateUtils.findExprsUsingSchemas(conjuncts, false,
-                    leafConjuncts, fromClause.getSchema());
-            Expression pred = PredicateUtils.makePredicate(leafConjuncts);
-
             resPlan = makeSimpleSelect(fromClause.getTableName(),
-                    pred, null);
+                    null, null);
         }
         else if (fromClause.isDerivedTable()) {
             // Get query plan for subquery
@@ -457,22 +443,24 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         else if (fromClause.isOuterJoin()) {
             // Generate optimal plan for each child
             JoinComponent leftComp, rightComp;
-            if (fromClause.hasOuterJoinOnLeft()) {
-                leftComp = makeJoinPlan(fromClause.getLeftChild(), null);
+            HashSet<Expression> leftConj = null;
+            HashSet<Expression> rightConj = null;
+            if (!fromClause.hasOuterJoinOnLeft()) {
+                rightConj = new HashSet(conjuncts);
             }
-            else {
-                leftComp = makeJoinPlan(fromClause.getLeftChild(), conjuncts);
+            if (!fromClause.hasOuterJoinOnRight()) {
+                leftConj = new HashSet(conjuncts);
             }
-            if (fromClause.hasOuterJoinOnRight()) {
-                rightComp = makeJoinPlan(fromClause.getRightChild(), null);
-            }
-            else {
-                rightComp = makeJoinPlan(fromClause.getRightChild(), conjuncts);
-            }
+            leftComp = makeJoinPlan(fromClause.getLeftChild(), leftConj);
+            rightComp = makeJoinPlan(fromClause.getRightChild(), rightConj);
             PlanNode leftNode = leftComp.joinPlan;
             PlanNode rightNode = rightComp.joinPlan;
+
+            leafConjuncts.addAll(leftComp.conjunctsUsed);
+            leafConjuncts.addAll(rightComp.conjunctsUsed);
             JoinType joinType = fromClause.getJoinType();
-            Expression predicate = fromClause.getOnExpression();
+            Expression predicate = fromClause.getComputedJoinExpr();
+
             boolean isRightOuterJoin = (joinType == JoinType.RIGHT_OUTER);
             if (isRightOuterJoin) {
                 joinType = JoinType.LEFT_OUTER;
@@ -485,6 +473,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         else {
             throw new IOException("makeLeafPlan: Unknown FromClause type");
         }
+
         // Handle alias
         if (fromClause.isRenamed()) {
             String aliasName = fromClause.getResultName();
@@ -500,9 +489,12 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         if (!exprsUsingSchemas.isEmpty()) {
             leafConjuncts.addAll(exprsUsingSchemas);
             Expression pred = PredicateUtils.makePredicate(leafConjuncts);
-            PlanUtils.addPredicateToPlan(resPlan, pred);
+            if (pred != null) {
+                PlanUtils.addPredicateToPlan(resPlan, pred);
+            }
         }
 
+        resPlan.prepare();
         return resPlan;
     }
 
@@ -556,7 +548,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 new HashMap<>();
 
             for (JoinComponent plan : joinPlans.values()) {
-                for (JoinComponent leafComponent: leafComponents) {
+                for (JoinComponent leafComponent : leafComponents) {
                     if (plan.leavesUsed.contains(leafComponent.getLeafPlan())) {
                         continue;
                     }
