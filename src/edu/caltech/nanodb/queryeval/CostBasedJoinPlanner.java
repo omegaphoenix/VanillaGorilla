@@ -473,7 +473,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             PlanNode rightNode = rightComp.joinPlan;
             JoinType joinType = fromClause.getJoinType();
             Expression predicate = fromClause.getOnExpression();
-            boolean isRightOuterJoin = joinType == JoinType.RIGHT_OUTER;
+            boolean isRightOuterJoin = (joinType == JoinType.RIGHT_OUTER);
             if (isRightOuterJoin) {
                 joinType = JoinType.LEFT_OUTER;
             }
@@ -491,9 +491,17 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             resPlan = new RenameNode(resPlan, aliasName);
         }
 
-        // TODO: Optimize to apply selections as early as possible
+        // Optimize to apply selections as early as possible
         // Note that this is not optimal in presence of indexes
         resPlan.prepare();
+        HashSet<Expression> exprsUsingSchemas = new HashSet<Expression>();
+        PredicateUtils.findExprsUsingSchemas(conjuncts, false,
+                exprsUsingSchemas, resPlan.getSchema());
+        if (!exprsUsingSchemas.isEmpty()) {
+            leafConjuncts.addAll(exprsUsingSchemas);
+            Expression pred = PredicateUtils.makePredicate(leafConjuncts);
+            PlanUtils.addPredicateToPlan(resPlan, pred);
+        }
 
         return resPlan;
     }
