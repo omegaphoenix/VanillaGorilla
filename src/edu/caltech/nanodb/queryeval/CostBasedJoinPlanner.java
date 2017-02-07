@@ -552,33 +552,25 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                     if (plan.leavesUsed.contains(leafComponent.getLeafPlan())) {
                         continue;
                     }
-                    /*
-                       - Make join between plan and leafComponent
-                       - Calculate cost of new join
-                       - if in nextJoinPlans,
-                            add conditionally on costs
-                       - else
-                            add to nextJoinPlans
-                     */
+                    // Collect conjuncts
                     HashSet<Expression> tmpConjuncts = new HashSet<Expression>();
                     PredicateUtils.findExprsUsingSchemas(conjuncts, false, tmpConjuncts,
                             plan.joinPlan.getSchema(), leafComponent.joinPlan.getSchema());
-                    // need something similar to ^ line for leaf nodes too...
-
                     tmpConjuncts.removeAll(plan.conjunctsUsed);
                     tmpConjuncts.removeAll(leafComponent.conjunctsUsed);
                     Expression pred = PredicateUtils.makePredicate(tmpConjuncts);
 
-                    // CROSS join or??
+                    // Create possible plan
                     PlanNode tmpPlan = new NestedLoopJoinNode(plan.joinPlan, leafComponent.joinPlan, JoinType.INNER, pred);
                     tmpPlan.prepare();
                     PlanCost tmpPlanCost = tmpPlan.getCost();
 
-                    // collect leaves used
+                    // Collect leaves used
                     HashSet<PlanNode> tmpLeavesUsed = new HashSet<>();
                     tmpLeavesUsed.addAll(plan.leavesUsed);
                     tmpLeavesUsed.addAll(leafComponent.leavesUsed);
 
+                    // Check if add plan
                     JoinComponent tmpJoin = new JoinComponent(tmpPlan, tmpLeavesUsed, tmpConjuncts);
                     if (nextJoinPlans.containsKey(tmpLeavesUsed)) {
                         PlanCost prevCost = nextJoinPlans.get(tmpLeavesUsed).joinPlan.getCost();
@@ -592,9 +584,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
                 }
             }
-
-            // TODO:  IMPLEMENT THE CODE THAT GENERATES OPTIMAL PLANS THAT
-            //        JOIN N + 1 LEAVES
 
             // Now that we have generated all plans joining N leaves, time to
             // create all plans joining N + 1 leaves.
