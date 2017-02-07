@@ -443,13 +443,13 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         else if (fromClause.isOuterJoin()) {
             // Generate optimal plan for each child
             JoinComponent leftComp, rightComp;
-            HashSet<Expression> leftConj = null;
-            HashSet<Expression> rightConj = null;
+            Collection<Expression> leftConj = null;
+            Collection<Expression> rightConj = null;
             if (!fromClause.hasOuterJoinOnLeft()) {
-                rightConj = new HashSet(conjuncts);
+                rightConj = conjuncts;
             }
             if (!fromClause.hasOuterJoinOnRight()) {
-                leftConj = new HashSet(conjuncts);
+                leftConj = conjuncts;
             }
             leftComp = makeJoinPlan(fromClause.getLeftChild(), leftConj);
             rightComp = makeJoinPlan(fromClause.getRightChild(), rightConj);
