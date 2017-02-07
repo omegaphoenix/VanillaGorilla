@@ -136,16 +136,12 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
     public PlanNode makePlan(SelectClause selClause,
         List<SelectClause> enclosingSelects) throws IOException {
 
-        // TODO:  Implement!
         AggregateProcessor aggregateProcessor = new AggregateProcessor(true);
         AggregateProcessor noAggregateProcessor = new AggregateProcessor(false);
 
         // PlanNode to return.
-        PlanNode result = null;
-        //
-        // This is a very rough sketch of how this function will work,
-        // focusing mainly on join planning:
-        //
+        PlanNode resPlan = null;
+
         // 1)  Pull out the top-level conjuncts from the WHERE and HAVING
         //     clauses on the query, since we will handle them in special ways
         //     if we have outer joins.
@@ -160,7 +156,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
             // If from clause is a base table, simply do a file scan.
             if (fromClause.isBaseTable()) {
-                result = makeSimpleSelect(fromClause.getTableName(),
+                resPlan = makeSimpleSelect(fromClause.getTableName(),
                         whereExpr, null);
             }
             // Handle joins.
@@ -175,9 +171,9 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 Collection<Expression> conjuncts = new HashSet<Expression>();
                 PredicateUtils.collectConjuncts(whereExpr, conjuncts);
                 JoinComponent joinResult = makeJoinPlan(fromClause, conjuncts);
-                result = joinResult.joinPlan;
+                resPlan = joinResult.joinPlan;
                 // if (whereExpr != null) {
-                //     result = new SimpleFilterNode(result, whereExpr);
+                //     resPlan = new SimpleFilterNode(resPlan, whereExpr);
                 // }
             }
             // Handle derived table recursively.
@@ -194,8 +190,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                     enclosing = new ArrayList<SelectClause>();
                     enclosing.add(selClause);
                 }
-                result = makePlan(subClause, enclosing);
-                result = new RenameNode(result, fromClause.getResultName());
+                resPlan = makePlan(subClause, enclosing);
+                resPlan = new RenameNode(resPlan, fromClause.getResultName());
             }
         }
         // 3)  If there are any unused conjuncts, determine how to handle them.
@@ -223,35 +219,36 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             }
 
             if (selClause.getGroupByExprs().size() != 0 || aggregateProcessor.aggregates.size() != 0) {
-                result = new HashedGroupAggregateNode(result, selClause.getGroupByExprs(), aggregateProcessor.aggregates);
+                resPlan = new HashedGroupAggregateNode(resPlan, selClause.getGroupByExprs(), aggregateProcessor.aggregates);
             }
 
             if (havingExpr != null) {
-                result = new SimpleFilterNode(result, havingExpr);
+                resPlan = new SimpleFilterNode(resPlan, havingExpr);
             }
 
             // If there is no FROM clause, make a trivial ProjectNode()
             if (fromClause == null) {
-                result = new ProjectNode(selectValues);
+                resPlan = new ProjectNode(selectValues);
             }
             else {
-                result = new ProjectNode(result, selectValues);
+                resPlan = new ProjectNode(resPlan, selectValues);
             }
         }
+
         // 5)  Handle other clauses such as ORDER BY, LIMIT/OFFSET, etc.
         List<OrderByExpression> orderByExprs = selClause.getOrderByExprs();
         if (orderByExprs.size() > 0) {
-            result = new SortNode(result, orderByExprs);
+            resPlan = new SortNode(resPlan, orderByExprs);
         }
 
         int limit = selClause.getLimit();
         int offset = selClause.getOffset();
         if (limit != 0 || offset != 0) {
-            result = new LimitOffsetNode(result, selClause.getOffset(), selClause.getLimit());
+            resPlan = new LimitOffsetNode(resPlan, selClause.getOffset(), selClause.getLimit());
         }
 
-        result.prepare();
-        return result;
+        resPlan.prepare();
+        return resPlan;
     }
 
 
