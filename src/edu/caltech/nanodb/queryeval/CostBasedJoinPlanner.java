@@ -440,23 +440,25 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         else if (fromClause.isOuterJoin()) {
             // Generate optimal plan for each child
             JoinComponent leftComp, rightComp;
-            Collection<Expression> leftConj = null;
-            Collection<Expression> rightConj = null;
+            HashSet<Expression> leftConj = null;
+            HashSet<Expression> rightConj = null;
             if (!fromClause.hasOuterJoinOnLeft()) {
-                rightConj = conjuncts;
+                PredicateUtils.findExprsUsingSchemas(conjuncts, false,
+                        leafConjuncts, fromClause.getRightChild().getSchema());
+                rightConj = leafConjuncts;
             }
             if (!fromClause.hasOuterJoinOnRight()) {
-                leftConj = conjuncts;
+                PredicateUtils.findExprsUsingSchemas(conjuncts, false,
+                        leafConjuncts, fromClause.getLeftChild().getSchema());
+                leftConj = leafConjuncts;
             }
             leftComp = makeJoinPlan(fromClause.getLeftChild(), leftConj);
             rightComp = makeJoinPlan(fromClause.getRightChild(), rightConj);
             PlanNode leftNode = leftComp.joinPlan;
             PlanNode rightNode = rightComp.joinPlan;
 
-            leafConjuncts.addAll(leftComp.conjunctsUsed);
-            leafConjuncts.addAll(rightComp.conjunctsUsed);
             JoinType joinType = fromClause.getJoinType();
-            Expression predicate = fromClause.getComputedJoinExpr();
+            Expression predicate = fromClause.getOnExpression();
 
             boolean isRightOuterJoin = (joinType == JoinType.RIGHT_OUTER);
             if (isRightOuterJoin) {
@@ -479,15 +481,17 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
         // Optimize to apply selections as early as possible
         // Note that this is not optimal in presence of indexes
-        resPlan.prepare();
-        HashSet<Expression> exprsUsingSchemas = new HashSet<Expression>();
-        PredicateUtils.findExprsUsingSchemas(conjuncts, false,
-                exprsUsingSchemas, resPlan.getSchema());
-        if (!exprsUsingSchemas.isEmpty()) {
-            leafConjuncts.addAll(exprsUsingSchemas);
-            Expression pred = PredicateUtils.makePredicate(leafConjuncts);
-            if (pred != null) {
-                PlanUtils.addPredicateToPlan(resPlan, pred);
+        if (fromClause.isBaseTable() || fromClause.isDerivedTable()){
+            resPlan.prepare();
+            HashSet<Expression> exprsUsingSchemas = new HashSet<Expression>();
+            PredicateUtils.findExprsUsingSchemas(conjuncts, false,
+                    exprsUsingSchemas, resPlan.getSchema());
+            if (!exprsUsingSchemas.isEmpty()) {
+                leafConjuncts.addAll(exprsUsingSchemas);
+                Expression pred = PredicateUtils.makePredicate(leafConjuncts);
+                if (pred != null) {
+                    PlanUtils.addPredicateToPlan(resPlan, pred);
+                }
             }
         }
 
