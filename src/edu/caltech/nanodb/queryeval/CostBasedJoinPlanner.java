@@ -136,16 +136,12 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
     public PlanNode makePlan(SelectClause selClause,
         List<SelectClause> enclosingSelects) throws IOException {
 
-        // TODO:  Implement!
         AggregateProcessor aggregateProcessor = new AggregateProcessor(true);
         AggregateProcessor noAggregateProcessor = new AggregateProcessor(false);
 
         // PlanNode to return.
-        PlanNode result = null;
-        //
-        // This is a very rough sketch of how this function will work,
-        // focusing mainly on join planning:
-        //
+        PlanNode resPlan = null;
+
         // 1)  Pull out the top-level conjuncts from the WHERE and HAVING
         //     clauses on the query, since we will handle them in special ways
         //     if we have outer joins.
@@ -160,7 +156,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
             // If from clause is a base table, simply do a file scan.
             if (fromClause.isBaseTable()) {
-                result = makeSimpleSelect(fromClause.getTableName(),
+                resPlan = makeSimpleSelect(fromClause.getTableName(),
                         whereExpr, null);
             }
             // Handle joins.
@@ -175,9 +171,9 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 Collection<Expression> conjuncts = new HashSet<Expression>();
                 PredicateUtils.collectConjuncts(whereExpr, conjuncts);
                 JoinComponent joinResult = makeJoinPlan(fromClause, conjuncts);
-                result = joinResult.joinPlan;
+                resPlan = joinResult.joinPlan;
                 // if (whereExpr != null) {
-                //     result = new SimpleFilterNode(result, whereExpr);
+                //     resPlan = new SimpleFilterNode(resPlan, whereExpr);
                 // }
             }
             // Handle derived table recursively.
@@ -194,8 +190,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                     enclosing = new ArrayList<SelectClause>();
                     enclosing.add(selClause);
                 }
-                result = makePlan(subClause, enclosing);
-                result = new RenameNode(result, fromClause.getResultName());
+                resPlan = makePlan(subClause, enclosing);
+                resPlan = new RenameNode(resPlan, fromClause.getResultName());
             }
         }
         // 3)  If there are any unused conjuncts, determine how to handle them.
@@ -223,35 +219,36 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             }
 
             if (selClause.getGroupByExprs().size() != 0 || aggregateProcessor.aggregates.size() != 0) {
-                result = new HashedGroupAggregateNode(result, selClause.getGroupByExprs(), aggregateProcessor.aggregates);
+                resPlan = new HashedGroupAggregateNode(resPlan, selClause.getGroupByExprs(), aggregateProcessor.aggregates);
             }
 
             if (havingExpr != null) {
-                result = new SimpleFilterNode(result, havingExpr);
+                resPlan = new SimpleFilterNode(resPlan, havingExpr);
             }
 
             // If there is no FROM clause, make a trivial ProjectNode()
             if (fromClause == null) {
-                result = new ProjectNode(selectValues);
+                resPlan = new ProjectNode(selectValues);
             }
             else {
-                result = new ProjectNode(result, selectValues);
+                resPlan = new ProjectNode(resPlan, selectValues);
             }
         }
+
         // 5)  Handle other clauses such as ORDER BY, LIMIT/OFFSET, etc.
         List<OrderByExpression> orderByExprs = selClause.getOrderByExprs();
         if (orderByExprs.size() > 0) {
-            result = new SortNode(result, orderByExprs);
+            resPlan = new SortNode(resPlan, orderByExprs);
         }
 
         int limit = selClause.getLimit();
         int offset = selClause.getOffset();
         if (limit != 0 || offset != 0) {
-            result = new LimitOffsetNode(result, selClause.getOffset(), selClause.getLimit());
+            resPlan = new LimitOffsetNode(resPlan, selClause.getOffset(), selClause.getLimit());
         }
 
-        result.prepare();
-        return result;
+        resPlan.prepare();
+        return resPlan;
     }
 
 
@@ -425,16 +422,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
     private PlanNode makeLeafPlan(FromClause fromClause,
         Collection<Expression> conjuncts, HashSet<Expression> leafConjuncts)
         throws IOException {
-
-        // TODO:  IMPLEMENT.
-        //        If you apply any conjuncts then make sure to add them to the
-        //        leafConjuncts collection.
-        //
-        //        Don't forget that all from-clauses can specify an alias.
-        //
-        //        Concentrate on properly handling cases other than outer
-        //        joins first, then focus on outer joins once you have the
-        //        typical cases supported.
         if (fromClause == null) {
             return null;
         }
@@ -443,12 +430,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         PlanNode resPlan;
         if (fromClause.isBaseTable()) {
             // Use FileScanNode
-            PredicateUtils.findExprsUsingSchemas(conjuncts, false,
-                    leafConjuncts, fromClause.getSchema());
-            Expression pred = PredicateUtils.makePredicate(leafConjuncts);
-
             resPlan = makeSimpleSelect(fromClause.getTableName(),
-                    pred, null);
+                    null, null);
         }
         else if (fromClause.isDerivedTable()) {
             // Get query plan for subquery
@@ -457,22 +440,26 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         else if (fromClause.isOuterJoin()) {
             // Generate optimal plan for each child
             JoinComponent leftComp, rightComp;
-            if (fromClause.hasOuterJoinOnLeft()) {
-                leftComp = makeJoinPlan(fromClause.getLeftChild(), null);
+            HashSet<Expression> leftConj = null;
+            HashSet<Expression> rightConj = null;
+            if (!fromClause.hasOuterJoinOnLeft()) {
+                PredicateUtils.findExprsUsingSchemas(conjuncts, false,
+                        leafConjuncts, fromClause.getRightChild().getSchema());
+                rightConj = leafConjuncts;
             }
-            else {
-                leftComp = makeJoinPlan(fromClause.getLeftChild(), conjuncts);
+            if (!fromClause.hasOuterJoinOnRight()) {
+                PredicateUtils.findExprsUsingSchemas(conjuncts, false,
+                        leafConjuncts, fromClause.getLeftChild().getSchema());
+                leftConj = leafConjuncts;
             }
-            if (fromClause.hasOuterJoinOnRight()) {
-                rightComp = makeJoinPlan(fromClause.getRightChild(), null);
-            }
-            else {
-                rightComp = makeJoinPlan(fromClause.getRightChild(), conjuncts);
-            }
+            leftComp = makeJoinPlan(fromClause.getLeftChild(), leftConj);
+            rightComp = makeJoinPlan(fromClause.getRightChild(), rightConj);
             PlanNode leftNode = leftComp.joinPlan;
             PlanNode rightNode = rightComp.joinPlan;
+
             JoinType joinType = fromClause.getJoinType();
             Expression predicate = fromClause.getOnExpression();
+
             boolean isRightOuterJoin = (joinType == JoinType.RIGHT_OUTER);
             if (isRightOuterJoin) {
                 joinType = JoinType.LEFT_OUTER;
@@ -485,6 +472,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         else {
             throw new IOException("makeLeafPlan: Unknown FromClause type");
         }
+
         // Handle alias
         if (fromClause.isRenamed()) {
             String aliasName = fromClause.getResultName();
@@ -493,16 +481,21 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
         // Optimize to apply selections as early as possible
         // Note that this is not optimal in presence of indexes
-        resPlan.prepare();
-        HashSet<Expression> exprsUsingSchemas = new HashSet<Expression>();
-        PredicateUtils.findExprsUsingSchemas(conjuncts, false,
-                exprsUsingSchemas, resPlan.getSchema());
-        if (!exprsUsingSchemas.isEmpty()) {
-            leafConjuncts.addAll(exprsUsingSchemas);
-            Expression pred = PredicateUtils.makePredicate(leafConjuncts);
-            PlanUtils.addPredicateToPlan(resPlan, pred);
+        if (fromClause.isBaseTable() || fromClause.isDerivedTable()){
+            resPlan.prepare();
+            HashSet<Expression> exprsUsingSchemas = new HashSet<Expression>();
+            PredicateUtils.findExprsUsingSchemas(conjuncts, false,
+                    exprsUsingSchemas, resPlan.getSchema());
+            if (!exprsUsingSchemas.isEmpty()) {
+                leafConjuncts.addAll(exprsUsingSchemas);
+                Expression pred = PredicateUtils.makePredicate(leafConjuncts);
+                if (pred != null) {
+                    PlanUtils.addPredicateToPlan(resPlan, pred);
+                }
+            }
         }
 
+        resPlan.prepare();
         return resPlan;
     }
 
@@ -556,7 +549,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 new HashMap<>();
 
             for (JoinComponent plan : joinPlans.values()) {
-                for (JoinComponent leafComponent: leafComponents) {
+                for (JoinComponent leafComponent : leafComponents) {
                     if (plan.leavesUsed.contains(leafComponent.getLeafPlan())) {
                         continue;
                     }

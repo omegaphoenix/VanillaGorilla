@@ -132,7 +132,7 @@ public abstract class AbstractPlannerImpl implements Planner {
         FromClause.JoinConditionType condType = fromClause.getConditionType();
         Expression predicate;
         List<SelectValue> projectVals = null;
-        Boolean needPostProject =
+        boolean needPostProject =
                 condType == FromClause.JoinConditionType.NATURAL_JOIN ||
                 condType == FromClause.JoinConditionType.JOIN_USING;
         if (needPostProject) {
