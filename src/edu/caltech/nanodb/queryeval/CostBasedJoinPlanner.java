@@ -111,6 +111,9 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             this.conjunctsUsed = conjunctsUsed;
         }
 
+        /**
+         * Returns the next leaf node joined by the plan.
+         */
         public PlanNode getLeafPlan() {
             if (leavesUsed.size() != 1) {
                 throw new IllegalStateException("JoinComponent is not single leaf");
