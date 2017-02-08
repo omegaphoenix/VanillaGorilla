@@ -402,7 +402,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
     /**
      * Constructs a plan tree for evaluating the specified from-clause.
-     * TODO:  COMPLETE THE DOCUMENTATION
      *
      * @param fromClause the select nodes that need to be joined.
      *
