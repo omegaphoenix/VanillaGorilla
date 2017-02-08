@@ -113,6 +113,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
         /**
          * Returns the next leaf node joined by the plan.
+         *
+         * @return next plan node joined by the plan in this join-component
          */
         public PlanNode getLeafPlan() {
             if (leavesUsed.size() != 1) {
