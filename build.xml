@@ -188,6 +188,7 @@
       <checkstyle config="sun_checks.xml">
         <fileset dir="src" includes="**/*.java"/>
         <formatter type="plain"/>
+        <formatter type="plain" toFile="build/checkstyle_errors.txt"/>
         <formatter type="xml" toFile="build/checkstyle_errors.xml"/>
       </checkstyle>
     </target>
