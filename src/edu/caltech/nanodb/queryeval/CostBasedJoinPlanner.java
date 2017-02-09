@@ -153,17 +153,24 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         FromClause fromClause = selClause.getFromClause();
         Expression havingExpr = selClause.getHavingExpr();
         Expression whereExpr = selClause.getWhereExpr();
+        Collection<Expression> ununusedConjuncts = new HashSet<>();
+        PredicateUtils.collectConjuncts(whereExpr, ununusedConjuncts);
 
         // Create an optimal join plan from the top-level from-clause and
         // the top-level conjuncts.
         if (fromClause != null) {
-            Collection<Expression> conjuncts = new HashSet<Expression>();
-            PredicateUtils.collectConjuncts(whereExpr, conjuncts);
+            Collection<Expression> conjuncts = ununusedConjuncts;
             JoinComponent tempRes = makeJoinPlan(fromClause, conjuncts);
             resPlan = tempRes.joinPlan;
+            ununusedConjuncts.removeAll(tempRes.conjunctsUsed);
         }
 
         // If there are any unused conjuncts, determine how to handle them.
+        if (ununusedConjuncts.size() > 0) {
+            for (Expression pred : ununusedConjuncts) {
+                makeSimpleSelect(fromClause.getTableName(), pred, null);
+            }
+        }
         // Create a project plan-node if necessary.
         // Check to see for trivial project (SELECT * FROM ...)
         if (!selClause.isTrivialProject()) {
