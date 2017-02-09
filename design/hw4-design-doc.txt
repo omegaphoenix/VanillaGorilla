@@ -6,32 +6,48 @@ A:  Logistics
 
 A1.  List your team name and the people who worked on this assignment.
 
-     <team name>
+     VanillaGorilla
 
-     <name>
-     <name>
-     ...
+     Justin Leong
+     Matthew Jin
+     David Qu
 
 A2.  Specify the repository URL, tag name and commit-hash of the Git version
      you are submitting for your assignment.  (You can list the commit hashes
      of your repository tags with this command:  git show-ref --tags)
 
-     Repository URL:  <url>
+     Repository URL:  https://github.com/omegaphoenix/VanillaGorilla
      Tag name:        <tag>
      Commit hash:     <hash>
 
 A3.  Specify any late tokens you are applying to this assignment, or
      "none" if no late tokens.
 
+     none
+
 A4.  Briefly describe what parts of the assignment each teammate focused on.
+
+     Justin focused on collecting details and optimal leaf-plans.
+     Matthew focused on generating an optimal join plan.
+     David focused on updating tests and writing test scripts.
 
 B:  Generating Optimal Joins
 ----------------------------
 
 B1.  Briefly describe how you generate an "optimal" access to a base table.
 
+     We check the list of conjuncts and see if any can be applied to the
+     table and create a simple select and apply that predicate as early
+     as possible which is usually in the base table access. This addition
+     is performed in makeLeafPlan.
+
 B2.  Briefly describe how you decide when it is acceptable to push
      conjuncts down through an outer join.
+
+     We push conjuncts down through an outer join by getting conjuncts that
+     can be applied to the side that is not the outer join side because
+     this side can be filtered and be null if there is no match to the outer
+     side.
 
 B3.  The planner in this assignment is still somewhat limited; for example,
      we can't push conjuncts down into subqueries.  Using the stores schema,
@@ -39,16 +55,40 @@ B3.  The planner in this assignment is still somewhat limited; for example,
      beneficial to push a conjunct down into the subquery.  (Your planner
      obviously doesn't need to perform this optimization.)
 
+     SELECT * FROM (SELECT * from cities) AS t1
+       WHERE city_name = 'Los Angeles';
+
+
 B4.  Enumerate the situations where you call prepare() on plans being
      generated.  Since this operation is somewhat expensive, do you
      see any ways to reduce the number of times you call prepare() in
      your implementation?
+
+     1. after a leaf plan is initially created
+     2. after applying a predicate to the leaf plan
+     3. after creating a possible new plan with n+1 leaves in the
+        dynamic programming loop
+     We already removed a duplicate prepare() call in makeSimpleSelect
+     because we were calling prepare() again after makeSimpleSelect
+     was called in makeLeafPlan().
 
 B5.  In what situations can you end up with unused conjuncts after
      planning joins.  Illustrate by giving an example SQL statement
      that would have unused conjuncts after join planning, again using
      the stores schema.  Then, describe a strategy for where/how these
      left-over conjuncts should be applied in the plan.
+
+     Situations with a having clause would tend to have unused conjuncts
+     after planning joins.
+     SELECT max(property_costs) FROM stores
+       WHERE stores.city_id < 10
+       GROUP BY stores.city_id HAVING max(property_costs) > 500000;
+     Here, the unused conjunct would be max(property_costs) > 500000. We
+     applied these left-over conjuncts by applying them at the end after
+     the optimal join plan was created.
+     If we could identify that property_costs > 500000 is a conjunct we
+     could use in our file scan it would be even more efficient. Unfortunately
+     we have not yet implemented that functionality.
 
 C:  Costing SQL Queries
 -----------------------
@@ -62,13 +102,61 @@ to write explanatory notes after your output.
 
 C1.  EXPLAIN SELECT * FROM cities WHERE population > 5000000;
 
-C2.  EXPLAIN SELECT store_id FROM stores, cities     WHERE stores.city_id = cities.city_id AND
-           cities.population > 1000000;
+Explain Plan:
+    FileScan[table:  CITIES, pred:  CITIES.POPULATION > 5000000]
+    cost=[tuples=99.3, tupSize=23.8, cpuCost=254.0, blockIOs=1]
 
-C3.  EXPLAIN SELECT store_id FROM stores JOIN                    (SELECT city_id FROM cities                     WHERE population > 1000000) AS big_cities                    ON stores.city_id = big_cities.city_id;
+Estimated 99.262199 tuples with average size 23.787401
+Estimated number of block IOs:  1
 
-C4.  EXPLAIN SELECT store_id, property_costs     FROM stores, cities, states     WHERE stores.city_id = cities.city_id AND
-           cities.state_id = states.state_id AND           state_name = 'Oregon' AND property_costs > 500000;
+
+C2.  EXPLAIN SELECT store_id FROM stores, cities
+       WHERE stores.city_id = cities.city_id AND cities.population > 1000000;
+
+Explain Plan:
+    Project[values:  [STORES.STORE_ID]] cost=[tuples=1776.2, tupSize=36.8, cpuCost=455194.8, blockIOs=5]
+        NestedLoop[pred:  STORES.CITY_ID == CITIES.CITY_ID] cost=[tuples=1776.2, tupSize=36.8, cpuCost=453418.5, blockIOs=5]
+            FileScan[table:  CITIES, pred:  CITIES.POPULATION > 1000000] cost=[tuples=225.6, tupSize=23.8, cpuCost=254.0, blockIOs=1]
+            FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
+
+Estimated 1776.238159 tuples with average size 36.787399
+Estimated number of block IOs:  5
+
+
+C3.  EXPLAIN SELECT store_id FROM stores JOIN
+       (SELECT city_id FROM cities
+       WHERE population > 1000000) AS big_cities
+       ON stores.city_id = big_cities.city_id;
+
+Explain Plan:
+    Project[values:  [STORES.STORE_ID]] cost=[tuples=1776.2, tupSize=36.8, cpuCost=455420.3, blockIOs=5]
+        NestedLoop[pred:  STORES.CITY_ID == BIG_CITIES.CITY_ID] cost=[tuples=1776.2, tupSize=36.8, cpuCost=453644.1, blockIOs=5]
+            Rename[resultTableName=BIG_CITIES] cost=[tuples=225.6, tupSize=23.8, cpuCost=479.6, blockIOs=1]
+                Project[values:  [CITIES.CITY_ID]] cost=[tuples=225.6, tupSize=23.8, cpuCost=479.6, blockIOs=1]
+                    FileScan[table:  CITIES, pred:  CITIES.POPULATION > 1000000] cost=[tuples=225.6, tupSize=23.8, cpuCost=254.0, blockIOs=1]
+            FileScan[table:  STORES] cost=[tuples=2000.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
+
+Estimated 1776.238159 tuples with average size 36.787399
+Estimated number of block IOs:  5
+
+
+C4.  EXPLAIN SELECT store_id, property_costs
+       FROM stores, cities, states
+       WHERE stores.city_id = cities.city_id AND
+           cities.state_id = states.state_id AND
+           state_name = 'Oregon' AND property_costs > 500000;
+
+Explain Plan:
+    Project[values:  [STORES.STORE_ID, STORES.PROPERTY_COSTS]] cost=[tuples=19.6, tupSize=52.5, cpuCost=7554.0, blockIOs=6]
+        NestedLoop[pred:  STORES.CITY_ID == CITIES.CITY_ID] cost=[tuples=19.6, tupSize=52.5, cpuCost=7534.4, blockIOs=6]
+            NestedLoop[pred:  CITIES.STATE_ID == STATES.STATE_ID] cost=[tuples=5.0, tupSize=39.5, cpuCost=559.0, blockIOs=2]
+                FileScan[table:  CITIES] cost=[tuples=254.0, tupSize=23.8, cpuCost=254.0, blockIOs=1]
+                FileScan[table:  STATES, pred:  STATES.STATE_NAME == 'Oregon'] cost=[tuples=1.0, tupSize=15.7, cpuCost=51.0, blockIOs=1]
+            FileScan[table:  STORES, pred:  STORES.PROPERTY_COSTS > 500000] cost=[tuples=999.0, tupSize=13.0, cpuCost=2000.0, blockIOs=4]
+
+Estimated 19.588217 tuples with average size 52.454067
+Estimated number of block IOs:  6
+
 
 E:  Extra Credit [OPTIONAL]
 ---------------------------
