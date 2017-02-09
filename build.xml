@@ -103,6 +103,9 @@
     <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml"
              classpathref="jacoco.path" />
 
+		<taskdef resource="com/puppycrawl/tools/checkstyle/ant/checkstyle-ant-task.properties"
+						 classpath="${libDir}/checkstyle-7.5.1-all.jar"/>
+
     <!-- Build Tasks -->
 
     <target name="full" depends="test,jar,javadoc"
@@ -179,6 +182,15 @@
                 <path refid="libs.path" />
             </classpath>
         </antlr>
+    </target>
+
+    <target name="checkstyle">
+      <checkstyle config="sun_checks.xml">
+        <fileset dir="src" includes="**/*.java"/>
+        <formatter type="plain"/>
+        <formatter type="plain" toFile="build/checkstyle_errors.txt"/>
+        <formatter type="xml" toFile="build/checkstyle_errors.xml"/>
+      </checkstyle>
     </target>
 
     <target name="compile" depends="debug,-init"
@@ -337,4 +349,5 @@
             <class location="${buildDir}/${distJarFile}" />
         </findbugs>
     </target>
+
 </project>

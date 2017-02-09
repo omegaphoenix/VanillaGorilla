@@ -92,7 +92,7 @@ public abstract class SelectNode extends PlanNode {
         // Continue to advance the current tuple until it is selected by the
         // predicate.
         do {
-            if (currentTuple != null) {
+            if (currentTuple != null && currentTuple.isPinned()) {
                 currentTuple.unpin();
             }
             advanceCurrentTuple();
@@ -106,6 +106,10 @@ public abstract class SelectNode extends PlanNode {
             }
         }
         while (!isTupleSelected(currentTuple));
+
+        if (currentTuple.isPinned()) {
+            currentTuple.unpin();
+        }
 
         // The current tuple now satisfies the predicate, so return it.
         return currentTuple;
