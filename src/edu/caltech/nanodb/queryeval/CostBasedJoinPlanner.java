@@ -324,13 +324,13 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
      * This helper method pulls the essential details for join optimization
      * out of a <tt>FROM</tt> clause.
      *
+     * A fromClause is a leaf if it is a base-table, subquery, or outer-join.
+     *
      * Add to leafFromClauses if fromClause is a leaf. Otherwise, collect
      * conjuncts from predicates (the on-expression and join-expression)
      * using collectConjuncts() method which breaks apart boolean AND
      * expressions and stores each individual term as a conjunct and
      * other predicates as a single conjunct.
-     *
-     * A fromClause is a leaf if it is a base-table, subquery, or outer-join.
      *
      * @param fromClause the from-clause to collect details from
      *
@@ -429,10 +429,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
     private PlanNode makeLeafPlan(FromClause fromClause,
         Collection<Expression> conjuncts, HashSet<Expression> leafConjuncts)
         throws IOException {
-        if (fromClause == null) {
-            return null;
-        }
-
         // Create basic plan based on fromClause type
         PlanNode resPlan;
         if (fromClause.isBaseTable()) {

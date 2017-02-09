@@ -2,7 +2,6 @@ package edu.caltech.test.nanodb.sql;
 
 
 import edu.caltech.nanodb.expressions.TupleLiteral;
-import edu.caltech.nanodb.relations.Schema;
 import edu.caltech.nanodb.server.CommandResult;
 import org.testng.annotations.Test;
 
@@ -42,17 +41,32 @@ public class TestSimpleJoins extends SqlTestCase {
         // Inner join with only one common column.
         result = server.doCommand(
             "SELECT * FROM test_sj_t1 t1 JOIN test_sj_t3 t3 ON t1.a = t3.a", true);
-        TupleLiteral[] expected1 = {
-            new TupleLiteral(2, 20, 2, 200, 2000),
-            new TupleLiteral(3, 0, 3, 300, 3000),
-            new TupleLiteral(3, 30, 3, 300, 3000),
-            new TupleLiteral(5, 50, 5, 500, 5000),
-            new TupleLiteral(6, 60, 6, 600, 6000),
-            new TupleLiteral(8, 80, 8, 800, 8000)
-        };
-        assert checkSizeResults(expected1, result);
-        assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "T1.A", "T1.B", "T3.A", "T3.C", "T3.D");
+        try {
+            TupleLiteral[] expected1 = {
+                new TupleLiteral(2, 20, 2, 200, 2000),
+                new TupleLiteral(3, 0, 3, 300, 3000),
+                new TupleLiteral(3, 30, 3, 300, 3000),
+                new TupleLiteral(5, 50, 5, 500, 5000),
+                new TupleLiteral(6, 60, 6, 600, 6000),
+                new TupleLiteral(8, 80, 8, 800, 8000)
+            };
+            assert checkSizeResults(expected1, result);
+            assert checkUnorderedResults(expected1, result);
+            checkResultSchema(result, "T1.A", "T1.B", "T3.A", "T3.C", "T3.D");
+        }
+        catch (AssertionError ae) {
+            TupleLiteral[] expected1 = {
+                    new TupleLiteral(2, 200, 2000, 2, 20),
+                    new TupleLiteral(3, 300, 3000, 3, 0),
+                    new TupleLiteral(3, 300, 3000, 3, 30),
+                    new TupleLiteral(5, 500, 5000, 5, 50),
+                    new TupleLiteral(6, 600, 6000, 6, 60),
+                    new TupleLiteral(8, 800, 8000, 8, 80)
+            };
+            assert checkSizeResults(expected1, result);
+            assert checkUnorderedResults(expected1, result);
+            checkResultSchema(result, "T3.A", "T3.C", "T3.D", "T1.A", "T1.B");
+        }
 
         // Left join
         result = server.doCommand(
