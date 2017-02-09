@@ -27,6 +27,10 @@ A3.  Specify any late tokens you are applying to this assignment, or
 
 A4.  Briefly describe what parts of the assignment each teammate focused on.
 
+     Justin focused on collecting details and optimal leaf-plans.
+     Matthew focused on generating an optimal join plan.
+     David focused on updating tests and writing test scripts.
+
 B:  Generating Optimal Joins
 ----------------------------
 
