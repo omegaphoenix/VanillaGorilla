@@ -179,8 +179,9 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             List<SelectValue> selectValues = selClause.getSelectValues();
 
             for (SelectValue sv : selectValues) {
-                if (!sv.isExpression())
+                if (!sv.isExpression()) {
                     continue;
+                }
                 Expression e = sv.getExpression().traverse(aggregateProcessor);
                 sv.setExpression(e);
             }
@@ -255,8 +256,9 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         logger.debug("    Collected FROM-clauses:  " + leafFromClauses);
         logger.debug("    Extra conjuncts:  " + extraConjuncts);
 
-        if (extraConjuncts != null)
+        if (extraConjuncts != null) {
             conjuncts.addAll(extraConjuncts);
+        }
 
         // Make a read-only set of the input conjuncts, to avoid bugs due to
         // unintended side-effects.
@@ -518,8 +520,9 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         HashMap<HashSet<PlanNode>, JoinComponent> joinPlans = new HashMap<>();
 
         // Initially populate joinPlans with just the N leaf plans.
-        for (JoinComponent leaf : leafComponents)
+        for (JoinComponent leaf : leafComponents) {
             joinPlans.put(leaf.leavesUsed, leaf);
+        }
 
         while (joinPlans.size() > 1) {
             logger.debug("Current set of join-plans has " + joinPlans.size() +
@@ -617,8 +620,9 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
      */
     public SelectNode makeSimpleSelect(String tableName, Expression predicate,
         List<SelectClause> enclosingSelects) throws IOException {
-        if (tableName == null)
+        if (tableName == null) {
             throw new IllegalArgumentException("tableName cannot be null");
+        }
 
         if (enclosingSelects != null) {
             // If there are enclosing selects, this subquery's predicate may
