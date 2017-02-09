@@ -609,7 +609,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         // Make a SelectNode to read rows from the table, with the specified
         // predicate.
         SelectNode selectNode = new FileScanNode(tableInfo, predicate);
-        selectNode.prepare();
         return selectNode;
     }
 }
