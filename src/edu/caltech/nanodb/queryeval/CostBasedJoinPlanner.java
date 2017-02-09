@@ -159,7 +159,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         if (fromClause != null) {
             Collection<Expression> conjuncts = new HashSet<Expression>();
             PredicateUtils.collectConjuncts(whereExpr, conjuncts);
-            HashSet<Expression> leafConjuncts = new HashSet<>();
+            PredicateUtils.collectConjuncts(havingExpr, conjuncts);
             JoinComponent tempRes = makeJoinPlan(fromClause, conjuncts);
             resPlan = tempRes.joinPlan;
         }
@@ -186,8 +186,10 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 whereExpr.traverse(noAggregateProcessor);
             }
 
-            if (selClause.getGroupByExprs().size() != 0 || aggregateProcessor.aggregates.size() != 0) {
-                resPlan = new HashedGroupAggregateNode(resPlan, selClause.getGroupByExprs(), aggregateProcessor.aggregates);
+            if (selClause.getGroupByExprs().size() != 0
+                || aggregateProcessor.aggregates.size() != 0) {
+                resPlan = new HashedGroupAggregateNode(resPlan,
+                    selClause.getGroupByExprs(), aggregateProcessor.aggregates);
             }
 
             if (havingExpr != null) {
