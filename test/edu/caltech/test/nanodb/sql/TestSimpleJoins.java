@@ -157,7 +157,13 @@ public class TestSimpleJoins extends SqlTestCase {
         TupleLiteral[] expected1 = {};
         assert checkSizeResults(expected1, result);
         assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "E.A", "E.D", "T1.A", "T1.B");
+
+        try {
+            checkResultSchema(result, "E.A", "E.D", "T1.A", "T1.B");
+        }
+        catch (AssertionError ae) {
+            checkResultSchema(result, "T1.A", "T1.B", "E.A", "E.D");
+        }
 
         // Left Join should be empty.
         result = server.doCommand(
