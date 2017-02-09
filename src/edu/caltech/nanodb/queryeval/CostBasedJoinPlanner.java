@@ -147,16 +147,15 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         // PlanNode to return.
         PlanNode resPlan = null;
 
-        // 1)  Pull out the top-level conjuncts from the WHERE and HAVING
-        //     clauses on the query, since we will handle them in special ways
-        //     if we have outer joins.
+        // Pull out the top-level conjuncts from the WHERE and HAVING
+        // clauses on the query, since we will handle them in special ways
+        // if we have outer joins.
         FromClause fromClause = selClause.getFromClause();
         Expression havingExpr = selClause.getHavingExpr();
         Expression whereExpr = selClause.getWhereExpr();
-        //
-        // 2)  Create an optimal join plan from the top-level from-clause and
-        //     the top-level conjuncts.
-        //
+
+        // Create an optimal join plan from the top-level from-clause and
+        // the top-level conjuncts.
         if (fromClause != null) {
             Collection<Expression> conjuncts = new HashSet<Expression>();
             PredicateUtils.collectConjuncts(whereExpr, conjuncts);
@@ -164,10 +163,9 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             JoinComponent tempRes = makeJoinPlan(fromClause, conjuncts);
             resPlan = tempRes.joinPlan;
         }
-        // 3)  If there are any unused conjuncts, determine how to handle them.
-        //
-        // 4)  Create a project plan-node if necessary.
-        //
+
+        // If there are any unused conjuncts, determine how to handle them.
+        // Create a project plan-node if necessary.
         // Check to see for trivial project (SELECT * FROM ...)
         if (!selClause.isTrivialProject()) {
             List<SelectValue> selectValues = selClause.getSelectValues();
@@ -205,7 +203,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             }
         }
 
-        // 5)  Handle other clauses such as ORDER BY, LIMIT/OFFSET, etc.
+        // Handle other clauses such as ORDER BY, LIMIT/OFFSET, etc.
         List<OrderByExpression> orderByExprs = selClause.getOrderByExprs();
         if (orderByExprs.size() > 0) {
             resPlan = new SortNode(resPlan, orderByExprs);
