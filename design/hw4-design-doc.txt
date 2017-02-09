@@ -55,6 +55,10 @@ B3.  The planner in this assignment is still somewhat limited; for example,
      beneficial to push a conjunct down into the subquery.  (Your planner
      obviously doesn't need to perform this optimization.)
 
+     SELECT * FROM (SELECT * from cities) AS t1
+       WHERE city_name = 'Los Angeles';
+
+
 B4.  Enumerate the situations where you call prepare() on plans being
      generated.  Since this operation is somewhat expensive, do you
      see any ways to reduce the number of times you call prepare() in
