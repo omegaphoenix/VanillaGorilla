@@ -101,7 +101,7 @@ public abstract class SelectNode extends PlanNode {
                 done = true;
                 return null;
             }
-            else {
+            else if (currentTuple.isPinned()){
                 currentTuple.unpin();
             }
         }
