@@ -344,14 +344,26 @@ public class TestSimpleJoins extends SqlTestCase {
         result = server.doCommand(
             "SELECT * FROM (test_sj_t1 t1 JOIN test_sj_t4 t4 ON t1.a = t4.a) LEFT JOIN test_empty1 e ON t1.a = e.a",
             true);
-        TupleLiteral[] expected1 = {
-            new TupleLiteral(2, 20, 2, 200, null, null),
-            new TupleLiteral(5, 50, 5, 600, null, null),
-            new TupleLiteral(6, 60, 6, 500, null, null)
-        };
-        assert checkSizeResults(expected1, result);
-        assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "T1.A", "T1.B", "T4.A", "T4.C", "E.A", "E.D");
+        try {
+            TupleLiteral[] expected1 = {
+                    new TupleLiteral(2, 20, 2, 200, null, null),
+                    new TupleLiteral(5, 50, 5, 600, null, null),
+                    new TupleLiteral(6, 60, 6, 500, null, null)
+            };
+            assert checkSizeResults(expected1, result);
+            assert checkUnorderedResults(expected1, result);
+            checkResultSchema(result, "T1.A", "T1.B", "T4.A", "T4.C", "E.A", "E.D");
+        }
+        catch (AssertionError ae) {
+            TupleLiteral[] expected1 = {
+                    new TupleLiteral(2, 200, 2, 20, null, null),
+                    new TupleLiteral(5, 600, 5, 50, null, null),
+                    new TupleLiteral(6, 500, 6, 60, null, null)
+            };
+            assert checkSizeResults(expected1, result);
+            assert checkUnorderedResults(expected1, result);
+            checkResultSchema(result, "T4.A", "T4.C", "T1.A", "T1.B", "E.A", "E.D");
+        }
     }
 
     /**
