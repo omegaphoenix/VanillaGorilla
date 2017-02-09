@@ -1,4 +1,4 @@
-ANALYZE states;
+ANALYZE states, stores, cities;
 EXPLAIN SELECT * FROM states;
 EXPLAIN SELECT state_id FROM states;
 EXPLAIN SELECT store_id, property_costs
