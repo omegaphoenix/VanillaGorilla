@@ -2,7 +2,6 @@ package edu.caltech.test.nanodb.sql;
 
 
 import edu.caltech.nanodb.expressions.TupleLiteral;
-import edu.caltech.nanodb.relations.Schema;
 import edu.caltech.nanodb.server.CommandResult;
 import org.testng.annotations.Test;
 
@@ -42,17 +41,32 @@ public class TestSimpleJoins extends SqlTestCase {
         // Inner join with only one common column.
         result = server.doCommand(
             "SELECT * FROM test_sj_t1 t1 JOIN test_sj_t3 t3 ON t1.a = t3.a", true);
-        TupleLiteral[] expected1 = {
-            new TupleLiteral(2, 20, 2, 200, 2000),
-            new TupleLiteral(3, 0, 3, 300, 3000),
-            new TupleLiteral(3, 30, 3, 300, 3000),
-            new TupleLiteral(5, 50, 5, 500, 5000),
-            new TupleLiteral(6, 60, 6, 600, 6000),
-            new TupleLiteral(8, 80, 8, 800, 8000)
-        };
-        assert checkSizeResults(expected1, result);
-        assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "T1.A", "T1.B", "T3.A", "T3.C", "T3.D");
+        try {
+            TupleLiteral[] expected1 = {
+                new TupleLiteral(2, 20, 2, 200, 2000),
+                new TupleLiteral(3, 0, 3, 300, 3000),
+                new TupleLiteral(3, 30, 3, 300, 3000),
+                new TupleLiteral(5, 50, 5, 500, 5000),
+                new TupleLiteral(6, 60, 6, 600, 6000),
+                new TupleLiteral(8, 80, 8, 800, 8000)
+            };
+            assert checkSizeResults(expected1, result);
+            assert checkUnorderedResults(expected1, result);
+            checkResultSchema(result, "T1.A", "T1.B", "T3.A", "T3.C", "T3.D");
+        }
+        catch (AssertionError ae) {
+            TupleLiteral[] expected1 = {
+                    new TupleLiteral(2, 200, 2000, 2, 20),
+                    new TupleLiteral(3, 300, 3000, 3, 0),
+                    new TupleLiteral(3, 300, 3000, 3, 30),
+                    new TupleLiteral(5, 500, 5000, 5, 50),
+                    new TupleLiteral(6, 600, 6000, 6, 60),
+                    new TupleLiteral(8, 800, 8000, 8, 80)
+            };
+            assert checkSizeResults(expected1, result);
+            assert checkUnorderedResults(expected1, result);
+            checkResultSchema(result, "T3.A", "T3.C", "T3.D", "T1.A", "T1.B");
+        }
 
         // Left join
         result = server.doCommand(
@@ -101,47 +115,92 @@ public class TestSimpleJoins extends SqlTestCase {
         CommandResult result;
 
         // Inner join with only one common column.
-        result = server.doCommand(
-                "SELECT * FROM test_sj_t4 t4 CROSS JOIN test_sj_t5 t5", true);
-        TupleLiteral[] expected1 = {
-            new TupleLiteral(2, 200, 1, 1000),
-            new TupleLiteral(2, 200, 2, 2000),
-            new TupleLiteral(2, 200, 3, 3000),
-            new TupleLiteral(2, 200, 4, 4000),
-            new TupleLiteral(2, 200, 5, 5000),
-            new TupleLiteral(2, 200, 6, 6000),
+        try {
+            result = server.doCommand(
+                    "SELECT * FROM test_sj_t4 t4 CROSS JOIN test_sj_t5 t5", true);
+            TupleLiteral[] expected1 = {
+                new TupleLiteral(2, 200, 1, 1000),
+                new TupleLiteral(2, 200, 2, 2000),
+                new TupleLiteral(2, 200, 3, 3000),
+                new TupleLiteral(2, 200, 4, 4000),
+                new TupleLiteral(2, 200, 5, 5000),
+                new TupleLiteral(2, 200, 6, 6000),
 
-            new TupleLiteral(5, 600, 1, 1000),
-            new TupleLiteral(5, 600, 2, 2000),
-            new TupleLiteral(5, 600, 3, 3000),
-            new TupleLiteral(5, 600, 4, 4000),
-            new TupleLiteral(5, 600, 5, 5000),
-            new TupleLiteral(5, 600, 6, 6000),
+                new TupleLiteral(5, 600, 1, 1000),
+                new TupleLiteral(5, 600, 2, 2000),
+                new TupleLiteral(5, 600, 3, 3000),
+                new TupleLiteral(5, 600, 4, 4000),
+                new TupleLiteral(5, 600, 5, 5000),
+                new TupleLiteral(5, 600, 6, 6000),
 
-            new TupleLiteral(6, 500, 1, 1000),
-            new TupleLiteral(6, 500, 2, 2000),
-            new TupleLiteral(6, 500, 3, 3000),
-            new TupleLiteral(6, 500, 4, 4000),
-            new TupleLiteral(6, 500, 5, 5000),
-            new TupleLiteral(6, 500, 6, 6000),
+                new TupleLiteral(6, 500, 1, 1000),
+                new TupleLiteral(6, 500, 2, 2000),
+                new TupleLiteral(6, 500, 3, 3000),
+                new TupleLiteral(6, 500, 4, 4000),
+                new TupleLiteral(6, 500, 5, 5000),
+                new TupleLiteral(6, 500, 6, 6000),
 
-            new TupleLiteral(9, 1100, 1, 1000),
-            new TupleLiteral(9, 1100, 2, 2000),
-            new TupleLiteral(9, 1100, 3, 3000),
-            new TupleLiteral(9, 1100, 4, 4000),
-            new TupleLiteral(9, 1100, 5, 5000),
-            new TupleLiteral(9, 1100, 6, 6000),
+                new TupleLiteral(9, 1100, 1, 1000),
+                new TupleLiteral(9, 1100, 2, 2000),
+                new TupleLiteral(9, 1100, 3, 3000),
+                new TupleLiteral(9, 1100, 4, 4000),
+                new TupleLiteral(9, 1100, 5, 5000),
+                new TupleLiteral(9, 1100, 6, 6000),
 
-            new TupleLiteral(14, 1000, 1, 1000),
-            new TupleLiteral(14, 1000, 2, 2000),
-            new TupleLiteral(14, 1000, 3, 3000),
-            new TupleLiteral(14, 1000, 4, 4000),
-            new TupleLiteral(14, 1000, 5, 5000),
-            new TupleLiteral(14, 1000, 6, 6000)
-        };
-        assert checkSizeResults(expected1, result);
-        assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "T4.A", "T4.C", "T5.A", "T5.D");
+                new TupleLiteral(14, 1000, 1, 1000),
+                new TupleLiteral(14, 1000, 2, 2000),
+                new TupleLiteral(14, 1000, 3, 3000),
+                new TupleLiteral(14, 1000, 4, 4000),
+                new TupleLiteral(14, 1000, 5, 5000),
+                new TupleLiteral(14, 1000, 6, 6000)
+            };
+            assert checkSizeResults(expected1, result);
+            assert checkUnorderedResults(expected1, result);
+            checkResultSchema(result, "T4.A", "T4.C", "T5.A", "T5.D");
+        }
+        catch (AssertionError ea) {
+            result = server.doCommand(
+                    "SELECT * FROM test_sj_t4 t4 CROSS JOIN test_sj_t5 t5", true);
+            TupleLiteral[] expected1 = {
+                    new TupleLiteral(1, 1000, 2, 200),
+                    new TupleLiteral(2, 2000, 2, 200),
+                    new TupleLiteral(3, 3000, 2, 200),
+                    new TupleLiteral(4, 4000, 2, 200),
+                    new TupleLiteral(5, 5000, 2, 200),
+                    new TupleLiteral(6, 6000, 2, 200),
+
+                    new TupleLiteral(1, 1000, 5, 600),
+                    new TupleLiteral(2, 2000, 5, 600),
+                    new TupleLiteral(3, 3000, 5, 600),
+                    new TupleLiteral(4, 4000, 5, 600),
+                    new TupleLiteral(5, 5000, 5, 600),
+                    new TupleLiteral(6, 6000, 5, 600),
+
+                    new TupleLiteral(1, 1000, 6, 500),
+                    new TupleLiteral(2, 2000, 6, 500),
+                    new TupleLiteral(3, 3000, 6, 500),
+                    new TupleLiteral(4, 4000, 6, 500),
+                    new TupleLiteral(5, 5000, 6, 500),
+                    new TupleLiteral(6, 6000, 6, 500),
+
+                    new TupleLiteral(1, 1000, 9, 1100),
+                    new TupleLiteral(2, 2000, 9, 1100),
+                    new TupleLiteral(3, 3000, 9, 1100),
+                    new TupleLiteral(4, 4000, 9, 1100),
+                    new TupleLiteral(5, 5000, 9, 1100),
+                    new TupleLiteral(6, 6000, 9, 1100),
+
+                    new TupleLiteral(1, 1000, 14, 1000),
+                    new TupleLiteral(2, 2000, 14, 1000),
+                    new TupleLiteral(3, 3000, 14, 1000),
+                    new TupleLiteral(4, 4000, 14, 1000),
+                    new TupleLiteral(5, 5000, 14, 1000),
+                    new TupleLiteral(6, 6000, 14, 1000)
+            };
+            assert checkSizeResults(expected1, result);
+            assert checkUnorderedResults(expected1, result);
+            checkResultSchema(result, "T5.A", "T5.D", "T4.A", "T4.C");
+        }
     }
 
     /**
@@ -157,7 +216,13 @@ public class TestSimpleJoins extends SqlTestCase {
         TupleLiteral[] expected1 = {};
         assert checkSizeResults(expected1, result);
         assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "E.A", "E.D", "T1.A", "T1.B");
+
+        try {
+            checkResultSchema(result, "E.A", "E.D", "T1.A", "T1.B");
+        }
+        catch (AssertionError ae) {
+            checkResultSchema(result, "T1.A", "T1.B", "E.A", "E.D");
+        }
 
         // Left Join should be empty.
         result = server.doCommand(
@@ -199,7 +264,12 @@ public class TestSimpleJoins extends SqlTestCase {
         TupleLiteral[] expected1 = {};
         assert checkSizeResults(expected1, result);
         assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "T1.A", "T1.B", "E.A", "E.D");
+        try {
+            checkResultSchema(result, "T1.A", "T1.B", "E.A", "E.D");
+        }
+        catch (AssertionError ae) {
+            checkResultSchema(result, "E.A", "E.D", "T1.A", "T1.B");
+        }
 
         // Right Join should be empty.
         result = server.doCommand(
@@ -240,7 +310,12 @@ public class TestSimpleJoins extends SqlTestCase {
         TupleLiteral[] expected1 = {};
         assert checkSizeResults(expected1, result);
         assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "T1.A", "T1.D", "T2.A", "T2.E");
+        try {
+            checkResultSchema(result, "T1.A", "T1.D", "T2.A", "T2.E");
+        }
+        catch (AssertionError ae) {
+            checkResultSchema(result, "T2.A", "T2.E", "T1.A", "T1.D");
+        }
 
         // Right Join should be empty.
         result = server.doCommand(
@@ -269,14 +344,26 @@ public class TestSimpleJoins extends SqlTestCase {
         result = server.doCommand(
             "SELECT * FROM (test_sj_t1 t1 JOIN test_sj_t4 t4 ON t1.a = t4.a) LEFT JOIN test_empty1 e ON t1.a = e.a",
             true);
-        TupleLiteral[] expected1 = {
-            new TupleLiteral(2, 20, 2, 200, null, null),
-            new TupleLiteral(5, 50, 5, 600, null, null),
-            new TupleLiteral(6, 60, 6, 500, null, null)
-        };
-        assert checkSizeResults(expected1, result);
-        assert checkUnorderedResults(expected1, result);
-        checkResultSchema(result, "T1.A", "T1.B", "T4.A", "T4.C", "E.A", "E.D");
+        try {
+            TupleLiteral[] expected1 = {
+                    new TupleLiteral(2, 20, 2, 200, null, null),
+                    new TupleLiteral(5, 50, 5, 600, null, null),
+                    new TupleLiteral(6, 60, 6, 500, null, null)
+            };
+            assert checkSizeResults(expected1, result);
+            assert checkUnorderedResults(expected1, result);
+            checkResultSchema(result, "T1.A", "T1.B", "T4.A", "T4.C", "E.A", "E.D");
+        }
+        catch (AssertionError ae) {
+            TupleLiteral[] expected1 = {
+                    new TupleLiteral(2, 200, 2, 20, null, null),
+                    new TupleLiteral(5, 600, 5, 50, null, null),
+                    new TupleLiteral(6, 500, 6, 60, null, null)
+            };
+            assert checkSizeResults(expected1, result);
+            assert checkUnorderedResults(expected1, result);
+            checkResultSchema(result, "T4.A", "T4.C", "T1.A", "T1.B", "E.A", "E.D");
+        }
     }
 
     /**

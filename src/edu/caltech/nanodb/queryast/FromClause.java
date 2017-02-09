@@ -475,6 +475,19 @@ public class FromClause {
         return tableName;
     }
 
+    /**
+     * Return true if the from-clause is considered a leaf.
+     * Base-tables, subqueries, and outer-joins are leaves.
+     *
+     * @param fromClause the from-clause to check
+     */
+    public boolean isLeaf() {
+        return isBaseTable()
+                || isDerivedTable()
+                || isOuterJoin();
+    }
+
+
 
     public boolean isRenamed() {
         // Join expressions aren't renamed; only tables and SELECT subqueries

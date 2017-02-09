@@ -107,23 +107,23 @@ public abstract class AbstractPlannerImpl implements Planner {
      */
     public PlanNode makeJoinPlan(SelectClause selClause,
                                  FromClause fromClause) throws IOException {
-        PlanNode result = null;
+        PlanNode resPlan = null;
         // Base case for recursion.
         if (fromClause.isBaseTable()) {
-            result = makeSimpleSelect(fromClause.getTableName(), null, null);
+            resPlan = makeSimpleSelect(fromClause.getTableName(), null, null);
 
             if (fromClause.isRenamed()) {
-                result = new RenameNode(result, fromClause.getResultName());
+                resPlan = new RenameNode(resPlan, fromClause.getResultName());
             }
-            result.prepare();
-            return result;
+            resPlan.prepare();
+            return resPlan;
         }
         else if (fromClause.isDerivedTable()) {
             List<SelectClause> enclosing = new ArrayList<SelectClause>();
             enclosing.add(selClause);
-            result = makePlan(fromClause.getSelectClause(), enclosing);
-            result = new RenameNode(result, fromClause.getResultName());
-            return result;
+            resPlan = makePlan(fromClause.getSelectClause(), enclosing);
+            resPlan = new RenameNode(resPlan, fromClause.getResultName());
+            return resPlan;
         }
 
         JoinType joinType = fromClause.getJoinType();
@@ -132,7 +132,7 @@ public abstract class AbstractPlannerImpl implements Planner {
         FromClause.JoinConditionType condType = fromClause.getConditionType();
         Expression predicate;
         List<SelectValue> projectVals = null;
-        Boolean needPostProject =
+        boolean needPostProject =
                 condType == FromClause.JoinConditionType.NATURAL_JOIN ||
                 condType == FromClause.JoinConditionType.JOIN_USING;
         if (needPostProject) {
@@ -142,31 +142,31 @@ public abstract class AbstractPlannerImpl implements Planner {
             predicate = fromClause.getOnExpression();
         }
         switch (joinType) {
-        case CROSS:
-        case INNER:
-        case LEFT_OUTER:
-        case ANTIJOIN:
-        case SEMIJOIN:
-            result = new NestedLoopJoinNode(left, right, joinType, predicate);
-            break;
-        case RIGHT_OUTER:
-            result = new NestedLoopJoinNode(left, right, joinType.LEFT_OUTER, predicate);
-            ((ThetaJoinNode) result).swap();
-            break;
-        case FULL_OUTER:
-            throw new UnsupportedOperationException(
-                      "Not implemented: FULL_OUTER join");
-        default:
-            throw new UnsupportedOperationException("Not a valid JoinType.");
+            case CROSS:
+            case INNER:
+            case LEFT_OUTER:
+            case ANTIJOIN:
+            case SEMIJOIN:
+                resPlan = new NestedLoopJoinNode(left, right, joinType, predicate);
+                break;
+            case RIGHT_OUTER:
+                resPlan = new NestedLoopJoinNode(left, right, JoinType.LEFT_OUTER, predicate);
+                ((ThetaJoinNode) resPlan).swap();
+                break;
+            case FULL_OUTER:
+                throw new UnsupportedOperationException(
+                          "Not implemented: FULL_OUTER join");
+            default:
+                throw new UnsupportedOperationException("Not a valid JoinType.");
         }
         if (needPostProject) {
             projectVals = fromClause.getComputedSelectValues();
             if (projectVals != null) {
-                result = new ProjectNode(result, projectVals, placeholder_num);
+                resPlan = new ProjectNode(resPlan, projectVals, placeholder_num);
                 placeholder_num++;
             }
         }
-        result.prepare();
-        return result;
+        resPlan.prepare();
+        return resPlan;
     }
 }
