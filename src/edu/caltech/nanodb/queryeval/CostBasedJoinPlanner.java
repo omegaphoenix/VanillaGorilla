@@ -486,6 +486,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         }
 
         resPlan.prepare();
+
         // Optimize to apply selections as early as possible
         // Note that this is not optimal in presence of indexes
         if (fromClause.isBaseTable() || fromClause.isDerivedTable()){
@@ -494,11 +495,9 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                     exprsUsingSchemas, resPlan.getSchema());
             if (!exprsUsingSchemas.isEmpty()) {
                 leafConjuncts.addAll(exprsUsingSchemas);
-                Expression pred = PredicateUtils.makePredicate(leafConjuncts);
-                if (pred != null) {
-                    PlanUtils.addPredicateToPlan(resPlan, pred);
-                    resPlan.prepare();
-                }
+                Expression pred = PredicateUtils.makePredicate(exprsUsingSchemas);
+                PlanUtils.addPredicateToPlan(resPlan, pred);
+                resPlan.prepare();
             }
         }
 
