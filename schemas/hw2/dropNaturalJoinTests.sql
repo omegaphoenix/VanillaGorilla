@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS test_nuj_t1;
+DROP TABLE IF EXISTS test_nuj_t2;
+DROP TABLE IF EXISTS test_nuj_t3;
+DROP TABLE IF EXISTS test_nuj_t4;
+DROP TABLE IF EXISTS test_nuj_t5;
+DROP TABLE IF EXISTS test_nuj_t6;
