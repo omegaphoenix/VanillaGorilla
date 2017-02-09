@@ -575,6 +575,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                     HashSet<PlanNode> tmpLeavesUsed = new HashSet<>();
                     tmpLeavesUsed.addAll(plan.leavesUsed);
                     tmpLeavesUsed.addAll(leafComponent.leavesUsed);
+
+                    // Add previously used conjuncts
                     tmpConjuncts.addAll(plan.conjunctsUsed);
                     tmpConjuncts.addAll(leafComponent.conjunctsUsed);
 
