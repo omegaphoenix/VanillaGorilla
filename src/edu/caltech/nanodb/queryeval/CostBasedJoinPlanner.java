@@ -158,46 +158,11 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         //     the top-level conjuncts.
         //
         if (fromClause != null) {
-
-            // If from clause is a base table, simply do a file scan.
-            if (fromClause.isBaseTable()) {
-                resPlan = makeSimpleSelect(fromClause.getTableName(),
-                        whereExpr, null);
-            }
-            // Handle joins.
-            else if (fromClause.isJoinExpr()) {
-                Expression e = fromClause.getOnExpression();
-                if (e == null) {
-                    e = fromClause.getComputedJoinExpr();
-                }
-                if (e != null) {
-                    e.traverse(noAggregateProcessor);
-                }
-                Collection<Expression> conjuncts = new HashSet<Expression>();
-                PredicateUtils.collectConjuncts(whereExpr, conjuncts);
-                JoinComponent joinResult = makeJoinPlan(fromClause, conjuncts);
-                resPlan = joinResult.joinPlan;
-                // if (whereExpr != null) {
-                //     resPlan = new SimpleFilterNode(resPlan, whereExpr);
-                // }
-            }
-            // Handle derived table recursively.
-            else if (fromClause.isDerivedTable()) {
-                SelectClause subClause = fromClause.getSelectClause();
-
-                // Enclosing selects for sub-query.
-                List<SelectClause> enclosing = null;
-                if (enclosingSelects != null) {
-                    enclosing = new ArrayList<SelectClause>(enclosingSelects);
-                    enclosing.add(selClause);
-                }
-                else {
-                    enclosing = new ArrayList<SelectClause>();
-                    enclosing.add(selClause);
-                }
-                resPlan = makePlan(subClause, enclosing);
-                resPlan = new RenameNode(resPlan, fromClause.getResultName());
-            }
+            Collection<Expression> conjuncts = new HashSet<Expression>();
+            PredicateUtils.collectConjuncts(whereExpr, conjuncts);
+            HashSet<Expression> leafConjuncts = new HashSet<>();
+            JoinComponent tempRes = makeJoinPlan(fromClause, conjuncts);
+            resPlan = tempRes.joinPlan;
         }
         // 3)  If there are any unused conjuncts, determine how to handle them.
         //
