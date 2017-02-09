@@ -36,8 +36,18 @@ B:  Generating Optimal Joins
 
 B1.  Briefly describe how you generate an "optimal" access to a base table.
 
+     We check the list of conjuncts and see if any can be applied to the
+     table and create a simple select and apply that predicate as early
+     as possible which is usually in the base table access. This addition
+     is performed in makeLeafPlan.
+
 B2.  Briefly describe how you decide when it is acceptable to push
      conjuncts down through an outer join.
+
+     We push conjuncts down through an outer join by getting conjuncts that
+     can be applied to the side that is not the outer join side because
+     this side can be filtered and be null if there is no match to the outer
+     side.
 
 B3.  The planner in this assignment is still somewhat limited; for example,
      we can't push conjuncts down into subqueries.  Using the stores schema,
@@ -50,11 +60,22 @@ B4.  Enumerate the situations where you call prepare() on plans being
      see any ways to reduce the number of times you call prepare() in
      your implementation?
 
+     1. after a leaf plan is initially created
+     2. after applying a predicate to the leaf plan
+     3. after creating a possible new plan with n+1 leaves in the
+        dynamic programming loop
+     We already removed a duplicate prepare() call in makeSimpleSelect
+     because we were calling prepare() again after makeSimpleSelect
+     was called in makeLeafPlan().
+
 B5.  In what situations can you end up with unused conjuncts after
      planning joins.  Illustrate by giving an example SQL statement
      that would have unused conjuncts after join planning, again using
      the stores schema.  Then, describe a strategy for where/how these
      left-over conjuncts should be applied in the plan.
+
+     Situations with a having clause would tend to have unused conjuncts
+     after planning joins.
 
 C:  Costing SQL Queries
 -----------------------
