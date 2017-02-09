@@ -76,6 +76,15 @@ B5.  In what situations can you end up with unused conjuncts after
 
      Situations with a having clause would tend to have unused conjuncts
      after planning joins.
+     SELECT max(property_costs) FROM stores
+       WHERE stores.city_id < 10
+       GROUP BY stores.city_id HAVING max(property_costs) > 500000;
+     Here, the unused conjunct would be max(property_costs) > 500000. We
+     applied these left-over conjuncts by applying them at the end after
+     the optimal join plan was created.
+     If we could identify that property_costs > 500000 is a conjunct we
+     could use in our file scan it would be even more efficient. Unfortunately
+     we have not yet implemented that functionality.
 
 C:  Costing SQL Queries
 -----------------------
