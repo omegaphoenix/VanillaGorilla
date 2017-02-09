@@ -445,15 +445,18 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             JoinComponent leftComp, rightComp;
             HashSet<Expression> leftConj = null;
             HashSet<Expression> rightConj = null;
+            HashSet<Expression> exprsUsingSchemas = new HashSet<Expression>();
             if (!fromClause.hasOuterJoinOnLeft()) {
                 PredicateUtils.findExprsUsingSchemas(conjuncts, false,
-                        leafConjuncts, fromClause.getRightChild().getSchema());
-                rightConj = leafConjuncts;
+                        exprsUsingSchemas, fromClause.getRightChild().getSchema());
+                rightConj = exprsUsingSchemas;
+                leafConjuncts.addAll(exprsUsingSchemas);
             }
             if (!fromClause.hasOuterJoinOnRight()) {
                 PredicateUtils.findExprsUsingSchemas(conjuncts, false,
-                        leafConjuncts, fromClause.getLeftChild().getSchema());
-                leftConj = leafConjuncts;
+                        exprsUsingSchemas, fromClause.getLeftChild().getSchema());
+                leftConj = exprsUsingSchemas;
+                leafConjuncts.addAll(exprsUsingSchemas);
             }
             leftComp = makeJoinPlan(fromClause.getLeftChild(), leftConj);
             rightComp = makeJoinPlan(fromClause.getRightChild(), rightConj);
@@ -482,10 +485,10 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             resPlan = new RenameNode(resPlan, aliasName);
         }
 
+        resPlan.prepare();
         // Optimize to apply selections as early as possible
         // Note that this is not optimal in presence of indexes
         if (fromClause.isBaseTable() || fromClause.isDerivedTable()){
-            resPlan.prepare();
             HashSet<Expression> exprsUsingSchemas = new HashSet<Expression>();
             PredicateUtils.findExprsUsingSchemas(conjuncts, false,
                     exprsUsingSchemas, resPlan.getSchema());
@@ -494,11 +497,11 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 Expression pred = PredicateUtils.makePredicate(leafConjuncts);
                 if (pred != null) {
                     PlanUtils.addPredicateToPlan(resPlan, pred);
+                    resPlan.prepare();
                 }
             }
         }
 
-        resPlan.prepare();
         return resPlan;
     }
 
