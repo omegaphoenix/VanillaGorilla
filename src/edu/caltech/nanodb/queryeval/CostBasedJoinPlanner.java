@@ -456,7 +456,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             if (!exprsUsingSchemas.isEmpty()) {
                 leafConjuncts.addAll(exprsUsingSchemas);
                 Expression pred = PredicateUtils.makePredicate(exprsUsingSchemas);
-                PlanUtils.addPredicateToPlan(resPlan, pred);
+                resPlan = PlanUtils.addPredicateToPlan(resPlan, pred);
                 resPlan.prepare();
             }
         }
