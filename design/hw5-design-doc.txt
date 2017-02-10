@@ -1,0 +1,102 @@
+CS122 Assignment 5 - Advanced Subqueries - Design Document
+==========================================================
+
+A:  Logistics
+-------------
+
+A1.  List your team name and the people who worked on this assignment.
+
+     <team name>
+
+     <name>
+     <name>
+     ...
+
+A2.  Specify the repository URL, tag name and commit-hash of the Git version
+     you are submitting for your assignment.  (You can list the commit hashes
+     of your repository tags with this command:  git show-ref --tags)
+
+     Repository URL:  <url>
+     Tag name:        <tag>
+     Commit hash:     <hash>
+
+A3.  Specify any late tokens you are applying to this assignment, or
+     "none" if no late tokens.
+
+A4.  Briefly describe what parts of the assignment each teammate focused on.
+
+B:  Subquery Planning
+---------------------
+
+B1.  Which planner did your team add subquery planning to?  How easy or
+     difficult was it to incorporate subquery-planning into the planner?
+
+B2.  Briefly outline the process by which you perform subquery planning in
+     your query planner.  Also explain briefly how your subquery-planner works.
+
+B3.  Briefly describe how you detect whether there are subqueries in the
+     GROUP BY and ORDER BY clauses.  How do you make sure this doesn't
+     interfere with subqueries in other clauses?
+
+C:  Correlated Evaluation
+-------------------------
+
+C1.  How easy or difficult was it to incorporate support for correlated
+     evaluation into your query planner?  Did it affect the sequence of
+     steps in any substantial ways?
+
+D:  Decorrelating Queries
+-------------------------
+
+D1.  Which example query decorrelation did your team choose to implement?
+     Why did you choose this query?
+
+D2.  How does your planner determine whether a query follows the pattern
+     that your planner can decorrelate?  How does it identify the components
+     of the query in order to decorrelate it?
+
+D3.  Briefly outline the process by which your planner decorrelates the query.
+     How does it modify the subquery, and how does it modify the enclosing
+     query?
+
+E:  Extra Credit [OPTIONAL]
+---------------------------
+
+If you implemented any extra-credit tasks for this assignment, describe
+them here.  The description should be like this, with stuff in "<>" replaced.
+(The value i starts at 1 and increments...)
+
+E<i>:  <one-line description>
+
+     <brief summary of what you did, including the specific classes that
+     we should look at for your implementation>
+
+     <brief summary of test-cases that demonstrate/exercise your extra work>
+
+F:  Feedback [OPTIONAL]
+-----------------------
+
+WE NEED YOUR FEEDBACK!  Thoughtful and constructive input will help us to
+improve future versions of the course.  These questions are OPTIONAL, and
+they obviously won't affect your grade in any way (including if you hate
+everything about the assignment and databases in general, or Donnie and/or
+the TAs in particular).  Feel free to answer as many or as few of them as
+you wish.
+
+NOTE:  If you wish to give anonymous feedback, a similar survey will be
+       made available on the Moodle.
+
+F1.  How many hours total did your team spend on this assignment?
+     (That is, the sum of each teammate's time spent on the assignment.)
+
+F2.  What parts of the assignment were most time-consuming?  Why?
+
+F3.  Did you find any parts of the assignment particularly instructive?
+     Correspondingly, did any parts feel like unnecessary busy-work?
+
+F4.  Did you particularly enjoy any parts of the assignment?  Were there
+     any parts that you particularly disliked?
+
+F5.  Do you have any suggestions for how future versions of the
+     assignment can be improved?
+
