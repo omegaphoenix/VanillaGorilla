@@ -13,6 +13,9 @@ import edu.caltech.nanodb.queryeval.CostBasedJoinPlanner;
  */
 public class SubqueryPlanner {
 
+    /**
+     * Planner for creating sub-query plans.
+     */
     private CostBasedJoinPlanner planner;
 
     /**
