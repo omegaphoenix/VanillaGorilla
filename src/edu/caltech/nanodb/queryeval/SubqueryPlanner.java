@@ -1,12 +1,12 @@
 package edu.caltech.nanodb.queryeval;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
 
-import edu.caltech.nanodb.expressions.*;
-import edu.caltech.nanodb.plannodes.*;
-import edu.caltech.nanodb.queryast.*;
-import edu.caltech.nanodb.queryeval.CostBasedJoinPlanner;
+import edu.caltech.nanodb.expressions.SubqueryOperator;
+import edu.caltech.nanodb.plannodes.PlanNode;
+import edu.caltech.nanodb.queryast.SelectClause;
+import edu.caltech.nanodb.queryast.SelectValue;
 
 /**
  * This class is used by the overall planner to handle sub-queries.
