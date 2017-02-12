@@ -17,15 +17,17 @@ public class SubqueryPlanner {
 
     /**
      * Constructs the SubqueryPlanner.
-     * @param planner
+     *
+     * @param planner this constructs plans out of plannodes.
      */
     public SubqueryPlanner(CostBasedJoinPlanner planner) {
         this.planner = planner;
     }
 
     /**
-     * Creates a query plan for a subquery.
-     * @param query the subquery to plan
+     * Creates a query plan for a subquery, and sets it for the SubqueryOperator.
+     *
+     * @param query the subquery to plan.
      */
     public void planSubquery(SubqueryOperator query,
                              List<SelectClause> enclosingSelects) throws IOException {
