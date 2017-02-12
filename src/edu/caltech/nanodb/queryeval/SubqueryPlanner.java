@@ -24,11 +24,11 @@ public class SubqueryPlanner {
     }
 
     /**
-     * Creates a query plan for a scalar subquery.
-     * @param query the scalar subquery to plan
+     * Creates a query plan for a subquery.
+     * @param query the subquery to plan
      */
-    public void planScalarSubquery(ScalarSubquery query,
-                                   List<SelectClause> enclosingSelects) throws IOException {
+    public void planSubquery(SubqueryOperator query,
+                             List<SelectClause> enclosingSelects) throws IOException {
         SelectClause select = query.getSubquery();
         PlanNode plan = planner.makePlan(select, enclosingSelects);
         query.setSubqueryPlan(plan);

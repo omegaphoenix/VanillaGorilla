@@ -180,8 +180,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 if (!sv.isExpression()) {
                     continue;
                 }
-                else if (sv.getExpression() instanceof ScalarSubquery) {
-                    subqueryPlanner.planScalarSubquery((ScalarSubquery) sv.getExpression(), enclosingSelects);
+                else if (sv.getExpression() instanceof SubqueryOperator) {
+                    subqueryPlanner.planSubquery((SubqueryOperator) sv.getExpression(), enclosingSelects);
                     continue;
                 }
                 Expression e = sv.getExpression().traverse(aggregateProcessor);
