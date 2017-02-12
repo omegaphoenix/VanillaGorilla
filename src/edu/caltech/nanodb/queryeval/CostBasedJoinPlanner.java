@@ -11,15 +11,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import edu.caltech.nanodb.expressions.AggregateProcessor;
-import edu.caltech.nanodb.expressions.OrderByExpression;
-import edu.caltech.nanodb.expressions.PredicateUtils;
+import edu.caltech.nanodb.expressions.*;
 import edu.caltech.nanodb.plannodes.*;
 import edu.caltech.nanodb.queryast.SelectValue;
 import edu.caltech.nanodb.relations.JoinType;
 import org.apache.log4j.Logger;
 
-import edu.caltech.nanodb.expressions.Expression;
 import edu.caltech.nanodb.queryast.FromClause;
 import edu.caltech.nanodb.queryast.SelectClause;
 import edu.caltech.nanodb.relations.TableInfo;
@@ -143,6 +140,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
     public PlanNode makePlan(SelectClause selClause,
         List<SelectClause> enclosingSelects) throws IOException {
 
+        SubqueryPlanner subqueryPlanner = new SubqueryPlanner(this);
         AggregateProcessor aggregateProcessor = new AggregateProcessor(true);
         AggregateProcessor noAggregateProcessor = new AggregateProcessor(false);
 
@@ -180,6 +178,10 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
             for (SelectValue sv : selectValues) {
                 if (!sv.isExpression()) {
+                    continue;
+                }
+                else if (sv.getExpression() instanceof ScalarSubquery) {
+                    subqueryPlanner.planScalarSubquery((ScalarSubquery) sv.getExpression(), enclosingSelects);
                     continue;
                 }
                 Expression e = sv.getExpression().traverse(aggregateProcessor);
