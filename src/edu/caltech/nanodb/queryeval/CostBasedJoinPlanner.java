@@ -189,8 +189,13 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             }
 
             if (havingExpr != null) {
-                Expression e = havingExpr.traverse(aggregateProcessor);
-                selClause.setHavingExpr(e);
+                if (havingExpr instanceof SubqueryOperator) {
+                    subqueryPlanner.planSubquery((SubqueryOperator) havingExpr, null);
+                }
+                else {
+                    Expression e = havingExpr.traverse(aggregateProcessor);
+                    selClause.setHavingExpr(e);
+                }
             }
 
             if (selClause.getGroupByExprs().size() != 0
