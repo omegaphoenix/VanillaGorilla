@@ -28,6 +28,7 @@ public class SubqueryPlanner {
      * Creates a query plan for a subquery, and sets it for the SubqueryOperator.
      *
      * @param query the subquery to plan.
+     * @throws IOException
      */
     public void planSubquery(SubqueryOperator query,
                              List<SelectClause> enclosingSelects) throws IOException {
