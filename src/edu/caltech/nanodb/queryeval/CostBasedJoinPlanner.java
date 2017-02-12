@@ -200,6 +200,12 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
             if (selClause.getGroupByExprs().size() != 0
                 || aggregateProcessor.aggregates.size() != 0) {
+
+                for (Expression gbe : selClause.getGroupByExprs()) {
+                    if (gbe instanceof SubqueryOperator) {
+                        throw new IOException("Subqueries are not allowed in GROUP BY clause.");
+                    }
+                }
                 resPlan = new HashedGroupAggregateNode(resPlan,
                     selClause.getGroupByExprs(), aggregateProcessor.aggregates);
             }
@@ -224,6 +230,12 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
         // Handle other clauses such as ORDER BY, LIMIT/OFFSET, etc.
         List<OrderByExpression> orderByExprs = selClause.getOrderByExprs();
+        for (OrderByExpression obe : orderByExprs) {
+            if (obe.getExpression() instanceof SubqueryOperator) {
+                throw new IOException("Subqueries are not allowed in ORDER BY clause.");
+            }
+        }
+
         if (orderByExprs.size() > 0) {
             resPlan = new SortNode(resPlan, orderByExprs);
         }
