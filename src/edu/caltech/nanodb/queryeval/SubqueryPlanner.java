@@ -5,7 +5,7 @@ import java.util.*;
 
 import edu.caltech.nanodb.expressions.*;
 import edu.caltech.nanodb.plannodes.*;
-import edu.caltech.nanodb.queryast.SelectClause;
+import edu.caltech.nanodb.queryast.*;
 import edu.caltech.nanodb.queryeval.CostBasedJoinPlanner;
 
 /**
@@ -38,6 +38,23 @@ public class SubqueryPlanner {
         SelectClause select = query.getSubquery();
         PlanNode plan = planner.makePlan(select, enclosingSelects);
         query.setSubqueryPlan(plan);
+    }
+
+    /**
+     * Processes all sub-queries in a query.
+     *
+     * @param selClause
+     * @param enclosingSelects
+     * @throws IOException
+     */
+    public void processSubqueries(SelectClause selClause,
+                                  List<SelectClause> enclosingSelects) throws IOException {
+
+        /**
+         * TODO: Refactor code to use/implement this function, or remove it, depending on
+         * how we want to structure our code.
+         */
+        List<SelectValue> selectValues = selClause.getSelectValues();
     }
 
 }
