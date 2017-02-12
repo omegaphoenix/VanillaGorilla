@@ -217,6 +217,11 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             }
         }
 
+        // Subqueries in WHERE clause
+        if (whereExpr instanceof SubqueryOperator) {
+            subqueryPlanner.planSubquery((SubqueryOperator) whereExpr, enclosingSelects);
+        }
+
         // Handle other clauses such as ORDER BY, LIMIT/OFFSET, etc.
         List<OrderByExpression> orderByExprs = selClause.getOrderByExprs();
         if (orderByExprs.size() > 0) {
