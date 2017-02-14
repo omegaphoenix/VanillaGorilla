@@ -180,22 +180,15 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 if (!sv.isExpression()) {
                     continue;
                 }
-                else if (sv.getExpression() instanceof SubqueryOperator) {
-                    subqueryPlanner.planSubquery((SubqueryOperator) sv.getExpression(), enclosingSelects);
-                    continue;
-                }
+                sv.getExpression().traverse(subqueryPlanner);
                 Expression e = sv.getExpression().traverse(aggregateProcessor);
                 sv.setExpression(e);
             }
 
             if (havingExpr != null) {
-                if (havingExpr instanceof SubqueryOperator) {
-                    subqueryPlanner.planSubquery((SubqueryOperator) havingExpr, null);
-                }
-                else {
-                    Expression e = havingExpr.traverse(aggregateProcessor);
-                    selClause.setHavingExpr(e);
-                }
+                havingExpr.traverse(subqueryPlanner);
+                Expression e = havingExpr.traverse(aggregateProcessor);
+                selClause.setHavingExpr(e);
             }
 
             if (selClause.getGroupByExprs().size() != 0
@@ -224,8 +217,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         }
 
         // Subqueries in WHERE clause
-        if (whereExpr instanceof SubqueryOperator) {
-            subqueryPlanner.planSubquery((SubqueryOperator) whereExpr, enclosingSelects);
+        if (whereExpr != null) {
+            whereExpr.traverse(subqueryPlanner);
         }
 
         // Handle other clauses such as ORDER BY, LIMIT/OFFSET, etc.
