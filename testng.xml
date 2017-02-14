@@ -48,8 +48,16 @@
     </packages>
   </test>
 
-  <!--
   <test name="assignment5-tests">
+    <classes>
+      <class name="edu.caltech.test.nanodb.sql.TestScalarSubquery" />
+      <class name="edu.caltech.test.nanodb.sql.TestExists" />
+      <class name="edu.caltech.test.nanodb.sql.TestInPredicates" />
+    </classes>
+  </test>
+
+  <!--
+  <test name="assignment6-tests">
     <classes>
       <class name="edu.caltech.test.nanodb.storage.btreefile.TestBTreeFile">
         <methods>
