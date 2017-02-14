@@ -3,6 +3,8 @@ package edu.caltech.nanodb.queryeval;
 import java.io.IOException;
 import java.util.List;
 
+import edu.caltech.nanodb.expressions.Expression;
+import edu.caltech.nanodb.expressions.ExpressionProcessor;
 import edu.caltech.nanodb.expressions.SubqueryOperator;
 import edu.caltech.nanodb.expressions.Environment;
 import edu.caltech.nanodb.plannodes.PlanNode;
@@ -12,7 +14,7 @@ import edu.caltech.nanodb.queryast.SelectValue;
 /**
  * This class is used by the overall planner to handle sub-queries.
  */
-public class SubqueryPlanner {
+public class SubqueryPlanner implements ExpressionProcessor {
 
     /**
      * Planner for creating sub-query plans.
@@ -33,6 +35,30 @@ public class SubqueryPlanner {
     public SubqueryPlanner(CostBasedJoinPlanner planner) {
         this.planner = planner;
         env = new Environment();
+    }
+
+    /**
+     * ExpressionProcessor enter()
+     * @param node the {@code Expression} node being entered
+     */
+    public void enter(Expression node) {
+        if (node instanceof SubqueryOperator) {
+            try {
+                planSubquery((SubqueryOperator) node, null);
+            }
+            catch (IOException e) {
+            }
+        }
+    }
+
+    /**
+     * ExpressionProcess leave()
+     * @param node the {@code Expression} node being left
+     *
+     * @return leave node unchanged.
+     */
+    public Expression leave(Expression node) {
+        return node;
     }
 
     /**
