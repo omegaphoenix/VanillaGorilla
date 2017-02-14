@@ -246,7 +246,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             resPlan = new LimitOffsetNode(resPlan, selClause.getOffset(),
                     selClause.getLimit());
         }
-
+        resPlan.setEnvironment(subqueryPlanner.getEnvironment());
         resPlan.prepare();
         return resPlan;
     }

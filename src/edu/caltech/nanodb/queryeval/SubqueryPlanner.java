@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import edu.caltech.nanodb.expressions.SubqueryOperator;
+import edu.caltech.nanodb.expressions.Environment;
 import edu.caltech.nanodb.plannodes.PlanNode;
 import edu.caltech.nanodb.queryast.SelectClause;
 import edu.caltech.nanodb.queryast.SelectValue;
@@ -19,12 +20,19 @@ public class SubqueryPlanner {
     private CostBasedJoinPlanner planner;
 
     /**
+     * Environment of parent plan.
+     */
+    private Environment env;
+
+
+    /**
      * Constructs the SubqueryPlanner.
      *
      * @param planner this constructs plans out of plannodes.
      */
     public SubqueryPlanner(CostBasedJoinPlanner planner) {
         this.planner = planner;
+        env = new Environment();
     }
 
     /**
@@ -37,7 +45,16 @@ public class SubqueryPlanner {
                              List<SelectClause> enclosingSelects) throws IOException {
         SelectClause select = query.getSubquery();
         PlanNode plan = planner.makePlan(select, enclosingSelects);
+        plan.addParentEnvironmentToPlanTree(env);
         query.setSubqueryPlan(plan);
+    }
+
+    /**
+     *  Accessor function to return environment.
+     *  @return Environment
+     */
+    public Environment getEnvironment() {
+        return env;
     }
 
     /**
