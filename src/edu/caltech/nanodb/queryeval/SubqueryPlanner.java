@@ -9,7 +9,6 @@ import edu.caltech.nanodb.expressions.SubqueryOperator;
 import edu.caltech.nanodb.expressions.Environment;
 import edu.caltech.nanodb.plannodes.PlanNode;
 import edu.caltech.nanodb.queryast.SelectClause;
-import edu.caltech.nanodb.queryast.SelectValue;
 
 /**
  * This class is used by the overall planner to handle sub-queries.
