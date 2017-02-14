@@ -163,14 +163,14 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             JoinComponent tempRes = makeJoinPlan(fromClause, conjuncts);
             resPlan = tempRes.joinPlan;
             ununusedConjuncts.removeAll(tempRes.conjunctsUsed);
-        }
 
-        // If there are any unused conjuncts, determine how to handle them.
-        if (ununusedConjuncts.size() > 0) {
-            for (Expression pred : ununusedConjuncts) {
-                makeSimpleSelect(fromClause.getTableName(), pred, null);
+            // If there are any unused conjuncts, determine how to handle them.
+            if (ununusedConjuncts.size() > 0) {
+                Expression pred = PredicateUtils.makePredicate(ununusedConjuncts);
+                resPlan = new SimpleFilterNode(resPlan, pred);
             }
         }
+
         // Create a project plan-node if necessary.
         // Check to see for trivial project (SELECT * FROM ...)
         if (!selClause.isTrivialProject()) {
