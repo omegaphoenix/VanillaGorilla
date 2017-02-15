@@ -209,7 +209,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 havingExpr.traverse(subqueryPlanner);
                 Expression e = havingExpr.traverse(aggregateProcessor);
                 selClause.setHavingExpr(e);
-                resPlan.setEnvironment(subqueryPlanner.getEnvironment());
             }
 
             if (selClause.getGroupByExprs().size() != 0
@@ -240,7 +239,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         // Subqueries in WHERE clause
         if (whereExpr != null) {
             whereExpr.traverse(subqueryPlanner);
-            resPlan.setEnvironment(subqueryPlanner.getEnvironment());
         }
 
         // Handle other clauses such as ORDER BY, LIMIT/OFFSET, etc.
@@ -261,6 +259,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             resPlan = new LimitOffsetNode(resPlan, selClause.getOffset(),
                     selClause.getLimit());
         }
+        resPlan.setEnvironment(subqueryPlanner.getEnvironment());
         resPlan.prepare();
         return resPlan;
     }
