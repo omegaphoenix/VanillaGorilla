@@ -169,4 +169,8 @@ public abstract class AbstractPlannerImpl implements Planner {
         resPlan.prepare();
         return resPlan;
     }
+
+    public SelectClause decorrelate(SelectClause selClause) {
+        return selClause;
+    }
 }

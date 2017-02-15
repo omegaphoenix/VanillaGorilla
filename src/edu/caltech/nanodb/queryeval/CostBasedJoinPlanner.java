@@ -139,6 +139,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
      */
     public PlanNode makePlan(SelectClause selClause,
         List<SelectClause> enclosingSelects) throws IOException {
+        selClause = decorrelate(selClause);
 
         SubqueryPlanner subqueryPlanner = new SubqueryPlanner(this);
         AggregateProcessor aggregateProcessor = new AggregateProcessor(true);
