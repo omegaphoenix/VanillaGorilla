@@ -171,6 +171,14 @@ public abstract class AbstractPlannerImpl implements Planner {
     }
 
     public SelectClause decorrelate(SelectClause selClause) {
+        if (isDecorrelatable(selClause)) {
+            // Decorrelate
+        }
         return selClause;
+    }
+
+    public boolean isDecorrelatable(SelectClause selClause) {
+        // Check if subquery inside where clause
+        return true;
     }
 }
