@@ -169,6 +169,23 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 Expression pred = PredicateUtils.makePredicate(ununusedConjuncts);
                 resPlan = new SimpleFilterNode(resPlan, pred);
             }
+
+            if (fromClause.isDerivedTable()) {
+                SelectClause subClause = fromClause.getSelectClause();
+
+                // Enclosing selects for sub-query.
+                List<SelectClause> enclosing = null;
+                if (enclosingSelects != null) {
+                    enclosing = new ArrayList<SelectClause>(enclosingSelects);
+                    enclosing.add(selClause);
+                }
+                else {
+                    enclosing = new ArrayList<SelectClause>();
+                    enclosing.add(selClause);
+                }
+                resPlan = makePlan(subClause, enclosing);
+                resPlan = new RenameNode(resPlan, fromClause.getResultName());
+            }
         }
 
         // Create a project plan-node if necessary.
