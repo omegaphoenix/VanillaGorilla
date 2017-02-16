@@ -6,8 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import edu.caltech.nanodb.expressions.ColumnName;
-import edu.caltech.nanodb.expressions.ColumnValue;
+import edu.caltech.nanodb.expressions.*;
 import edu.caltech.nanodb.plannodes.*;
 import edu.caltech.nanodb.relations.ColumnInfo;
 import org.apache.log4j.Logger;
@@ -15,8 +14,6 @@ import org.apache.log4j.Logger;
 import edu.caltech.nanodb.queryast.FromClause;
 import edu.caltech.nanodb.queryast.SelectClause;
 import edu.caltech.nanodb.queryast.SelectValue;
-import edu.caltech.nanodb.expressions.Expression;
-import edu.caltech.nanodb.expressions.FunctionCall;
 
 import edu.caltech.nanodb.relations.JoinType;
 import edu.caltech.nanodb.relations.TableInfo;
@@ -168,5 +165,72 @@ public abstract class AbstractPlannerImpl implements Planner {
         }
         resPlan.prepare();
         return resPlan;
+    }
+
+    public SelectClause decorrelate(SelectClause selClause) {
+        if (isDecorrelatableIn(selClause)) {
+            // Decorrelate
+            selClause = decorrelateIn(selClause);
+        }
+        else if (isDecorrelatableExists(selClause)) {
+            // Decorrelate
+            selClause = decorrelateExists(selClause);
+        }
+        return selClause;
+    }
+
+    public SelectClause decorrelateIn(SelectClause selClause) {
+        FromClause leftFrom = selClause.getFromClause();
+        Expression whereExpr = selClause.getWhereExpr();
+        SelectClause subquery = ((InSubqueryOperator) whereExpr).getSubquery();
+        FromClause rightFrom = subquery.getFromClause();
+        FromClause newFromClause =
+                new FromClause(leftFrom, rightFrom, JoinType.SEMIJOIN);
+        Expression newOnExpression = subquery.getWhereExpr();
+        newFromClause.setOnExpression(newOnExpression);
+        selClause.setFromClause(newFromClause);
+        selClause.setWhereExpr(null);
+        return selClause;
+    }
+
+    public SelectClause decorrelateExists(SelectClause selClause) {
+        Expression whereExpr = selClause.getWhereExpr();
+        ExistsOperator existsOperator = (ExistsOperator) whereExpr;
+        SelectClause sel = existsOperator.getSubquery();
+
+        if (sel.isCorrelated()) {
+            Expression condition = sel.getWhereExpr();
+            sel.setWhereExpr(null);
+
+            FromClause left = selClause.getFromClause();
+            FromClause right = sel.getFromClause();
+            FromClause newFrom = new FromClause(left, right, JoinType.SEMIJOIN);
+            newFrom.setOnExpression(condition);
+
+            selClause.setFromClause(newFrom);
+        }
+
+        return selClause;
+    }
+
+    public boolean isDecorrelatableIn(SelectClause selClause) {
+        // Check if subquery inside where clause
+        Expression whereExpr = selClause.getWhereExpr();
+        if (whereExpr != null) {
+            if (whereExpr instanceof InSubqueryOperator) {
+                return ((InSubqueryOperator) whereExpr).getSubquery().isCorrelated();
+            }
+        }
+        return false;
+    }
+
+    public boolean isDecorrelatableExists(SelectClause selClause) {
+        // Check if subquery inside where clause
+        Expression whereExp = selClause.getWhereExpr();
+
+        if (whereExp instanceof ExistsOperator) {
+            return true;
+        }
+        return false;
     }
 }

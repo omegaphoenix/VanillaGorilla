@@ -332,7 +332,6 @@ public class SelectClause {
         return !correlatedWith.isEmpty();
     }
 
-
     public Set<ColumnName> getCorrelatedColumns() {
         return correlatedWith.keySet();
     }
