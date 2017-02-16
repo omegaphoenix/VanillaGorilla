@@ -74,6 +74,11 @@ D:  Decorrelating Queries
 D1.  Which example query decorrelation did your team choose to implement?
      Why did you choose this query?
 
+     We chose to implement the two query decorrelations that use the semijoin
+     operator. We chose to implement these because we could work on them in
+     parallel and they were very similar in nature so we could help each
+     other.
+
 D2.  How does your planner determine whether a query follows the pattern
      that your planner can decorrelate?  How does it identify the components
      of the query in order to decorrelate it?
