@@ -231,7 +231,8 @@ public abstract class AbstractPlannerImpl implements Planner {
 
         FromClause leftFrom = selClause.getFromClause();
         FromClause rightFrom = subquery.getFromClause();
-        FromClause newFrom = new FromClause(leftFrom, rightFrom, JoinType.SEMIJOIN);
+        FromClause newFrom =
+                new FromClause(leftFrom, rightFrom, JoinType.SEMIJOIN);
         newFrom.setOnExpression(condition);
 
         selClause.setFromClause(newFrom);
