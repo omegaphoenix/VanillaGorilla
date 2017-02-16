@@ -201,7 +201,6 @@ public abstract class AbstractPlannerImpl implements Planner {
         if (sel.isCorrelated()) {
             Expression condition = sel.getWhereExpr();
             sel.setWhereExpr(null);
-            // sel.clearCorrelated();
 
             FromClause left = selClause.getFromClause();
             FromClause right = sel.getFromClause();
