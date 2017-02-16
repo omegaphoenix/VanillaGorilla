@@ -184,16 +184,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 SelectClause subClause = fromClause.getSelectClause();
 
                 // Enclosing selects for sub-query.
-                List<SelectClause> enclosing = null;
-                if (enclosingSelects != null) {
-                    enclosing = new ArrayList<SelectClause>(enclosingSelects);
-                    enclosing.add(selClause);
-                }
-                else {
-                    enclosing = new ArrayList<SelectClause>();
-                    enclosing.add(selClause);
-                }
-                resPlan = makePlan(subClause, enclosing);
+                resPlan = makePlan(subClause, subquerySelects);
                 resPlan = new RenameNode(resPlan, fromClause.getResultName());
             }
 
