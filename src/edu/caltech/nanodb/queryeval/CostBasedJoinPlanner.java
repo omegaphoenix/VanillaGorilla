@@ -187,6 +187,10 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 resPlan = makePlan(subClause, enclosing);
                 resPlan = new RenameNode(resPlan, fromClause.getResultName());
             }
+
+            if (resPlan != null) {
+                resPlan.setEnvironment(subqueryPlanner.getEnvironment());
+            }
         }
 
         // Create a project plan-node if necessary.
@@ -201,9 +205,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
                 sv.getExpression().traverse(subqueryPlanner);
                 Expression e = sv.getExpression().traverse(aggregateProcessor);
                 sv.setExpression(e);
-                if (resPlan != null) {
-                    resPlan.setEnvironment(subqueryPlanner.getEnvironment());
-                }
             }
 
             if (havingExpr != null) {
@@ -260,7 +261,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             resPlan = new LimitOffsetNode(resPlan, selClause.getOffset(),
                     selClause.getLimit());
         }
-        resPlan.setEnvironment(subqueryPlanner.getEnvironment());
         resPlan.prepare();
         return resPlan;
     }
