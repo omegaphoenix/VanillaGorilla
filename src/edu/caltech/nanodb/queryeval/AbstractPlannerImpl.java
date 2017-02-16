@@ -4,11 +4,11 @@ package edu.caltech.nanodb.queryeval;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import edu.caltech.nanodb.expressions.*;
+import edu.caltech.nanodb.expressions.Expression;
+import edu.caltech.nanodb.expressions.ExistsOperator;
+import edu.caltech.nanodb.expressions.InSubqueryOperator;
 import edu.caltech.nanodb.plannodes.*;
-import edu.caltech.nanodb.relations.ColumnInfo;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.queryast.FromClause;
@@ -36,8 +36,8 @@ public abstract class AbstractPlannerImpl implements Planner {
     protected StorageManager storageManager;
 
 
-    /** The next placeholder table name number */
-    private int placeholder_num = 0;
+    /** The next placeholder table name number. */
+    private int placeholderNum = 0;
 
 
     /** Sets the storage manager to be used during query planning. */
@@ -51,7 +51,7 @@ public abstract class AbstractPlannerImpl implements Planner {
      * <p>
      * While this method can be used for building up larger <tt>SELECT</tt>
      * queries, the returned plan is also suitable for use in <tt>UPDATE</tt>
-     * and <tt>DELETE</tt> command evaluation.  In these cases, the plan must
+     * and <tt>DELETE</tt> command evaluation.  In these cases, the plan must only
      * only generate tuples of type {@link edu.caltech.nanodb.storage.PageTuple},
      * so that the command can modify or delete the actual tuple in the file's
      * page data.
@@ -93,7 +93,6 @@ public abstract class AbstractPlannerImpl implements Planner {
     /**
      * Make a plan for the join expression.
      *
-     *
      * @param selClause an object describing the query to be performed.
      * @param fromClause an object describing the FROM clause in a query.
      *
@@ -130,8 +129,8 @@ public abstract class AbstractPlannerImpl implements Planner {
         Expression predicate;
         List<SelectValue> projectVals = null;
         boolean needPostProject =
-                condType == FromClause.JoinConditionType.NATURAL_JOIN ||
-                condType == FromClause.JoinConditionType.JOIN_USING;
+                condType == FromClause.JoinConditionType.NATURAL_JOIN
+                || condType == FromClause.JoinConditionType.JOIN_USING;
         if (needPostProject) {
             predicate = fromClause.getComputedJoinExpr();
         }
