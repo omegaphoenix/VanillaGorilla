@@ -199,13 +199,16 @@ public abstract class AbstractPlannerImpl implements Planner {
     public SelectClause decorrelateIn(SelectClause selClause) {
         FromClause leftFrom = selClause.getFromClause();
         Expression whereExpr = selClause.getWhereExpr();
+
         SelectClause subquery = ((InSubqueryOperator) whereExpr).getSubquery();
         FromClause rightFrom = subquery.getFromClause();
-        FromClause newFromClause =
+        Expression condition = subquery.getWhereExpr();
+
+        FromClause newFrom =
                 new FromClause(leftFrom, rightFrom, JoinType.SEMIJOIN);
-        Expression newOnExpression = subquery.getWhereExpr();
-        newFromClause.setOnExpression(newOnExpression);
-        selClause.setFromClause(newFromClause);
+        newFrom.setOnExpression(condition);
+
+        selClause.setFromClause(newFrom);
         selClause.setWhereExpr(null);
         return selClause;
     }
@@ -221,20 +224,17 @@ public abstract class AbstractPlannerImpl implements Planner {
     public SelectClause decorrelateExists(SelectClause selClause) {
         Expression whereExpr = selClause.getWhereExpr();
         ExistsOperator existsOperator = (ExistsOperator) whereExpr;
-        SelectClause sel = existsOperator.getSubquery();
+        SelectClause subquery = existsOperator.getSubquery();
 
-        if (sel.isCorrelated()) {
-            Expression condition = sel.getWhereExpr();
-            sel.setWhereExpr(null);
+        Expression condition = subquery.getWhereExpr();
+        subquery.setWhereExpr(null);
 
-            FromClause left = selClause.getFromClause();
-            FromClause right = sel.getFromClause();
-            FromClause newFrom = new FromClause(left, right, JoinType.SEMIJOIN);
-            newFrom.setOnExpression(condition);
+        FromClause leftFrom = selClause.getFromClause();
+        FromClause rightFrom = subquery.getFromClause();
+        FromClause newFrom = new FromClause(leftFrom, rightFrom, JoinType.SEMIJOIN);
+        newFrom.setOnExpression(condition);
 
-            selClause.setFromClause(newFrom);
-        }
-
+        selClause.setFromClause(newFrom);
         return selClause;
     }
 
@@ -267,10 +267,10 @@ public abstract class AbstractPlannerImpl implements Planner {
      */
     public boolean isDecorrelatableExists(SelectClause selClause) {
         // Check if subquery inside where clause
-        Expression whereExp = selClause.getWhereExpr();
+        Expression whereExpr = selClause.getWhereExpr();
 
-        if (whereExp instanceof ExistsOperator) {
-            return true;
+        if (whereExpr instanceof ExistsOperator) {
+            return ((ExistsOperator) whereExpr).getSubquery().isCorrelated();
         }
         return false;
     }
