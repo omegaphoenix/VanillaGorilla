@@ -6,8 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import edu.caltech.nanodb.expressions.ColumnName;
-import edu.caltech.nanodb.expressions.ColumnValue;
+import edu.caltech.nanodb.expressions.*;
 import edu.caltech.nanodb.plannodes.*;
 import edu.caltech.nanodb.relations.ColumnInfo;
 import org.apache.log4j.Logger;
@@ -15,8 +14,6 @@ import org.apache.log4j.Logger;
 import edu.caltech.nanodb.queryast.FromClause;
 import edu.caltech.nanodb.queryast.SelectClause;
 import edu.caltech.nanodb.queryast.SelectValue;
-import edu.caltech.nanodb.expressions.Expression;
-import edu.caltech.nanodb.expressions.FunctionCall;
 
 import edu.caltech.nanodb.relations.JoinType;
 import edu.caltech.nanodb.relations.TableInfo;
@@ -187,16 +184,43 @@ public abstract class AbstractPlannerImpl implements Planner {
     }
 
     public SelectClause decorrelateExists(SelectClause selClause) {
+        Expression whereExpr = selClause.getWhereExpr();
+        ExistsOperator existsOperator = (ExistsOperator) whereExpr;
+        SelectClause sel = existsOperator.getSubquery();
+
+        if (sel.isCorrelated()) {
+            Expression condition = sel.getWhereExpr();
+            sel.setWhereExpr(null);
+            sel.clearCorrelated();
+
+            FromClause left = selClause.getFromClause();
+            FromClause right = new FromClause(sel,"alias");
+            FromClause newFrom = new FromClause(left, right, JoinType.SEMIJOIN);
+            newFrom.setOnExpression(condition);
+
+            selClause.setFromClause(newFrom);
+        }
+
         return selClause;
     }
 
     public boolean isDecorrelatableIn(SelectClause selClause) {
         // Check if subquery inside where clause
-        return true;
+        Expression whereExp = selClause.getWhereExpr();
+
+        if (whereExp instanceof InSubqueryOperator) {
+            return true;
+        }
+        return false;
     }
 
     public boolean isDecorrelatableExists(SelectClause selClause) {
         // Check if subquery inside where clause
-        return true;
+        Expression whereExp = selClause.getWhereExpr();
+
+        if (whereExp instanceof ExistsOperator) {
+            return true;
+        }
+        return false;
     }
 }

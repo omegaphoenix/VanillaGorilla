@@ -332,6 +332,9 @@ public class SelectClause {
         return !correlatedWith.isEmpty();
     }
 
+    public void clearCorrelated() {
+        correlatedWith = new HashMap<>();
+    }
 
     public Set<ColumnName> getCorrelatedColumns() {
         return correlatedWith.keySet();
