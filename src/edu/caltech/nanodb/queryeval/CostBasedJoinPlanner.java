@@ -92,21 +92,21 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
          * Constructs a new instance for a <em>non-leaf node</em>.  It should
          * not be used for leaf plans!
          *
-         * @param joinPlan the query plan that joins together all leaves
+         * @param jPlan the query plan that joins together all leaves
          *        specified in the <tt>leavesUsed</tt> argument.
          *
-         * @param leavesUsed the set of two or more leaf plans that are joined
+         * @param leavesJoined the set of two or more leaf plans that are joined
          *        together by the join plan.
          *
-         * @param conjunctsUsed the set of conjuncts used by the join plan.
+         * @param conjUsed the set of conjuncts used by the join plan.
          *        Obviously, it is expected that all conjuncts specified here
          *        can actually be evaluated against the join plan.
          */
-        public JoinComponent(PlanNode joinPlan, HashSet<PlanNode> leavesUsed,
-                             HashSet<Expression> conjunctsUsed) {
-            this.joinPlan = joinPlan;
-            this.leavesUsed = leavesUsed;
-            this.conjunctsUsed = conjunctsUsed;
+        public JoinComponent(PlanNode jPlan, HashSet<PlanNode> leavesJoined,
+                             HashSet<Expression> conjUsed) {
+            joinPlan = jPlan;
+            leavesUsed = leavesJoined;
+            conjunctsUsed = conjUsed;
         }
 
         /**
@@ -150,7 +150,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         }
         subquerySelects.add(selClause);
 
-        SubqueryPlanner subqueryPlanner = new SubqueryPlanner(this, subquerySelects);
+        SubqueryPlanner subqueryPlanner =
+                new SubqueryPlanner(this, subquerySelects);
         AggregateProcessor aggregateProcessor = new AggregateProcessor(true);
         AggregateProcessor noAggregateProcessor = new AggregateProcessor(false);
 
@@ -176,7 +177,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
             // If there are any unused conjuncts, determine how to handle them.
             if (ununusedConjuncts.size() > 0) {
-                Expression pred = PredicateUtils.makePredicate(ununusedConjuncts);
+                Expression pred = PredicateUtils.makePredicate(
+                        ununusedConjuncts);
                 resPlan = new SimpleFilterNode(resPlan, pred);
             }
 
@@ -218,7 +220,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
                 for (Expression gbe : selClause.getGroupByExprs()) {
                     if (gbe instanceof SubqueryOperator) {
-                        throw new IOException("Subqueries are not allowed in GROUP BY clause.");
+                        throw new IOException("Subqueries are not allowed"
+                                + "in GROUP BY clause.");
                     }
                 }
                 resPlan = new HashedGroupAggregateNode(resPlan,
@@ -247,7 +250,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         List<OrderByExpression> orderByExprs = selClause.getOrderByExprs();
         for (OrderByExpression obe : orderByExprs) {
             if (obe.getExpression() instanceof SubqueryOperator) {
-                throw new IOException("Subqueries are not allowed in ORDER BY clause.");
+                throw new IOException("Subqueries are not allowed in ORDER BY"
+                        + "clause.");
             }
         }
 
@@ -312,8 +316,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         // Print out the results, for debugging purposes.
         if (logger.isDebugEnabled()) {
             for (JoinComponent leaf : leafComponents) {
-                logger.debug("    Leaf plan:\n" +
-                    PlanNode.printNodeTreeToString(leaf.joinPlan, true));
+                logger.debug("    Leaf plan:\n"
+                    + PlanNode.printNodeTreeToString(leaf.joinPlan, true));
             }
         }
 
@@ -323,8 +327,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
             generateOptimalJoin(leafComponents, roConjuncts);
 
         PlanNode plan = optimalJoin.joinPlan;
-        logger.info("Optimal join plan generated:\n" +
-            PlanNode.printNodeTreeToString(plan, true));
+        logger.info("Optimal join plan generated:\n"
+            + PlanNode.printNodeTreeToString(plan, true));
 
         return optimalJoin;
     }
@@ -506,7 +510,7 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
 
         // Optimize to apply selections as early as possible
         // Note that this is not optimal in presence of indexes
-        if (fromClause.isBaseTable() || fromClause.isDerivedTable()){
+        if (fromClause.isBaseTable() || fromClause.isDerivedTable()) {
             HashSet<Expression> exprsUsingSchemas = new HashSet<Expression>();
             PredicateUtils.findExprsUsingSchemas(conjuncts, false,
                     exprsUsingSchemas, resPlan.getSchema());
@@ -563,8 +567,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         }
 
         while (joinPlans.size() > 1) {
-            logger.debug("Current set of join-plans has " + joinPlans.size() +
-                " plans in it.");
+            logger.debug("Current set of join-plans has " + joinPlans.size()
+                + " plans in it.");
 
             // This is the set of "next plans" we will generate.  Plans only
             // get stored if they are the first plan that joins together the
@@ -628,8 +632,8 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         // At this point, the set of join plans should only contain one plan,
         // and it should be the optimal plan.
 
-        assert joinPlans.size() == 1 :
-            "There can be only one optimal join plan!";
+        assert joinPlans.size() == 1
+            : "There can be only one optimal join plan!";
         return joinPlans.values().iterator().next();
     }
 
@@ -651,6 +655,9 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
      * @param predicate An optional selection predicate, or {@code null} if
      *        no filtering is desired.
      *
+     * @param enclosingSelects Used before correlated evalution was implemented
+     *        to warn that correlated evaluation isn't implemented.
+     *
      * @return A new plan-node for evaluating the select operation.
      *
      * @throws IOException if an error occurs when loading necessary table
@@ -660,15 +667,6 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         List<SelectClause> enclosingSelects) throws IOException {
         if (tableName == null) {
             throw new IllegalArgumentException("tableName cannot be null");
-        }
-
-        if (enclosingSelects != null) {
-            // If there are enclosing selects, this subquery's predicate may
-            // reference an outer query's value, but we don't detect that here.
-            // Therefore we will probably fail with an unrecognized column
-            // reference.
-            logger.warn("Currently we are not clever enough to detect " +
-                "correlated subqueries, so expect things are about to break...");
         }
 
         // Open the table.
