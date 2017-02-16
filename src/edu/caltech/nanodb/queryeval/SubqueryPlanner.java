@@ -25,35 +25,44 @@ public class SubqueryPlanner implements ExpressionProcessor {
      */
     private Environment env;
 
+    /**
+     * Enclosing selects for planner.
+     */
+    private List<SelectClause> enclosingSelects;
 
     /**
      * Constructs the SubqueryPlanner.
      *
      * @param planner this constructs plans out of plannodes.
+     * @param enclosingSelects list of enclosing selects.
      */
-    public SubqueryPlanner(CostBasedJoinPlanner planner) {
+    public SubqueryPlanner(CostBasedJoinPlanner planner, List<SelectClause> enclosingSelects){
         this.planner = planner;
         env = new Environment();
+        this.enclosingSelects = enclosingSelects;
     }
 
     /**
      * ExpressionProcessor enter()
+     *
      * @param node the {@code Expression} node being entered
      */
     public void enter(Expression node) {
         if (node instanceof SubqueryOperator) {
             try {
-                planSubquery((SubqueryOperator) node, null);
+                planSubquery((SubqueryOperator) node);
             }
             catch (IOException e) {
+                throw new IllegalArgumentException("planSubquery threw IOException on " +
+                        node.toString() + " with message: " + e.getMessage());
             }
         }
     }
 
     /**
      * ExpressionProcess leave()
-     * @param node the {@code Expression} node being left
      *
+     * @param node the {@code Expression} node being left
      * @return leave node unchanged.
      */
     public Expression leave(Expression node) {
@@ -66,8 +75,7 @@ public class SubqueryPlanner implements ExpressionProcessor {
      * @param query the subquery to plan.
      * @throws IOException
      */
-    public void planSubquery(SubqueryOperator query,
-                             List<SelectClause> enclosingSelects) throws IOException {
+    public void planSubquery(SubqueryOperator query) throws IOException {
         SelectClause select = query.getSubquery();
         PlanNode plan = planner.makePlan(select, enclosingSelects);
         plan.addParentEnvironmentToPlanTree(env);
@@ -76,6 +84,7 @@ public class SubqueryPlanner implements ExpressionProcessor {
 
     /**
      *  Accessor function to return environment.
+     *
      *  @return Environment
      */
     public Environment getEnvironment() {

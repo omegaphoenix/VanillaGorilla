@@ -4,11 +4,11 @@ package edu.caltech.nanodb.queryeval;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import edu.caltech.nanodb.expressions.*;
+import edu.caltech.nanodb.expressions.Expression;
+import edu.caltech.nanodb.expressions.ExistsOperator;
+import edu.caltech.nanodb.expressions.InSubqueryOperator;
 import edu.caltech.nanodb.plannodes.*;
-import edu.caltech.nanodb.relations.ColumnInfo;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.queryast.FromClause;
@@ -36,8 +36,8 @@ public abstract class AbstractPlannerImpl implements Planner {
     protected StorageManager storageManager;
 
 
-    /** The next placeholder table name number */
-    private int placeholder_num = 0;
+    /** The next placeholder table name number. */
+    private int placeholderNum = 0;
 
 
     /** Sets the storage manager to be used during query planning. */
@@ -51,7 +51,7 @@ public abstract class AbstractPlannerImpl implements Planner {
      * <p>
      * While this method can be used for building up larger <tt>SELECT</tt>
      * queries, the returned plan is also suitable for use in <tt>UPDATE</tt>
-     * and <tt>DELETE</tt> command evaluation.  In these cases, the plan must
+     * and <tt>DELETE</tt> command evaluation.  In these cases, the plan must only
      * only generate tuples of type {@link edu.caltech.nanodb.storage.PageTuple},
      * so that the command can modify or delete the actual tuple in the file's
      * page data.
@@ -93,7 +93,6 @@ public abstract class AbstractPlannerImpl implements Planner {
     /**
      * Make a plan for the join expression.
      *
-     *
      * @param selClause an object describing the query to be performed.
      * @param fromClause an object describing the FROM clause in a query.
      *
@@ -130,8 +129,8 @@ public abstract class AbstractPlannerImpl implements Planner {
         Expression predicate;
         List<SelectValue> projectVals = null;
         boolean needPostProject =
-                condType == FromClause.JoinConditionType.NATURAL_JOIN ||
-                condType == FromClause.JoinConditionType.JOIN_USING;
+                condType == FromClause.JoinConditionType.NATURAL_JOIN
+                || condType == FromClause.JoinConditionType.JOIN_USING;
         if (needPostProject) {
             predicate = fromClause.getComputedJoinExpr();
         }
@@ -144,93 +143,137 @@ public abstract class AbstractPlannerImpl implements Planner {
             case LEFT_OUTER:
             case ANTIJOIN:
             case SEMIJOIN:
-                resPlan = new NestedLoopJoinNode(left, right, joinType, predicate);
+                resPlan = new NestedLoopJoinNode(left, right, joinType,
+                        predicate);
                 break;
             case RIGHT_OUTER:
-                resPlan = new NestedLoopJoinNode(left, right, JoinType.LEFT_OUTER, predicate);
+                resPlan = new NestedLoopJoinNode(left, right,
+                        JoinType.LEFT_OUTER, predicate);
                 ((ThetaJoinNode) resPlan).swap();
                 break;
             case FULL_OUTER:
                 throw new UnsupportedOperationException(
                           "Not implemented: FULL_OUTER join");
             default:
-                throw new UnsupportedOperationException("Not a valid JoinType.");
+                throw new UnsupportedOperationException(
+                        "Not a valid JoinType.");
         }
         if (needPostProject) {
             projectVals = fromClause.getComputedSelectValues();
             if (projectVals != null) {
-                resPlan = new ProjectNode(resPlan, projectVals, placeholder_num);
-                placeholder_num++;
+                resPlan = new ProjectNode(resPlan, projectVals,
+                        placeholderNum);
+                placeholderNum++;
             }
         }
         resPlan.prepare();
         return resPlan;
     }
 
+    /**
+     * Decorrolate AST if it fits one of the known correlated subquery forms.
+     *
+     * @param selClause an object describing the query to be performed.
+     *
+     * @return updated AST with one fewer correlated subquery
+     *
+     */
     public SelectClause decorrelate(SelectClause selClause) {
         if (isDecorrelatableIn(selClause)) {
-            // Decorrelate
             selClause = decorrelateIn(selClause);
         }
         else if (isDecorrelatableExists(selClause)) {
-            // Decorrelate
             selClause = decorrelateExists(selClause);
         }
         return selClause;
     }
 
+    /**
+     * Decorrolate AST to remove correlated subquery in in-clause.
+     *
+     * @param selClause an object describing the query to be performed.
+     *
+     * @return updated AST with one fewer correlated subquery
+     *
+     */
     public SelectClause decorrelateIn(SelectClause selClause) {
         FromClause leftFrom = selClause.getFromClause();
         Expression whereExpr = selClause.getWhereExpr();
+
         SelectClause subquery = ((InSubqueryOperator) whereExpr).getSubquery();
         FromClause rightFrom = subquery.getFromClause();
-        FromClause newFromClause =
+        Expression condition = subquery.getWhereExpr();
+
+        FromClause newFrom =
                 new FromClause(leftFrom, rightFrom, JoinType.SEMIJOIN);
-        Expression newOnExpression = subquery.getWhereExpr();
-        newFromClause.setOnExpression(newOnExpression);
-        selClause.setFromClause(newFromClause);
+        newFrom.setOnExpression(condition);
+
+        selClause.setFromClause(newFrom);
         selClause.setWhereExpr(null);
         return selClause;
     }
 
+    /**
+     * Decorrolate AST to remove correlated subquery in exists-clause.
+     *
+     * @param selClause an object describing the query to be performed.
+     *
+     * @return updated AST with one fewer correlated subquery
+     *
+     */
     public SelectClause decorrelateExists(SelectClause selClause) {
         Expression whereExpr = selClause.getWhereExpr();
         ExistsOperator existsOperator = (ExistsOperator) whereExpr;
-        SelectClause sel = existsOperator.getSubquery();
+        SelectClause subquery = existsOperator.getSubquery();
 
-        if (sel.isCorrelated()) {
-            Expression condition = sel.getWhereExpr();
-            sel.setWhereExpr(null);
+        Expression condition = subquery.getWhereExpr();
+        subquery.setWhereExpr(null);
 
-            FromClause left = selClause.getFromClause();
-            FromClause right = sel.getFromClause();
-            FromClause newFrom = new FromClause(left, right, JoinType.SEMIJOIN);
-            newFrom.setOnExpression(condition);
+        FromClause leftFrom = selClause.getFromClause();
+        FromClause rightFrom = subquery.getFromClause();
+        FromClause newFrom =
+                new FromClause(leftFrom, rightFrom, JoinType.SEMIJOIN);
+        newFrom.setOnExpression(condition);
 
-            selClause.setFromClause(newFrom);
-        }
-
+        selClause.setFromClause(newFrom);
         return selClause;
     }
 
+    /**
+     * Return true if query has correlated subquery in in-clause.
+     *
+     * @param selClause an object describing the query to be performed.
+     *
+     * @return updated AST with one fewer correlated subquery
+     *
+     */
     public boolean isDecorrelatableIn(SelectClause selClause) {
         // Check if subquery inside where clause
         Expression whereExpr = selClause.getWhereExpr();
-        if (whereExpr != null) {
-            if (whereExpr instanceof InSubqueryOperator) {
-                return ((InSubqueryOperator) whereExpr).getSubquery().isCorrelated();
-            }
+        if (whereExpr != null && whereExpr instanceof InSubqueryOperator) {
+            SelectClause sq = ((InSubqueryOperator) whereExpr).getSubquery();
+            return sq.isCorrelated();
         }
+
         return false;
     }
 
+    /**
+     * Return true if query has correlated subquery in exists-clause.
+     *
+     * @param selClause an object describing the query to be performed.
+     *
+     * @return updated AST with one fewer correlated subquery
+     *
+     */
     public boolean isDecorrelatableExists(SelectClause selClause) {
         // Check if subquery inside where clause
-        Expression whereExp = selClause.getWhereExpr();
-
-        if (whereExp instanceof ExistsOperator) {
-            return true;
+        Expression whereExpr = selClause.getWhereExpr();
+        if (whereExpr != null && whereExpr instanceof ExistsOperator) {
+            SelectClause sq = ((ExistsOperator) whereExpr).getSubquery();
+            return sq.isCorrelated();
         }
+
         return false;
     }
 }
