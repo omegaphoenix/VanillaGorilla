@@ -53,6 +53,8 @@ public class SubqueryPlanner implements ExpressionProcessor {
                 planSubquery((SubqueryOperator) node);
             }
             catch (IOException e) {
+                throw new IllegalArgumentException("planSubquery threw IOException on " +
+                        node.toString() + " with message: " + e.getMessage());
             }
         }
     }
