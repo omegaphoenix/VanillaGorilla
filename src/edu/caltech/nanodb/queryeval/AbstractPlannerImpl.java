@@ -201,10 +201,10 @@ public abstract class AbstractPlannerImpl implements Planner {
         if (sel.isCorrelated()) {
             Expression condition = sel.getWhereExpr();
             sel.setWhereExpr(null);
-            sel.clearCorrelated();
+            // sel.clearCorrelated();
 
             FromClause left = selClause.getFromClause();
-            FromClause right = new FromClause(sel,"alias");
+            FromClause right = sel.getFromClause();
             FromClause newFrom = new FromClause(left, right, JoinType.SEMIJOIN);
             newFrom.setOnExpression(condition);
 
