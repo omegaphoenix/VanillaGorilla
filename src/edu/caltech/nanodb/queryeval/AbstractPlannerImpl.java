@@ -194,6 +194,23 @@ public abstract class AbstractPlannerImpl implements Planner {
     }
 
     public SelectClause decorrelateExists(SelectClause selClause) {
+        Expression whereExpr = selClause.getWhereExpr();
+        ExistsOperator existsOperator = (ExistsOperator) whereExpr;
+        SelectClause sel = existsOperator.getSubquery();
+
+        if (sel.isCorrelated()) {
+            Expression condition = sel.getWhereExpr();
+            sel.setWhereExpr(null);
+            sel.clearCorrelated();
+
+            FromClause left = selClause.getFromClause();
+            FromClause right = new FromClause(sel,"alias");
+            FromClause newFrom = new FromClause(left, right, JoinType.SEMIJOIN);
+            newFrom.setOnExpression(condition);
+
+            selClause.setFromClause(newFrom);
+        }
+
         return selClause;
     }
 
@@ -210,6 +227,11 @@ public abstract class AbstractPlannerImpl implements Planner {
 
     public boolean isDecorrelatableExists(SelectClause selClause) {
         // Check if subquery inside where clause
-        return true;
+        Expression whereExp = selClause.getWhereExpr();
+
+        if (whereExp instanceof ExistsOperator) {
+            return true;
+        }
+        return false;
     }
 }
