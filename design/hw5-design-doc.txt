@@ -1,0 +1,171 @@
+CS122 Assignment 5 - Advanced Subqueries - Design Document
+==========================================================
+
+A:  Logistics
+-------------
+
+A1.  List your team name and the people who worked on this assignment.
+
+     VanillaGorilla
+
+     Matthew Jin
+     Justin Leong
+     David Qu
+
+A2.  Specify the repository URL, tag name and commit-hash of the Git version
+     you are submitting for your assignment.  (You can list the commit hashes
+     of your repository tags with this command:  git show-ref --tags)
+
+     Repository URL:  https://github.com/omegaphoenix/VanillaGorilla
+     Tag name:        hw5
+     Commit hash:     <hash>
+
+A3.  Specify any late tokens you are applying to this assignment, or
+     "none" if no late tokens.
+
+     None.
+
+A4.  Briefly describe what parts of the assignment each teammate focused on.
+
+     David implemented naive support for uncorrelated subqueries.
+     Matthew added support for correlated evaluation, and implemented one
+     of the query-decorrelations.
+     Justin implemented a query-decorrelation and helped debug correlated
+     evaluation.
+
+B:  Subquery Planning
+---------------------
+
+B1.  Which planner did your team add subquery planning to?  How easy or
+     difficult was it to incorporate subquery-planning into the planner?
+
+     We added subquery planning to the cost-based join planner. It was not
+     too difficult to do this.
+
+B2.  Briefly outline the process by which you perform subquery planning in
+     your query planner.  Also explain briefly how your subquery-planner works.
+
+     We check the appropriate expressions by calling the Expression.traverse()
+     method with the subquery-planner, which implements ExpressionProcessor.
+     The subquery-planner walks through the expression and looks for
+     subexpressions that are instances of SubqueryOperator. then, it creates
+     a plan for the subquery operator, and sets its subquery plan using
+     query.setSubqueryPlan().
+
+B3.  Briefly describe how you detect whether there are subqueries in the
+     GROUP BY and ORDER BY clauses.  How do you make sure this doesn't
+     interfere with subqueries in other clauses?
+
+     We check each group by and order by clause individually when we iterate
+     through the expressions, and throw an IOException if they are an instance
+     of SubqueryOperator. This should not interfere with subqueries in other
+     clauses because it only checks the appropriate sub expressions.
+
+C:  Correlated Evaluation
+-------------------------
+
+C1.  How easy or difficult was it to incorporate support for correlated
+     evaluation into your query planner?  Did it affect the sequence of
+     steps in any substantial ways?
+
+     Creating the environment in the subqueryPlanner was simple, but we ran
+     into a bug where we couldn't get the environment to link to the correct
+     parent. The end solution was to change where we set the plan environment
+     in makePlan(). Other than this, the sequence of steps wasn't affected in
+     any substantial way.
+
+D:  Decorrelating Queries
+-------------------------
+
+D1.  Which example query decorrelation did your team choose to implement?
+     Why did you choose this query?
+
+     We chose to implement the two query decorrelations that use the semijoin
+     operator. We chose to implement these because we could work on them in
+     parallel and they were very similar in nature so we could help each
+     other.
+
+D2.  How does your planner determine whether a query follows the pattern
+     that your planner can decorrelate?  How does it identify the components
+     of the query in order to decorrelate it?
+
+     Our planner calls decorrelate at the begining of makePlan().
+     Then, it checks the where expression to see if it is an in or exist
+     subquery and then checks if the subquery is correlated.
+     It identifies the componenets by calling the accessor methods on the
+     SelectClause AST to get the subquery, condition, and left and right
+     FromClause to join.
+
+D3.  Briefly outline the process by which your planner decorrelates the query.
+     How does it modify the subquery, and how does it modify the enclosing
+     query?
+
+     Correlated Subquery In:
+     Get the where expression and from clause (t1 ...).
+     Get the subquery from the where expression.
+     Get the from clause (t2 ...) of the subquery and the where expression of
+     the subquery (cond).
+     Create new from clause (newFromClause) semijoining (t1 ...) and (t2 ...).
+     Set newFromClause's condition to be (cond).
+     Set the original select clause's from expression to be newFromClause.
+     Remove the original where expression.
+
+     Correlated Subquery Exists:
+     Get the where expression and from clause (t1 ...).
+     Get the subquery from the where expression.
+     Get the where expression of the subquery (cond).
+     Remove the subquery where expression.
+     Get the from clause (t2 ...) of the subquery.
+     Create new from clause (newFromClause) semijoining (t1 ...) and (t2 ...).
+     Set newFromClause's condition to be (cond).
+     Set the original select clause's from expression to be newFromClause.
+
+E:  Extra Credit [OPTIONAL]
+---------------------------
+
+If you implemented any extra-credit tasks for this assignment, describe
+them here.  The description should be like this, with stuff in "<>" replaced.
+(The value i starts at 1 and increments...)
+
+E<1>:  <Support subqueries in cost-based join planner>
+
+     We implemented advanced subqueries and decorrelation in
+     CostBasedJoinPlanner. (not sure how much extra time)
+
+     <See Donnie's tests for advanced subqueries. Natural joins not supported
+      since optional in hw4.>
+
+E<2>:  <Decorrelate an addition form of query>
+
+     We implemented decorrelation for correlated subqueries in both the
+     InSubqueryOperator and ExistsOperator. (1-2 hours)
+
+     <Tests still pass and explain shows the decorrelated plan.>
+
+F:  Feedback [OPTIONAL]
+-----------------------
+
+WE NEED YOUR FEEDBACK!  Thoughtful and constructive input will help us to
+improve future versions of the course.  These questions are OPTIONAL, and
+they obviously won't affect your grade in any way (including if you hate
+everything about the assignment and databases in general, or Donnie and/or
+the TAs in particular).  Feel free to answer as many or as few of them as
+you wish.
+
+NOTE:  If you wish to give anonymous feedback, a similar survey will be
+       made available on the Moodle.
+
+F1.  How many hours total did your team spend on this assignment?
+     (That is, the sum of each teammate's time spent on the assignment.)
+
+F2.  What parts of the assignment were most time-consuming?  Why?
+
+F3.  Did you find any parts of the assignment particularly instructive?
+     Correspondingly, did any parts feel like unnecessary busy-work?
+
+F4.  Did you particularly enjoy any parts of the assignment?  Were there
+     any parts that you particularly disliked?
+
+F5.  Do you have any suggestions for how future versions of the
+     assignment can be improved?
+

@@ -89,6 +89,7 @@ public class ScalarSubquery extends SubqueryOperator {
 
                 result = t1.getColumnValue(0);
                 t1.unpin();
+                evaluated = true;
             }
             catch (IOException e) {
                 throw new ExpressionException("Error while evaluating subquery", e);

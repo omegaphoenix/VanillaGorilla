@@ -35,7 +35,6 @@ public class AggregateProcessor implements ExpressionProcessor {
                 currentExprHasAggr = true;
             }
         }
-        return;
     }
 
     public Expression leave(Expression e) {
