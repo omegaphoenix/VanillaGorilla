@@ -89,6 +89,13 @@ D2.  How does your planner determine whether a query follows the pattern
      that your planner can decorrelate?  How does it identify the components
      of the query in order to decorrelate it?
 
+     Our planner calls decorrelate at the begining of makePlan().
+     Then, it checks the where expression to see if it is an in or exist
+     subquery and then checks if the subquery is correlated.
+     It identifies the componenets by calling the accessor methods on the
+     SelectClause AST to get the subquery, condition, and left and right
+     FromClause to join.
+
 D3.  Briefly outline the process by which your planner decorrelates the query.
      How does it modify the subquery, and how does it modify the enclosing
      query?
