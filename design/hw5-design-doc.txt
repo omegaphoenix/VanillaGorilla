@@ -100,12 +100,20 @@ If you implemented any extra-credit tasks for this assignment, describe
 them here.  The description should be like this, with stuff in "<>" replaced.
 (The value i starts at 1 and increments...)
 
-E<i>:  <one-line description>
+E<1>:  <Support subqueries in cost-based join planner>
 
-     <brief summary of what you did, including the specific classes that
-     we should look at for your implementation>
+     We implemented advanced subqueries and decorrelation in
+     CostBasedJoinPlanner.
 
-     <brief summary of test-cases that demonstrate/exercise your extra work>
+     <See Donnie's tests for advanced subqueries. Natural joins not supported
+      since optional in hw4.>
+
+E<2>:  <Decorrelate an addition form of query>
+
+     We implemented decorrelation for correlated subqueries in both the
+     InSubqueryOperator and ExistsOperator.
+
+     <Tests still pass and explain shows the decorrelated plan.>
 
 F:  Feedback [OPTIONAL]
 -----------------------
