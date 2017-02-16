@@ -6,24 +6,32 @@ A:  Logistics
 
 A1.  List your team name and the people who worked on this assignment.
 
-     <team name>
+     VanillaGorilla
 
-     <name>
-     <name>
-     ...
+     Matthew Jin
+     Justin Leong
+     David Qu
 
 A2.  Specify the repository URL, tag name and commit-hash of the Git version
      you are submitting for your assignment.  (You can list the commit hashes
      of your repository tags with this command:  git show-ref --tags)
 
-     Repository URL:  <url>
-     Tag name:        <tag>
+     Repository URL:  https://github.com/omegaphoenix/VanillaGorilla
+     Tag name:        hw5
      Commit hash:     <hash>
 
 A3.  Specify any late tokens you are applying to this assignment, or
      "none" if no late tokens.
 
+     None.
+
 A4.  Briefly describe what parts of the assignment each teammate focused on.
+
+     David implemented naive support for uncorrelated subqueries.
+     Matthew added support for correlated evaluation, and implemented one
+     of the query-decorrelations.
+     Justin implemented a query-decorrelation and helped debug correlated
+     evaluation.
 
 B:  Subquery Planning
 ---------------------
@@ -31,12 +39,27 @@ B:  Subquery Planning
 B1.  Which planner did your team add subquery planning to?  How easy or
      difficult was it to incorporate subquery-planning into the planner?
 
+     We added subquery planning to the cost-based join planner. It was not
+     too difficult to do this.
+
 B2.  Briefly outline the process by which you perform subquery planning in
      your query planner.  Also explain briefly how your subquery-planner works.
+
+     We check the appropriate expressions by calling the Expression.traverse()
+     method with the subquery-planner, which implements ExpressionProcessor.
+     The subquery-planner walks through the expression and looks for
+     subexpressions that are instances of SubqueryOperator. then, it creates
+     a plan for the subquery operator, and sets its subquery plan using
+     query.setSubqueryPlan().
 
 B3.  Briefly describe how you detect whether there are subqueries in the
      GROUP BY and ORDER BY clauses.  How do you make sure this doesn't
      interfere with subqueries in other clauses?
+
+     We check each group by and order by clause individually when we iterate
+     through the expressions, and throw an IOException if they are an instance
+     of SubqueryOperator. This should not interfere with subqueries in other
+     clauses because it only checks the appropriate sub expressions.
 
 C:  Correlated Evaluation
 -------------------------
