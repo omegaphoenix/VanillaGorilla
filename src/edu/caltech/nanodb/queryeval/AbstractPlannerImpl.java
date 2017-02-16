@@ -6,8 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import edu.caltech.nanodb.expressions.ColumnName;
-import edu.caltech.nanodb.expressions.ColumnValue;
+import edu.caltech.nanodb.expressions.*;
 import edu.caltech.nanodb.plannodes.*;
 import edu.caltech.nanodb.relations.ColumnInfo;
 import org.apache.log4j.Logger;
@@ -15,8 +14,6 @@ import org.apache.log4j.Logger;
 import edu.caltech.nanodb.queryast.FromClause;
 import edu.caltech.nanodb.queryast.SelectClause;
 import edu.caltech.nanodb.queryast.SelectValue;
-import edu.caltech.nanodb.expressions.Expression;
-import edu.caltech.nanodb.expressions.FunctionCall;
 
 import edu.caltech.nanodb.relations.JoinType;
 import edu.caltech.nanodb.relations.TableInfo;
@@ -192,7 +189,14 @@ public abstract class AbstractPlannerImpl implements Planner {
 
     public boolean isDecorrelatableIn(SelectClause selClause) {
         // Check if subquery inside where clause
-        return true;
+        Expression whereExpr = selClause.getWhereExpr();
+        if (whereExpr != null) {
+            if (whereExpr instanceof InSubqueryOperator) {
+                // TODO: Check if subquery is correlated
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isDecorrelatableExists(SelectClause selClause) {
