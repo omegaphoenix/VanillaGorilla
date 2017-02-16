@@ -180,6 +180,16 @@ public abstract class AbstractPlannerImpl implements Planner {
     }
 
     public SelectClause decorrelateIn(SelectClause selClause) {
+        FromClause leftFrom = selClause.getFromClause();
+        Expression whereExpr = selClause.getWhereExpr();
+        SelectClause subquery = ((InSubqueryOperator) whereExpr).getSubquery();
+        FromClause rightFrom = subquery.getFromClause();
+        FromClause newFromClause =
+                new FromClause(leftFrom, rightFrom, JoinType.SEMIJOIN);
+        Expression newOnExpression = subquery.getWhereExpr();
+        newFromClause.setOnExpression(newOnExpression);
+        selClause.setFromClause(newFromClause);
+        selClause.setWhereExpr(null);
         return selClause;
     }
 
@@ -192,8 +202,7 @@ public abstract class AbstractPlannerImpl implements Planner {
         Expression whereExpr = selClause.getWhereExpr();
         if (whereExpr != null) {
             if (whereExpr instanceof InSubqueryOperator) {
-                // TODO: Check if subquery is correlated
-                return true;
+                return ((InSubqueryOperator) whereExpr).getSubquery().isCorrelated();
             }
         }
         return false;
