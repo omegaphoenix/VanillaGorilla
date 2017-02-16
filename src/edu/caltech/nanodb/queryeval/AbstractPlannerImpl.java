@@ -171,13 +171,31 @@ public abstract class AbstractPlannerImpl implements Planner {
     }
 
     public SelectClause decorrelate(SelectClause selClause) {
-        if (isDecorrelatable(selClause)) {
+        if (isDecorrelatableIn(selClause)) {
             // Decorrelate
+            selClause = decorrelateIn(selClause);
+        }
+        else if (isDecorrelatableExists(selClause)) {
+            // Decorrelate
+            selClause = decorrelateExists(selClause);
         }
         return selClause;
     }
 
-    public boolean isDecorrelatable(SelectClause selClause) {
+    public SelectClause decorrelateIn(SelectClause selClause) {
+        return selClause;
+    }
+
+    public SelectClause decorrelateExists(SelectClause selClause) {
+        return selClause;
+    }
+
+    public boolean isDecorrelatableIn(SelectClause selClause) {
+        // Check if subquery inside where clause
+        return true;
+    }
+
+    public boolean isDecorrelatableExists(SelectClause selClause) {
         // Check if subquery inside where clause
         return true;
     }
