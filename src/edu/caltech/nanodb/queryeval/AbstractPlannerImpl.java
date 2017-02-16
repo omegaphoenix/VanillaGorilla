@@ -249,11 +249,11 @@ public abstract class AbstractPlannerImpl implements Planner {
     public boolean isDecorrelatableIn(SelectClause selClause) {
         // Check if subquery inside where clause
         Expression whereExpr = selClause.getWhereExpr();
-        if (whereExpr != null) {
-            if (whereExpr instanceof InSubqueryOperator) {
-                return ((InSubqueryOperator) whereExpr).getSubquery().isCorrelated();
-            }
+        if (whereExpr != null && whereExpr instanceof InSubqueryOperator) {
+            SelectClause sq = ((InSubqueryOperator) whereExpr).getSubquery();
+            return sq.isCorrelated();
         }
+
         return false;
     }
 
@@ -268,10 +268,11 @@ public abstract class AbstractPlannerImpl implements Planner {
     public boolean isDecorrelatableExists(SelectClause selClause) {
         // Check if subquery inside where clause
         Expression whereExpr = selClause.getWhereExpr();
-
-        if (whereExpr instanceof ExistsOperator) {
-            return ((ExistsOperator) whereExpr).getSubquery().isCorrelated();
+        if (whereExpr != null && whereExpr instanceof ExistsOperator) {
+            SelectClause sq = ((ExistsOperator) whereExpr).getSubquery();
+            return sq.isCorrelated();
         }
+
         return false;
     }
 }
