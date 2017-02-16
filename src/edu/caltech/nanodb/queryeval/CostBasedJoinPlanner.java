@@ -141,7 +141,16 @@ public class CostBasedJoinPlanner extends AbstractPlannerImpl {
         List<SelectClause> enclosingSelects) throws IOException {
         selClause = decorrelate(selClause);
 
-        SubqueryPlanner subqueryPlanner = new SubqueryPlanner(this);
+        List<SelectClause> subquerySelects = null;
+        if (enclosingSelects != null) {
+            subquerySelects = new ArrayList<SelectClause>(enclosingSelects);
+        }
+        else {
+            subquerySelects = new ArrayList<SelectClause>();
+        }
+        subquerySelects.add(selClause);
+
+        SubqueryPlanner subqueryPlanner = new SubqueryPlanner(this, subquerySelects);
         AggregateProcessor aggregateProcessor = new AggregateProcessor(true);
         AggregateProcessor noAggregateProcessor = new AggregateProcessor(false);
 
