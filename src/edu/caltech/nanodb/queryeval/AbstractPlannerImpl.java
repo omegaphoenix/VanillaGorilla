@@ -143,41 +143,59 @@ public abstract class AbstractPlannerImpl implements Planner {
             case LEFT_OUTER:
             case ANTIJOIN:
             case SEMIJOIN:
-                resPlan = new NestedLoopJoinNode(left, right, joinType, predicate);
+                resPlan = new NestedLoopJoinNode(left, right, joinType,
+                        predicate);
                 break;
             case RIGHT_OUTER:
-                resPlan = new NestedLoopJoinNode(left, right, JoinType.LEFT_OUTER, predicate);
+                resPlan = new NestedLoopJoinNode(left, right,
+                        JoinType.LEFT_OUTER, predicate);
                 ((ThetaJoinNode) resPlan).swap();
                 break;
             case FULL_OUTER:
                 throw new UnsupportedOperationException(
                           "Not implemented: FULL_OUTER join");
             default:
-                throw new UnsupportedOperationException("Not a valid JoinType.");
+                throw new UnsupportedOperationException(
+                        "Not a valid JoinType.");
         }
         if (needPostProject) {
             projectVals = fromClause.getComputedSelectValues();
             if (projectVals != null) {
-                resPlan = new ProjectNode(resPlan, projectVals, placeholder_num);
-                placeholder_num++;
+                resPlan = new ProjectNode(resPlan, projectVals,
+                        placeholderNum);
+                placeholderNum++;
             }
         }
         resPlan.prepare();
         return resPlan;
     }
 
+    /**
+     * Decorrolate AST if it fits one of the known correlated subquery forms.
+     *
+     * @param selClause an object describing the query to be performed.
+     *
+     * @return updated AST with one fewer correlated subquery
+     *
+     */
     public SelectClause decorrelate(SelectClause selClause) {
         if (isDecorrelatableIn(selClause)) {
-            // Decorrelate
             selClause = decorrelateIn(selClause);
         }
         else if (isDecorrelatableExists(selClause)) {
-            // Decorrelate
             selClause = decorrelateExists(selClause);
         }
         return selClause;
     }
 
+    /**
+     * Decorrolate AST to remove correlated subquery in in-clause.
+     *
+     * @param selClause an object describing the query to be performed.
+     *
+     * @return updated AST with one fewer correlated subquery
+     *
+     */
     public SelectClause decorrelateIn(SelectClause selClause) {
         FromClause leftFrom = selClause.getFromClause();
         Expression whereExpr = selClause.getWhereExpr();
@@ -192,6 +210,14 @@ public abstract class AbstractPlannerImpl implements Planner {
         return selClause;
     }
 
+    /**
+     * Decorrolate AST to remove correlated subquery in exists-clause.
+     *
+     * @param selClause an object describing the query to be performed.
+     *
+     * @return updated AST with one fewer correlated subquery
+     *
+     */
     public SelectClause decorrelateExists(SelectClause selClause) {
         Expression whereExpr = selClause.getWhereExpr();
         ExistsOperator existsOperator = (ExistsOperator) whereExpr;
@@ -212,6 +238,14 @@ public abstract class AbstractPlannerImpl implements Planner {
         return selClause;
     }
 
+    /**
+     * Return true if query has correlated subquery in in-clause.
+     *
+     * @param selClause an object describing the query to be performed.
+     *
+     * @return updated AST with one fewer correlated subquery
+     *
+     */
     public boolean isDecorrelatableIn(SelectClause selClause) {
         // Check if subquery inside where clause
         Expression whereExpr = selClause.getWhereExpr();
@@ -223,6 +257,14 @@ public abstract class AbstractPlannerImpl implements Planner {
         return false;
     }
 
+    /**
+     * Return true if query has correlated subquery in exists-clause.
+     *
+     * @param selClause an object describing the query to be performed.
+     *
+     * @return updated AST with one fewer correlated subquery
+     *
+     */
     public boolean isDecorrelatableExists(SelectClause selClause) {
         // Check if subquery inside where clause
         Expression whereExp = selClause.getWhereExpr();
