@@ -100,6 +100,26 @@ D3.  Briefly outline the process by which your planner decorrelates the query.
      How does it modify the subquery, and how does it modify the enclosing
      query?
 
+     Correlated Subquery In:
+     Get the where expression and from clause (t1 ...).
+     Get the subquery from the where expression.
+     Get the from clause (t2 ...) of the subquery and the where expression of
+     the subquery (cond).
+     Create new from clause (newFromClause) semijoining (t1 ...) and (t2 ...).
+     Set newFromClause's condition to be (cond).
+     Set the original select clause's from expression to be newFromClause.
+     Remove the original where expression.
+
+     Correlated Subquery Exists:
+     Get the where expression and from clause (t1 ...).
+     Get the subquery from the where expression.
+     Get the where expression of the subquery (cond).
+     Remove the subquery where expression.
+     Get the from clause (t2 ...) of the subquery.
+     Create new from clause (newFromClause) semijoining (t1 ...) and (t2 ...).
+     Set newFromClause's condition to be (cond).
+     Set the original select clause's from expression to be newFromClause.
+
 E:  Extra Credit [OPTIONAL]
 ---------------------------
 
@@ -110,7 +130,7 @@ them here.  The description should be like this, with stuff in "<>" replaced.
 E<1>:  <Support subqueries in cost-based join planner>
 
      We implemented advanced subqueries and decorrelation in
-     CostBasedJoinPlanner.
+     CostBasedJoinPlanner. (not sure how much extra time)
 
      <See Donnie's tests for advanced subqueries. Natural joins not supported
       since optional in hw4.>
@@ -118,7 +138,7 @@ E<1>:  <Support subqueries in cost-based join planner>
 E<2>:  <Decorrelate an addition form of query>
 
      We implemented decorrelation for correlated subqueries in both the
-     InSubqueryOperator and ExistsOperator.
+     InSubqueryOperator and ExistsOperator. (1-2 hours)
 
      <Tests still pass and explain shows the decorrelated plan.>
 

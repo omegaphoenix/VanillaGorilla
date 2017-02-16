@@ -222,15 +222,15 @@ public abstract class AbstractPlannerImpl implements Planner {
      *
      */
     public SelectClause decorrelateExists(SelectClause selClause) {
+        FromClause leftFrom = selClause.getFromClause();
         Expression whereExpr = selClause.getWhereExpr();
         ExistsOperator existsOperator = (ExistsOperator) whereExpr;
-        SelectClause subquery = existsOperator.getSubquery();
 
+        SelectClause subquery = existsOperator.getSubquery();
         Expression condition = subquery.getWhereExpr();
         subquery.setWhereExpr(null);
-
-        FromClause leftFrom = selClause.getFromClause();
         FromClause rightFrom = subquery.getFromClause();
+
         FromClause newFrom =
                 new FromClause(leftFrom, rightFrom, JoinType.SEMIJOIN);
         newFrom.setOnExpression(condition);
