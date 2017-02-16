@@ -68,6 +68,12 @@ C1.  How easy or difficult was it to incorporate support for correlated
      evaluation into your query planner?  Did it affect the sequence of
      steps in any substantial ways?
 
+     Creating the environment in the subqueryPlanner was simple, but we ran
+     into a bug where we couldn't get the environment to link to the correct
+     parent. The end solution was to change where we set the plan environment
+     in makePlan(). Other than this, the sequence of steps wasn't affected in
+     any substantial way.
+
 D:  Decorrelating Queries
 -------------------------
 
