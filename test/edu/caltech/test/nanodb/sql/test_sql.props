@@ -29,6 +29,61 @@ setup_testSelectProject = \
     INSERT INTO test_select_project VALUES ( 6,   'blue',   50 );
 
 #============================================================================
+# INDEXES
+#
+
+# This setup SQL is used for the create/drop indexes test case
+setup_testIndexOps = \
+    CREATE TABLE test_index_ops ( \
+        a INTEGER, \
+        b VARCHAR(20), \
+        c INTEGER \
+    ); \
+    INSERT INTO test_index_ops VALUES ( 1,    'red',   10 ); \
+    INSERT INTO test_index_ops VALUES ( 2, 'orange',   20 ); \
+    INSERT INTO test_index_ops VALUES ( 3,     NULL,   30 ); \
+    INSERT INTO test_index_ops VALUES ( 4,  'green', NULL ); \
+    INSERT INTO test_index_ops VALUES ( 5, 'yellow',   40 ); \
+    INSERT INTO test_index_ops VALUES ( 6,   'blue',   50 );
+
+# This setup SQL is used for the unique constraint test case
+setup_testUniqueOps = \
+    CREATE TABLE test_unique_ops ( \
+        a INTEGER UNIQUE, \
+        b VARCHAR(20), \
+        c INTEGER \
+    ); \
+    INSERT INTO test_unique_ops VALUES ( 1,    'red',   10 ); \
+    INSERT INTO test_unique_ops VALUES ( 2, 'orange',   20 ); \
+    INSERT INTO test_unique_ops VALUES ( 3,     NULL,   30 ); \
+    INSERT INTO test_unique_ops VALUES ( 4,  'green', NULL ); \
+    INSERT INTO test_unique_ops VALUES ( 5, 'yellow',   40 ); \
+    INSERT INTO test_unique_ops VALUES ( 6,   'blue',   50 );
+
+# This setup SQL is used for the not null constraint test case
+setup_testNotNullOps = \
+    CREATE TABLE test_not_null_ops ( \
+        a INTEGER NOT NULL, \
+        b VARCHAR(20) PRIMARY KEY, \
+        c INTEGER \
+    ); \
+    INSERT INTO test_not_null_ops VALUES ( 1,    'red',   10 ); \
+    INSERT INTO test_not_null_ops VALUES ( 2, 'orange',   20 );
+
+# This setup SQL is used for the foreign keys test case
+setup_testForeignOps = \
+    CREATE TABLE test_fkey_parent_ops ( \
+        a INTEGER PRIMARY KEY, \
+        b VARCHAR(20) UNIQUE, \
+        c INTEGER \
+    ); \
+    INSERT INTO test_fkey_parent_ops VALUES ( 1,    'red',   10 ); \
+    INSERT INTO test_fkey_parent_ops VALUES ( 2, 'orange',   20 ); \
+    INSERT INTO test_fkey_parent_ops VALUES ( 3, 'yellow',   30 ); \
+    INSERT INTO test_fkey_parent_ops VALUES ( 4,  'green',   40 ); \
+    INSERT INTO test_fkey_parent_ops VALUES ( 5,     NULL,   50 );
+
+#============================================================================
 # GROUPING AND AGGREGATION
 #
 
