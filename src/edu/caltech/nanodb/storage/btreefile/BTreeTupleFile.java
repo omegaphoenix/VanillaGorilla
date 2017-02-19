@@ -507,18 +507,21 @@ public class BTreeTupleFile implements SequentialTupleFile {
                     int pointer = innerPage.getPointer(i);
                     dbPage = storageManager.loadDBPage(dbFile, pointer);
                     pageType = dbPage.readByte(0);
+                    break;
                 }
                 // Take right pointer.
                 else if (compareKeys == 0) {
                     int pointer = innerPage.getPointer(i + 1);
                     dbPage = storageManager.loadDBPage(dbFile, pointer);
                     pageType = dbPage.readByte(0);
+                    break;
                 }
                 // Always take right pointer at end.
                 else if (i == numKeys - 1) {
                     int pointer = innerPage.getPointer(numKeys);
                     dbPage = storageManager.loadDBPage(dbFile, pointer);
                     pageType = dbPage.readByte(0);
+                    break;
                 }
             }
         }
