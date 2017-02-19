@@ -497,6 +497,7 @@ public class BTreeTupleFile implements SequentialTupleFile {
         while (pageType == BTREE_INNER_PAGE) {
             InnerPage innerPage = new InnerPage(dbPage, schema);
 
+            int nextPageNo;
             int numKeys = innerPage.getNumKeys();
             // Traverse keys of non-leaf node.
             for (int i = 0; i < numKeys; i++) {
@@ -504,25 +505,28 @@ public class BTreeTupleFile implements SequentialTupleFile {
                 int compareKeys = TupleComparator.comparePartialTuples(searchKey, curKey);
                 // Take left pointer.
                 if (compareKeys < 0) {
-                    int pointer = innerPage.getPointer(i);
-                    dbPage = storageManager.loadDBPage(dbFile, pointer);
-                    pageType = dbPage.readByte(0);
+                    nextPageNo = innerPage.getPointer(i);
                     break;
                 }
                 // Take right pointer.
                 else if (compareKeys == 0) {
-                    int pointer = innerPage.getPointer(i + 1);
-                    dbPage = storageManager.loadDBPage(dbFile, pointer);
-                    pageType = dbPage.readByte(0);
+                    nextPageNo = innerPage.getPointer(i + 1);
                     break;
                 }
                 // Always take right pointer at end.
                 else if (i == numKeys - 1) {
-                    int pointer = innerPage.getPointer(numKeys);
-                    dbPage = storageManager.loadDBPage(dbFile, pointer);
-                    pageType = dbPage.readByte(0);
+                    nextPageNo = innerPage.getPointer(numKeys);
                     break;
                 }
+            }
+
+            // Load next page.
+            dbPage = storageManager.loadDBPage(dbFile, nextPageNo);
+            pageType = dbPage.readByte(0);
+
+            // Update pagePath.
+            if (pagePath != null) {
+                pagePath.add(nextPageNo);
             }
         }
 
