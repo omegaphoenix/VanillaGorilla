@@ -497,7 +497,7 @@ public class BTreeTupleFile implements SequentialTupleFile {
         while (pageType == BTREE_INNER_PAGE) {
             InnerPage innerPage = new InnerPage(dbPage, schema);
 
-            int nextPageNo;
+            int nextPageNo = 0;
             int numKeys = innerPage.getNumKeys();
             // Traverse keys of non-leaf node.
             for (int i = 0; i < numKeys; i++) {
