@@ -756,20 +756,21 @@ public class LeafPageOperations {
 
         // Get a new blank page in the index, with the same parent as the
         // leaf-page we were handed.
-
         DBPage newDBPage = fileOps.getNewDataPage();
         LeafPage newLeaf = LeafPage.init(newDBPage, tupleFile.getSchema());
 
-        /* TODO:  IMPLEMENT THE REST OF THIS METHOD.
-         *
-         * The LeafPage class provides some helpful operations for moving leaf-
-         * entries to a left or right sibling.
-         *
-         * The parent page must also be updated.  If the leaf node doesn't have
-         * a parent, the tree's depth will increase by one level.
-         */
-        logger.error("NOT YET IMPLEMENTED:  splitLeafAndAddKey()");
-        return null;
+        // Split leaf.
+        newLeaf.setNextPageNo(leaf.getNextPageNo());
+        leaf.setNextPageNo(newLeaf.getNextPageNo());
+        int newNumTups = leaf.getNumTuples() / 2;
+        leaf.moveTuplesRight(newLeaf, newNumTups);
+
+        // Add tuple
+        BTreeFilePageTuple newTuple = addTupleToLeafPair(leaf, newLeaf, tuple);
+
+        // Update parent.
+
+        return newTuple;
     }
 
 
