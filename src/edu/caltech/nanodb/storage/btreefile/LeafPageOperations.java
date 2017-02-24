@@ -768,28 +768,7 @@ public class LeafPageOperations {
         BTreeFilePageTuple newTuple = addTupleToLeafPair(leaf, newLeaf, tuple);
 
         // Update parent.
-        BTreeFilePageTuple key = newLeaf.getTuple(0);
-        int leafPageNo = leaf.getPageNo();
-        int newLeafPageNo = newLeaf.getPageNo();
-        if (isRoot(pagePath)) {
-            // New parent/root
-            DBFile file = tupleFile.getDBFile();
-            DBPage header = storageManager.loadDBPage(file, 0);
-
-            TableSchema fileSchema = tupleFile.getSchema();
-            DBPage newRootPage = fileOps.getNewDataPage();
-            InnerPage newRoot = InnerPage.init(newRootPage,
-                    fileSchema, leafPageNo, key, newLeafPageNo);
-            int newRootPageNo = newRoot.getPageNo();
-            HeaderPage.setRootPageNo(header, newRootPageNo);
-        }
-        else {
-            int parentPageNo = pagePath.get(pathSize - 2);
-            InnerPage parentPage = innerPageOps.loadPage(parentPageNo);
-            pagePath.remove(pathSize - 1);
-            innerPageOps.addTuple(parentPage, pagePath, leafPageNo, key,
-                    newLeafPageNo);
-        }
+        updateParentAfterSplit(leaf, newLeaf, pagePath);
 
         return newTuple;
     }
@@ -822,6 +801,40 @@ public class LeafPageOperations {
      */
     private boolean isRoot(List<Integer> pagePath) {
         return pagePath.size() == 1;
+    }
+
+    /**
+     * This helper function updates the parent node after the leaf node is
+     * split.
+     *
+     * @param leaf the leaf node to split
+     * @param newLeaf the new leaf node to split half the tuples into
+     */
+    private void updateParentAfterSplit(LeafPage leaf, LeafPage newLeaf,
+                                        List<Integer> pagePath) {
+        BTreeFilePageTuple key = newLeaf.getTuple(0);
+        int leafPageNo = leaf.getPageNo();
+        int newLeafPageNo = newLeaf.getPageNo();
+        if (isRoot(pagePath)) {
+            // New parent/root
+            DBFile file = tupleFile.getDBFile();
+            DBPage header = storageManager.loadDBPage(file, 0);
+
+            TableSchema fileSchema = tupleFile.getSchema();
+            DBPage newRootPage = fileOps.getNewDataPage();
+            InnerPage newRoot = InnerPage.init(newRootPage,
+                    fileSchema, leafPageNo, key, newLeafPageNo);
+            int newRootPageNo = newRoot.getPageNo();
+            HeaderPage.setRootPageNo(header, newRootPageNo);
+        }
+        else {
+            int pathSize = pagePath.size();
+            int parentPageNo = pagePath.get(pathSize - 2);
+            InnerPage parentPage = innerPageOps.loadPage(parentPageNo);
+            pagePath.remove(pathSize - 1);
+            innerPageOps.addTuple(parentPage, pagePath, leafPageNo, key,
+                    newLeafPageNo);
+        }
     }
 
     /**
