@@ -4,6 +4,7 @@ package edu.caltech.nanodb.storage.btreefile;
 import java.io.IOException;
 import java.util.List;
 
+import edu.caltech.nanodb.relations.TableSchema;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.expressions.TupleComparator;
@@ -732,6 +733,7 @@ public class LeafPageOperations {
      *       certainly be better if it did.
      *
      * @param leaf the leaf node to split and then add the tuple to
+     *
      * @param pagePath the sequence of page-numbers traversed to reach this
      *        leaf node.
      *
@@ -760,19 +762,67 @@ public class LeafPageOperations {
         LeafPage newLeaf = LeafPage.init(newDBPage, tupleFile.getSchema());
 
         // Split leaf.
-        newLeaf.setNextPageNo(leaf.getNextPageNo());
-        leaf.setNextPageNo(newLeaf.getNextPageNo());
-        int newNumTups = leaf.getNumTuples() / 2;
-        leaf.moveTuplesRight(newLeaf, newNumTups);
+        splitLeaf(leaf, newLeaf);
 
-        // Add tuple
+        // Add tuple.
         BTreeFilePageTuple newTuple = addTupleToLeafPair(leaf, newLeaf, tuple);
 
         // Update parent.
+        BTreeFilePageTuple key = newLeaf.getTuple(0);
+        int leafPageNo = leaf.getPageNo();
+        int newLeafPageNo = newLeaf.getPageNo();
+        if (isRoot(pagePath)) {
+            // New parent/root
+            DBFile file = tupleFile.getDBFile();
+            DBPage header = storageManager.loadDBPage(file, 0);
+
+            TableSchema fileSchema = tupleFile.getSchema();
+            DBPage newRootPage = fileOps.getNewDataPage();
+            InnerPage newRoot = InnerPage.init(newRootPage,
+                    fileSchema, leafPageNo, key, newLeafPageNo);
+            int newRootPageNo = newRoot.getPageNo();
+            HeaderPage.setRootPageNo(header, newRootPageNo);
+        }
+        else {
+            int parentPageNo = pagePath.get(pathSize - 2);
+            InnerPage parentPage = innerPageOps.loadPage(parentPageNo);
+            pagePath.remove(pathSize - 1);
+            innerPageOps.addTuple(parentPage, pagePath, leafPageNo, key,
+                    newLeafPageNo);
+        }
 
         return newTuple;
     }
 
+    /**
+     * This helper function splits the specified leaf-node into two nodes.
+     * It doesn't update the parent node.
+     *
+     * @todo (donnie) When the leaf node is split, half of the tuples are
+     *       put into the new leaf, regardless of the size of individual
+     *       tuples.  In other words, this method doesn't try to keep the
+     *       leaves half-full based on bytes used.  It would almost
+     *       certainly be better if it did.
+     *
+     * @param leaf the leaf node to split
+     * @param newLeaf the new leaf node to split half the tuples into
+     */
+    private void splitLeaf(LeafPage leaf, LeafPage newLeaf) {
+        newLeaf.setNextPageNo(leaf.getNextPageNo());
+        leaf.setNextPageNo(newLeaf.getNextPageNo());
+        int newNumTups = leaf.getNumTuples() / 2;
+        leaf.moveTuplesRight(newLeaf, newNumTups);
+    }
+
+    /**
+     * This helper function returns true if this is the pagePath of a root.
+     *
+     * @param pagePath the sequence of page-numbers traversed to reach this
+     *        leaf node.
+     */
+    private boolean isRoot(List<Integer> pagePath) {
+        return pagePath.size() == 1;
+    }
 
     /**
      * This helper function determines how many tuples must be relocated from
