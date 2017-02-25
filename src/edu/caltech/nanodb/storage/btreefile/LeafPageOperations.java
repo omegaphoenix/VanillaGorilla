@@ -775,20 +775,18 @@ public class LeafPageOperations {
 
     /**
      * This helper function splits the specified leaf-node into two nodes.
-     * It doesn't update the parent node.
-     *
-     * @todo (donnie) When the leaf node is split, half of the tuples are
-     *       put into the new leaf, regardless of the size of individual
-     *       tuples.  In other words, this method doesn't try to keep the
-     *       leaves half-full based on bytes used.  It would almost
-     *       certainly be better if it did.
+     * It doesn't update the parent node. It splits by half the number of
+     * tuples which is not necessarily half the size of the leaf-node.
      *
      * @param leaf the leaf node to split
      * @param newLeaf the new leaf node to split half the tuples into
      */
     private void splitLeaf(LeafPage leaf, LeafPage newLeaf) {
+        // Update next page
         newLeaf.setNextPageNo(leaf.getNextPageNo());
         leaf.setNextPageNo(newLeaf.getNextPageNo());
+
+        // Split tuples
         int newNumTups = leaf.getNumTuples() / 2;
         leaf.moveTuplesRight(newLeaf, newNumTups);
     }
@@ -816,21 +814,26 @@ public class LeafPageOperations {
         int leafPageNo = leaf.getPageNo();
         int newLeafPageNo = newLeaf.getPageNo();
         if (isRoot(pagePath)) {
-            // New parent/root
             DBFile file = tupleFile.getDBFile();
+            TableSchema fileSchema = tupleFile.getSchema();
             DBPage header = storageManager.loadDBPage(file, 0);
 
-            TableSchema fileSchema = tupleFile.getSchema();
+            // New parent/root
             DBPage newRootPage = fileOps.getNewDataPage();
-            InnerPage newRoot = InnerPage.init(newRootPage,
-                    fileSchema, leafPageNo, key, newLeafPageNo);
+            InnerPage newRoot = InnerPage.init(newRootPage, fileSchema,
+                    leafPageNo, key, newLeafPageNo);
+
+            // Set new root
             int newRootPageNo = newRoot.getPageNo();
             HeaderPage.setRootPageNo(header, newRootPageNo);
         }
         else {
+            // Get parent page
             int pathSize = pagePath.size();
             int parentPageNo = pagePath.get(pathSize - 2);
             InnerPage parentPage = innerPageOps.loadPage(parentPageNo);
+
+            // Update parent page
             pagePath.remove(pathSize - 1);
             innerPageOps.addTuple(parentPage, pagePath, leafPageNo, key,
                     newLeafPageNo);
