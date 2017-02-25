@@ -782,11 +782,11 @@ public class LeafPageOperations {
      * @param newLeaf the new leaf node to split half the tuples into
      */
     private void splitLeaf(LeafPage leaf, LeafPage newLeaf) {
-        // Update next page
+        // Update next page.
         newLeaf.setNextPageNo(leaf.getNextPageNo());
         leaf.setNextPageNo(newLeaf.getNextPageNo());
 
-        // Split tuples
+        // Split tuples.
         int newNumTups = leaf.getNumTuples() / 2;
         leaf.moveTuplesRight(newLeaf, newNumTups);
     }
@@ -809,7 +809,8 @@ public class LeafPageOperations {
      * @param newLeaf the new leaf node to split half the tuples into
      */
     private void updateParentAfterSplit(LeafPage leaf, LeafPage newLeaf,
-                                        List<Integer> pagePath) {
+                                        List<Integer> pagePath)
+    throws IOException {
         BTreeFilePageTuple key = newLeaf.getTuple(0);
         int leafPageNo = leaf.getPageNo();
         int newLeafPageNo = newLeaf.getPageNo();
@@ -818,22 +819,22 @@ public class LeafPageOperations {
             TableSchema fileSchema = tupleFile.getSchema();
             DBPage header = storageManager.loadDBPage(file, 0);
 
-            // New parent/root
+            // Initialize new parent/root.
             DBPage newRootPage = fileOps.getNewDataPage();
             InnerPage newRoot = InnerPage.init(newRootPage, fileSchema,
                     leafPageNo, key, newLeafPageNo);
 
-            // Set new root
+            // Set new root.
             int newRootPageNo = newRoot.getPageNo();
             HeaderPage.setRootPageNo(header, newRootPageNo);
         }
         else {
-            // Get parent page
+            // Get parent page.
             int pathSize = pagePath.size();
             int parentPageNo = pagePath.get(pathSize - 2);
             InnerPage parentPage = innerPageOps.loadPage(parentPageNo);
 
-            // Update parent page
+            // Update parent page.
             pagePath.remove(pathSize - 1);
             innerPageOps.addTuple(parentPage, pagePath, leafPageNo, key,
                     newLeafPageNo);
