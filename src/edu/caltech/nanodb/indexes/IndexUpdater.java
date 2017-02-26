@@ -133,6 +133,25 @@ public class IndexUpdater implements RowEventListener {
                 //
                 // Finally, add a new tuple to the index, including the
                 // tuple-pointer to the tuple in the table.
+                TupleFile tupleFile = indexInfo.getTupleFile();
+                switch (indexInfo.getTableColumnRefs().getConstraintType()) {
+                case PRIMARY_KEY:
+                case FOREIGN_KEY:
+                case UNIQUE:
+                    Tuple uniqueKey = IndexUtils.makeTableSearchKey(indexDef, ptup, false);
+                    Tuple existing = IndexUtils.findTupleInIndex(uniqueKey, tupleFile);
+                    if (existing != null) {
+                        throw new IOException("Adding tuple " +
+                            ptup.toString() +
+                            " violates PK, FK, or unique constraint because tuple " +
+                            existing.toString() + " already exists in " +
+                            tblFileInfo.getTableName());
+                    }
+                    break;
+                }
+                // Add value
+                Tuple key = IndexUtils.makeTableSearchKey(indexDef, ptup, true);
+                tupleFile.addTuple(key);
             }
             catch (IOException e) {
                 throw new EventDispatchException("Couldn't update index " +
