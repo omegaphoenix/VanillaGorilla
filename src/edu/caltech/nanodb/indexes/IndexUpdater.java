@@ -190,6 +190,15 @@ public class IndexUpdater implements RowEventListener {
                 //
                 // If the tuple doesn't appear in this index, throw an
                 // IllegalStateException to indicate that the index is bad.
+                TupleFile tupleFile = indexInfo.getTupleFile();
+                Tuple key = IndexUtils.makeTableSearchKey(indexDef, ptup, true);
+                Tuple existing = IndexUtils.findTupleInIndex(key, tupleFile);
+                if (existing == null) {
+                    throw new IllegalStateException("Deleting tuple " +
+                        ptup.toString() + " from " + tblFileInfo.getTableName() +
+                        " failed because ");
+                }
+                tupleFile.deleteTuple(ptup);
             }
             catch (IOException e) {
                 throw new EventDispatchException("Couldn't update index " +
