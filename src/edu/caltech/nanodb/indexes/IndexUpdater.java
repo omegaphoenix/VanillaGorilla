@@ -184,7 +184,7 @@ public class IndexUpdater implements RowEventListener {
                 if (existing == null) {
                     throw new IllegalStateException("Deleting tuple " +
                         ptup.toString() + " from " + tblFileInfo.getTableName() +
-                        " failed because ");
+                        " failed because it doesn't exist in index " + indexDef.toString());
                 }
                 tupleFile.deleteTuple(ptup);
             }
