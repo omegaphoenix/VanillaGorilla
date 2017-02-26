@@ -726,7 +726,7 @@ public class InnerPage implements DataPage {
         DBPage leftSibDBPage = leftSibling.getDBPage();
         int leftSibOffset = leftSibling.endOffset;
         Schema leftSibSchema = leftSibling.schema;
-        if (parentKeyLen == 0) {
+        if (parentKeyLen != 0) {
             PageTuple.storeTuple(leftSibDBPage, leftSibOffset, leftSibSchema,
                     parentKey);
         }
@@ -744,7 +744,7 @@ public class InnerPage implements DataPage {
 
         // Move data to beginning of page.
         int prevEndOffset = newParentKey.getEndOffset();
-        int dataLeft = endOffset = prevEndOffset;
+        int dataLeft = endOffset - prevEndOffset;
         dbPage.moveDataRange(prevEndOffset, OFFSET_FIRST_POINTER, dataLeft);
 
         // Update number of pointers
@@ -956,41 +956,27 @@ public class InnerPage implements DataPage {
             }
         }
 
-        /* TODO:  IMPLEMENT THE REST OF THIS METHOD.
-         *
-         * You can use PageTuple.storeTuple() to write a key into a DBPage.
-         *
-         * The DBPage.write() method is useful for copying a large chunk of
-         * data from one DBPage to another.
-         *
-         * Your implementation also needs to properly handle the incoming
-         * parent-key, and produce a new parent-key as well.
-         */
-
-        // Move parent tuple.
-        DBPage rightSibDBPage = rightSibling.getDBPage();
-        int rightSibOffset = rightSibling.endOffset;
-        Schema rightSibSchema = rightSibling.schema;
-        if (parentKeyLen == 0) {
-            PageTuple.storeTuple(rightSibDBPage, rightSibOffset, rightSibSchema,
-                    parentKey);
-        }
-        rightSibOffset += parentKeyLen;
-
         // Get the key to elevate to parent.
-        int lastKeyIdx = count - 1;
+        int lastKeyIdx = numPointers - (count + 1);
         BTreeFilePageTuple newParentKey = getKey(lastKeyIdx);
         TupleLiteral newParentTuple = new TupleLiteral(newParentKey);
 
-        // This is the amount of data we will need to move.
-        int moveOffset = newParentKey.getOffset() - OFFSET_FIRST_POINTER;
-        rightSibDBPage.write(rightSibOffset, dbPage.getPageData(),
-                OFFSET_FIRST_POINTER, moveOffset);
+        // Move data back to make room
+        DBPage rightSibDBPage = rightSibling.getDBPage();
+        int distToMovePar = OFFSET_FIRST_POINTER + len;
+        int spaceToAdd = distToMovePar + parentKeyLen;
+        int dataToMove = rightSibling.getSpaceUsedByEntries();
+        rightSibDBPage.moveDataRange(OFFSET_FIRST_POINTER, spaceToAdd, dataToMove);
 
-        // Move data to beginning of page.
-        int prevEndOffset = newParentKey.getEndOffset();
-        int dataLeft = endOffset = prevEndOffset;
-        dbPage.moveDataRange(prevEndOffset, OFFSET_FIRST_POINTER, dataLeft);
+        // Move parent tuple.
+        if (parentKeyLen != 0) {
+            PageTuple.storeTuple(rightSibDBPage, distToMovePar, schema,
+                    parentKey);
+        }
+
+        // This is the amount of data we will need to move.
+        rightSibDBPage.write(OFFSET_FIRST_POINTER, dbPage.getPageData(),
+                startOffset, len);
 
         // Update number of pointers
         int rightNumPointers = rightSibling.getNumPointers() + count;
