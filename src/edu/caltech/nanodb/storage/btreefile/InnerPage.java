@@ -732,13 +732,43 @@ public class InnerPage implements DataPage {
          * Your implementation also needs to properly handle the incoming
          * parent-key, and produce a new parent-key as well.
          */
-        logger.error("NOT YET IMPLEMENTED:  movePointersLeft()");
+
+        // Move parent tuple.
+        DBPage leftSibDBPage = leftSibling.getDBPage();
+        int leftSibOffset = leftSibling.endOffset;
+        Schema leftSibSchema = leftSibling.schema;
+        if (parentKeyLen == 0) {
+            PageTuple.storeTuple(leftSibDBPage, leftSibOffset, leftSibSchema,
+                    parentKey);
+        }
+        leftSibOffset += parentKeyLen;
+
+        // Get the key to elevate to parent.
+        int lastKeyIdx = count - 1;
+        BTreeFilePageTuple newParentKey = getKey(lastKeyIdx);
+        TupleLiteral newParentTuple = new TupleLiteral(newParentKey);
+
+        // This is the amount of data we will need to move.
+        int moveOffset = newParentKey.getOffset() - OFFSET_FIRST_POINTER;
+        leftSibDBPage.write(leftSibOffset, dbPage.getPageData(),
+                OFFSET_FIRST_POINTER, moveOffset);
+
+        // Move data to beginning of page.
+        int prevEndOffset = newParentKey.getEndOffset();
+        int dataLeft = endOffset = prevEndOffset;
+        dbPage.moveDataRange(prevEndOffset, OFFSET_FIRST_POINTER, dataLeft);
+
+        // Update number of pointers
+        int leftNumPointers = leftSibling.getNumPointers() + count;
+        int rightNumPointers = numPointers - count;
+        leftSibDBPage.writeShort(OFFSET_NUM_POINTERS, leftNumPointers);
+        dbPage.writeShort(OFFSET_NUM_POINTERS, rightNumPointers);
 
         // Update the cached info for both non-leaf pages.
         loadPageContents();
         leftSibling.loadPageContents();
 
-        return null;
+        return newParentTuple;
     }
 
 
