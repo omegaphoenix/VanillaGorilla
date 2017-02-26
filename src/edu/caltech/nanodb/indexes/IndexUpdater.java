@@ -125,19 +125,13 @@ public class IndexUpdater implements RowEventListener {
                 IndexInfo indexInfo = indexManager.openIndex(tblFileInfo,
                     indexDef.getIndexName());
 
-                // TODO:  Implement!
-                //
-                // If the index is a unique index, then verify that there
-                // isn't already a tuple in the index with the same values
-                // (excluding the tuple-pointer column, of course).
-                //
-                // Finally, add a new tuple to the index, including the
-                // tuple-pointer to the tuple in the table.
                 TupleFile tupleFile = indexInfo.getTupleFile();
+                // Enforce unique constraints.
                 switch (indexInfo.getTableColumnRefs().getConstraintType()) {
                 case PRIMARY_KEY:
                 case FOREIGN_KEY:
                 case UNIQUE:
+                    // Don't match tuple pointer.
                     Tuple uniqueKey = IndexUtils.makeTableSearchKey(indexDef, ptup, false);
                     Tuple existing = IndexUtils.findTupleInIndex(uniqueKey, tupleFile);
                     if (existing != null) {
@@ -183,15 +177,9 @@ public class IndexUpdater implements RowEventListener {
                 IndexInfo indexInfo = indexManager.openIndex(tblFileInfo,
                     indexDef.getIndexName());
 
-                // TODO:  Implement!
-                //
-                // Find and remove the entry in this index, corresponding to
-                // the passed-in tuple.
-                //
-                // If the tuple doesn't appear in this index, throw an
-                // IllegalStateException to indicate that the index is bad.
                 TupleFile tupleFile = indexInfo.getTupleFile();
                 Tuple key = IndexUtils.makeTableSearchKey(indexDef, ptup, true);
+                // Make sure tuple exists.
                 Tuple existing = IndexUtils.findTupleInIndex(key, tupleFile);
                 if (existing == null) {
                     throw new IllegalStateException("Deleting tuple " +
