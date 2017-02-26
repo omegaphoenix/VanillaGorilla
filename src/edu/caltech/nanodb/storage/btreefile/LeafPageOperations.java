@@ -784,7 +784,7 @@ public class LeafPageOperations {
     private void splitLeaf(LeafPage leaf, LeafPage newLeaf) {
         // Update next page.
         newLeaf.setNextPageNo(leaf.getNextPageNo());
-        leaf.setNextPageNo(newLeaf.getNextPageNo());
+        leaf.setNextPageNo(newLeaf.getPageNo());
 
         // Split tuples.
         int newNumTups = leaf.getNumTuples() / 2;
