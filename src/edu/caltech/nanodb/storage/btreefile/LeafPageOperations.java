@@ -4,6 +4,7 @@ package edu.caltech.nanodb.storage.btreefile;
 import java.io.IOException;
 import java.util.List;
 
+import edu.caltech.nanodb.relations.TableSchema;
 import org.apache.log4j.Logger;
 
 import edu.caltech.nanodb.expressions.TupleComparator;
@@ -732,6 +733,7 @@ public class LeafPageOperations {
      *       certainly be better if it did.
      *
      * @param leaf the leaf node to split and then add the tuple to
+     *
      * @param pagePath the sequence of page-numbers traversed to reach this
      *        leaf node.
      *
@@ -756,22 +758,88 @@ public class LeafPageOperations {
 
         // Get a new blank page in the index, with the same parent as the
         // leaf-page we were handed.
-
         DBPage newDBPage = fileOps.getNewDataPage();
         LeafPage newLeaf = LeafPage.init(newDBPage, tupleFile.getSchema());
 
-        /* TODO:  IMPLEMENT THE REST OF THIS METHOD.
-         *
-         * The LeafPage class provides some helpful operations for moving leaf-
-         * entries to a left or right sibling.
-         *
-         * The parent page must also be updated.  If the leaf node doesn't have
-         * a parent, the tree's depth will increase by one level.
-         */
-        logger.error("NOT YET IMPLEMENTED:  splitLeafAndAddKey()");
-        return null;
+        // Split leaf.
+        splitLeaf(leaf, newLeaf);
+
+        // Add tuple.
+        BTreeFilePageTuple newTuple = addTupleToLeafPair(leaf, newLeaf, tuple);
+
+        // Update parent.
+        updateParentAfterSplit(leaf, newLeaf, pagePath);
+
+        return newTuple;
     }
 
+    /**
+     * This helper function splits the specified leaf-node into two nodes.
+     * It doesn't update the parent node. It splits by half the number of
+     * tuples which is not necessarily half the size of the leaf-node.
+     *
+     * @param leaf the leaf node to split
+     * @param newLeaf the new leaf node to split half the tuples into
+     */
+    private void splitLeaf(LeafPage leaf, LeafPage newLeaf) {
+        // Update next page.
+        newLeaf.setNextPageNo(leaf.getNextPageNo());
+        leaf.setNextPageNo(newLeaf.getPageNo());
+
+        // Split tuples.
+        int newNumTups = leaf.getNumTuples() / 2;
+        leaf.moveTuplesRight(newLeaf, newNumTups);
+    }
+
+    /**
+     * This helper function returns true if this is the pagePath of a root.
+     *
+     * @param pagePath the sequence of page-numbers traversed to reach this
+     *        leaf node.
+     */
+    private boolean isRoot(List<Integer> pagePath) {
+        return pagePath.size() == 1;
+    }
+
+    /**
+     * This helper function updates the parent node after the leaf node is
+     * split.
+     *
+     * @param leaf the leaf node to split
+     * @param newLeaf the new leaf node to split half the tuples into
+     */
+    private void updateParentAfterSplit(LeafPage leaf, LeafPage newLeaf,
+                                        List<Integer> pagePath)
+    throws IOException {
+        BTreeFilePageTuple key = newLeaf.getTuple(0);
+        int leafPageNo = leaf.getPageNo();
+        int newLeafPageNo = newLeaf.getPageNo();
+        if (isRoot(pagePath)) {
+            DBFile file = tupleFile.getDBFile();
+            TableSchema fileSchema = tupleFile.getSchema();
+            DBPage header = storageManager.loadDBPage(file, 0);
+
+            // Initialize new parent/root.
+            DBPage newRootPage = fileOps.getNewDataPage();
+            InnerPage newRoot = InnerPage.init(newRootPage, fileSchema,
+                    leafPageNo, key, newLeafPageNo);
+
+            // Set new root.
+            int newRootPageNo = newRoot.getPageNo();
+            HeaderPage.setRootPageNo(header, newRootPageNo);
+        }
+        else {
+            // Get parent page.
+            int pathSize = pagePath.size();
+            int parentPageNo = pagePath.get(pathSize - 2);
+            InnerPage parentPage = innerPageOps.loadPage(parentPageNo);
+
+            // Update parent page.
+            pagePath.remove(pathSize - 1);
+            innerPageOps.addTuple(parentPage, pagePath, leafPageNo, key,
+                    newLeafPageNo);
+        }
+    }
 
     /**
      * This helper function determines how many tuples must be relocated from
