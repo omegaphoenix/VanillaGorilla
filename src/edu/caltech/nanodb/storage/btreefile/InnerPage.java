@@ -725,9 +725,8 @@ public class InnerPage implements DataPage {
         // Move parent tuple.
         DBPage leftSibDBPage = leftSibling.getDBPage();
         int leftSibOffset = leftSibling.endOffset;
-        Schema leftSibSchema = leftSibling.schema;
         if (parentKeyLen != 0) {
-            PageTuple.storeTuple(leftSibDBPage, leftSibOffset, leftSibSchema,
+            PageTuple.storeTuple(leftSibDBPage, leftSibOffset, schema,
                     parentKey);
         }
 
