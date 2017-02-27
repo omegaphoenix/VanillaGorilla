@@ -730,7 +730,6 @@ public class InnerPage implements DataPage {
             PageTuple.storeTuple(leftSibDBPage, leftSibOffset, leftSibSchema,
                     parentKey);
         }
-        leftSibOffset += parentKeyLen;
 
         // Get the key to elevate to parent.
         int lastKeyIdx = count - 1;
@@ -738,20 +737,18 @@ public class InnerPage implements DataPage {
         TupleLiteral newParentTuple = new TupleLiteral(newParentKey);
 
         // This is the amount of data we will need to move.
-        int moveOffset = newParentKey.getOffset() - OFFSET_FIRST_POINTER;
-        leftSibDBPage.write(leftSibOffset, dbPage.getPageData(),
-                OFFSET_FIRST_POINTER, moveOffset);
+        int len = newParentKey.getOffset() - OFFSET_FIRST_POINTER;
+        leftSibOffset += parentKeyLen;
+        byte[] data = dbPage.getPageData();
+        leftSibDBPage.write(leftSibOffset, data, OFFSET_FIRST_POINTER, len);
 
-        // Move data to beginning of page.
+        // Slide remaining entries in source node left
         int prevEndOffset = newParentKey.getEndOffset();
-        int dataLeft = endOffset - prevEndOffset;
-        dbPage.moveDataRange(prevEndOffset, OFFSET_FIRST_POINTER, dataLeft);
+        int dataLength = endOffset - prevEndOffset;
+        dbPage.moveDataRange(prevEndOffset, OFFSET_FIRST_POINTER, dataLength);
 
         // Update number of pointers
-        int leftNumPointers = leftSibling.getNumPointers() + count;
-        int rightNumPointers = numPointers - count;
-        leftSibDBPage.writeShort(OFFSET_NUM_POINTERS, leftNumPointers);
-        dbPage.writeShort(OFFSET_NUM_POINTERS, rightNumPointers);
+        updateNumPointers(leftSibling, count);
 
         // Update the cached info for both non-leaf pages.
         loadPageContents();
@@ -902,6 +899,10 @@ public class InnerPage implements DataPage {
      * provided by the caller, which should be inserted before the new pointers
      * being moved into the sibling node.
      * </p>
+     * <p>
+     * This is similar to the movePointersLeft method except we need to clear the
+     * space in the rightSibling before we can move the data over.
+     * <p>
      *
      * @param rightSibling the right sibling of this inner node in the index file
      *
@@ -961,12 +962,12 @@ public class InnerPage implements DataPage {
         BTreeFilePageTuple newParentKey = getKey(lastKeyIdx);
         TupleLiteral newParentTuple = new TupleLiteral(newParentKey);
 
-        // Move data back to make room
+        // Move data back in target node to make room for moving entries.
         DBPage rightSibDBPage = rightSibling.getDBPage();
         int distToMovePar = OFFSET_FIRST_POINTER + len;
         int spaceToAdd = distToMovePar + parentKeyLen;
-        int dataToMove = rightSibling.getSpaceUsedByEntries();
-        rightSibDBPage.moveDataRange(OFFSET_FIRST_POINTER, spaceToAdd, dataToMove);
+        int dataLength = rightSibling.getSpaceUsedByEntries();
+        rightSibDBPage.moveDataRange(OFFSET_FIRST_POINTER, spaceToAdd, dataLength);
 
         // Move parent tuple.
         if (parentKeyLen != 0) {
@@ -975,14 +976,11 @@ public class InnerPage implements DataPage {
         }
 
         // This is the amount of data we will need to move.
-        rightSibDBPage.write(OFFSET_FIRST_POINTER, dbPage.getPageData(),
-                startOffset, len);
+        byte[] data = dbPage.getPageData();
+        rightSibDBPage.write(OFFSET_FIRST_POINTER, data, startOffset, len);
 
         // Update number of pointers
-        int rightNumPointers = rightSibling.getNumPointers() + count;
-        int leftNumPointers = numPointers - count;
-        rightSibDBPage.writeShort(OFFSET_NUM_POINTERS, rightNumPointers);
-        dbPage.writeShort(OFFSET_NUM_POINTERS, leftNumPointers);
+        updateNumPointers(rightSibling, count);
 
         // Update the cached info for both non-leaf pages.
         loadPageContents();
@@ -998,6 +996,28 @@ public class InnerPage implements DataPage {
         }
 
         return newParentTuple;
+    }
+
+
+    /**
+     * <p>
+     * This helper method updates the number of tuples after they are moved to
+     * a sibling.
+     * </p>
+     *
+     * @param dest the InnerPage that tuples were moved to
+     *
+     * @param numTuplesMoved the number of tuples that have been moved
+     */
+    public void updateNumPointers(InnerPage dest, int numTuplesMoved) {
+        // Calculate new number of tuples.
+        int srcNumPointers = numPointers - numTuplesMoved;
+        int destNumPointers = dest.getNumPointers() + numTuplesMoved;
+
+        // Update pages
+        DBPage destDBPage = dest.getDBPage();
+        destDBPage.writeShort(OFFSET_NUM_POINTERS, destNumPointers);
+        dbPage.writeShort(OFFSET_NUM_POINTERS, srcNumPointers);
     }
 
 
