@@ -726,12 +726,6 @@ public class LeafPageOperations {
      * a tuple to a leaf that doesn't have enough space, when it isn't
      * possible to relocate values to the left or right sibling of the leaf.
      *
-     * @todo (donnie) When the leaf node is split, half of the tuples are
-     *       put into the new leaf, regardless of the size of individual
-     *       tuples.  In other words, this method doesn't try to keep the
-     *       leaves half-full based on bytes used.  It would almost
-     *       certainly be better if it did.
-     *
      * @param leaf the leaf node to split and then add the tuple to
      *
      * @param pagePath the sequence of page-numbers traversed to reach this
