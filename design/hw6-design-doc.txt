@@ -107,10 +107,13 @@ B5.  In this implementation, nodes do not store a page-pointer to their
      Justify your answer.
 
      With the current method, we store in memory a path of nodes to get to
-     the current node. As we traverse the tree, this little extra computation
-     must be done and stored. With the proposed method, the parents are stored
-     on disk instead, but we can modify the nodes without first traversing the
-     tree to find its parents. 
+     the current node. As we traverse the tree to get to the desired node, this
+     little extra computation is done. With the proposed method, the parents
+     are instead stored on disk instead, but we can modify the nodes without
+     first traversing the tree to find its parents. However, we recommend the
+     current implementation because reading and writing to disk is
+     prohibitively expensive, while the traversal has already been done to get
+     to the desired node that we want to split.
 
 B6.  It should be obvious how indexes can be used to enforce primary keys,
      but what role might they play with foreign keys?  For example, given
@@ -124,7 +127,11 @@ B6.  It should be obvious how indexes can be used to enforce primary keys,
          id INTEGER REFERENCES t1;
      );
 
-    Why might we want to build an index on t2.id?
+     Why might we want to build an index on t2.id?
+
+     First of all, the foreign key constrains t2.id to be unique entries. It is
+     also possible that table t2 is more sparse than table t1, so a separate
+     index will be cheaper to traverse.
 
 E:  Extra Credit [OPTIONAL]
 ---------------------------
