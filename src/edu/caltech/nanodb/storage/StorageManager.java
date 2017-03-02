@@ -11,14 +11,17 @@ import org.apache.log4j.Logger;
 import edu.caltech.nanodb.expressions.TypeCastException;
 
 import edu.caltech.nanodb.indexes.BasicIndexManager;
+import edu.caltech.nanodb.indexes.DatabaseConstraintEnforcer;
 import edu.caltech.nanodb.indexes.IndexManager;
 
+import edu.caltech.nanodb.indexes.IndexUpdater;
 import edu.caltech.nanodb.server.EventDispatcher;
 import edu.caltech.nanodb.server.NanoDBServer;
 import edu.caltech.nanodb.server.properties.PropertyHandler;
 import edu.caltech.nanodb.server.properties.ReadOnlyPropertyException;
 import edu.caltech.nanodb.server.properties.UnrecognizedPropertyException;
 
+import edu.caltech.nanodb.storage.btreefile.BTreeTupleFileManager;
 import edu.caltech.nanodb.storage.heapfile.HeapTupleFileManager;
 import edu.caltech.nanodb.transactions.TransactionManager;
 
@@ -250,7 +253,8 @@ public class StorageManager {
         tupleFileManagers.put(DBFileType.HEAP_TUPLE_FILE,
             new HeapTupleFileManager(this));
 
-        // TODO:  Register B-tree file-type here.
+        tupleFileManagers.put(DBFileType.BTREE_TUPLE_FILE,
+            new BTreeTupleFileManager(this));
 
         if (TransactionManager.isEnabled()) {
             logger.info("Initializing transaction manager.");
@@ -270,11 +274,11 @@ public class StorageManager {
         if (ENABLE_INDEXES) {
             EventDispatcher eventDispatcher = server.getEventDispatcher();
 
-            // TODO:  Register the event-handler that enforces database constraints!
-            // eventDispatcher.addRowEventListener(new DatabaseConstraintEnforcer(this));
+            // Register the event-handler that enforces database constraints!
+            eventDispatcher.addRowEventListener(new DatabaseConstraintEnforcer(server));
 
-            // TODO:  Register the event-handler that updates indexes when tables change.
-            // eventDispatcher.addRowEventListener(new IndexUpdater(this));
+            // Register the event-handler that updates indexes when tables change.
+            eventDispatcher.addRowEventListener(new IndexUpdater(this));
         }
 
         initialized = true;
