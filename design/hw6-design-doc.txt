@@ -65,7 +65,8 @@ B2.  What is the maximum number of search-keys that can be stored in leaf
 
      First, we subtract 2 bytes (for the extra pointer to other leaf nodes)
      from 8192, leaving us with 8190 bytes to fit 9 byte search-keys, for 910
-     keys.
+     keys. However, if we account for the space for header information such
+     as page type, we subtract 1 key to get 909 keys.
 
 B3.  What is the maximum number of keys that can be stored in inner nodes
      of this particular implementation?  (Recall that every key must have
@@ -73,6 +74,8 @@ B3.  What is the maximum number of keys that can be stored in inner nodes
 
      The difference between inner nodes and leaf nodes is that the offset is
      not also stored. So, each key is only 7 bytes, for 8190 / 7 = 1170 keys.
+     However, if we account for the space for header information such as the
+     page type, we subtract 1 key to get 1169 keys.
 
 B4.  In this implementation, leaf nodes do not reference the previous
      leaf, only the next leaf.  When splitting a leaf into two leaves,
