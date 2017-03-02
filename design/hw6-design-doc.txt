@@ -54,16 +54,16 @@ B1.  What is the total size of the index's search-key for the primary-key
      byte-level in your answer, but you should show what each byte is a
      part of.)
 
-     There are 10 bytes. The actual id integer is 4 bytes, and the file
-     pointer is 6 bytes (the pageNo is a signed 32-bit = 4 byte value and the
-     offset is an unsigned 16-bit = 2 byte value according to the docs).
+     There are 8 bytes. The actual id integer is 4 bytes, and the file
+     pointer is 4 bytes (the pageNo is a unsigned 16-bit = 2 byte value and the
+     offset is an unsigned 16-bit = 2 byte value).
 
 B2.  What is the maximum number of search-keys that can be stored in leaf
      nodes of NanoDB's B+ tree implementation?  You should assume a page-
      size of 8192 bytes.
 
-     First, we subtract 4 bytes (for the extra pointer to other leaf nodes)
-     from 8192, leaving us with 8188 bytes to fit 10 byte search-keys, for 818
+     First, we subtract 2 bytes (for the extra pointer to other leaf nodes)
+     from 8192, leaving us with 8190 bytes to fit 8 byte search-keys, for 1023
      keys.
 
 B3.  What is the maximum number of keys that can be stored in inner nodes
@@ -71,7 +71,7 @@ B3.  What is the maximum number of keys that can be stored in inner nodes
      a page-pointer on either side of the key.)
 
      The difference between inner nodes and leaf nodes is that the offset is
-     not also stored. So, each key is only 8 bytes, for 8188 / 8 = 1023 keys.
+     not also stored. So, each key is only 6 bytes, for 8190 / 6 = 1365 keys.
 
 B4.  In this implementation, leaf nodes do not reference the previous
      leaf, only the next leaf.  When splitting a leaf into two leaves,
