@@ -31,7 +31,7 @@ public class NanoDBServer {
     private static Logger logger = Logger.getLogger(NanoDBServer.class);
 
 
-    static final boolean FLUSH_DATA_AFTER_CMD = true;
+    static final boolean FLUSH_DATA_AFTER_CMD = false;
 
 
     /** The event dispatcher for this database server. */

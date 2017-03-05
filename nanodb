@@ -9,7 +9,7 @@ CPATH=$CPATH:build/classes
 
 # To set the page-size to use, add "-Dnanodb.pagesize=2048" to JAVA_OPTS.
 # To enable transaction processing, add "-Dnanodb.txns=on" to JAVA_OPTS.
-JAVA_OPTS="-Dlog4j.configuration=logging.conf"
+JAVA_OPTS="-Dlog4j.configuration=logging.conf -Dnanodb.txns=on"
 
 # Enable remote debugging with -d flag (wait for Intellij to attach).
 if [ "$1" = "-d" ];
