@@ -116,6 +116,7 @@ public class HeapTupleFile implements TupleFile {
             throw e;
         }
         HeaderPage.setFirstPage(header, END_OF_LIST);
+        storageManager.logDBPageWrite(header);
         header.unpin();
 
         this.storageManager = storageManager;
@@ -419,6 +420,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             // next insertions.
             DataPage.setNextNonFullPage(dbPage, firstPage);
             HeaderPage.setFirstPage(header, pageNo);
+            storageManager.logDBPageWrite(header);
             if (prevPage != header && prevPage != null) {
                 prevPage.unpin();
             }
@@ -443,6 +445,8 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             int nextPageNo = DataPage.getNextNonFullPage(dbPage);
             DataPage.setNextNonFullPage(prevPage, nextPageNo);
             DataPage.setNextNonFullPage(dbPage, END_OF_LIST);
+            // Might be an extra log if prevPage was set to header
+            storageManager.logDBPageWrite(prevPage);
         }
 
         DataPage.sanityCheck(dbPage);
@@ -451,6 +455,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
         }
         header.unpin();
         pageTup.unpin();
+        storageManager.logDBPageWrite(dbPage);
         dbPage.unpin();
         return pageTup;
     }
@@ -484,6 +489,7 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
 
         DBPage dbPage = ptup.getDBPage();
         DataPage.sanityCheck(dbPage);
+        storageManager.logDBPageWrite(dbPage);
     }
 
 
@@ -508,16 +514,20 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             int currFirstPage = HeaderPage.getFirstPage(header);
             DataPage.setNextNonFullPage(dbPage, currFirstPage);
             HeaderPage.setFirstPage(header, dbPage.getPageNo());
+            storageManager.logDBPageWrite(header);
             header.unpin();
         }
         DataPage.deleteTuple(dbPage, ptup.getSlot());
         DataPage.sanityCheck(dbPage);
+        storageManager.logDBPageWrite(dbPage);
 
         // Note that we don't invalidate the page-tuple when it is deleted,
         // so that the tuple can still be unpinned, etc.
     }
 
 
+    /** TODO: Might need to logDBPageWrite. Write java doc.
+     */
     @Override
     public void analyze() throws IOException {
         HeapFilePageTuple cur = null;
