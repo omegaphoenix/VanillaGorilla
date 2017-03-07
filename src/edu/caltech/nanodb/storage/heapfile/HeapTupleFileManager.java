@@ -119,6 +119,7 @@ public class HeapTupleFileManager implements TupleFileManager {
         statsWriter.writeTableStats(schema, stats, hpWriter);
         int statsSize = hpWriter.getPosition() - schemaEndPos;
         HeaderPage.setStatsSize(headerPage, statsSize);
+        storageManager.logDBPageWrite(headerPage);
         headerPage.unpin();
     }
 
