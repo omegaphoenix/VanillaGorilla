@@ -445,7 +445,6 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
             int nextPageNo = DataPage.getNextNonFullPage(dbPage);
             DataPage.setNextNonFullPage(prevPage, nextPageNo);
             DataPage.setNextNonFullPage(dbPage, END_OF_LIST);
-            // Might be an extra log if prevPage was set to header
             storageManager.logDBPageWrite(prevPage);
         }
 
@@ -526,8 +525,6 @@ page_scan:  // So we can break out of the outer loop from inside the inner loop.
     }
 
 
-    /** TODO: Might need to logDBPageWrite. Write java doc.
-     */
     @Override
     public void analyze() throws IOException {
         HeapFilePageTuple cur = null;
