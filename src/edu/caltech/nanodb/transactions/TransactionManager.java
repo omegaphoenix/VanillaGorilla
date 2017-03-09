@@ -445,7 +445,9 @@ public class TransactionManager implements BufferManagerObserver {
                 latestLSN = tmpLSN;
             }
         }
-        forceWAL(latestLSN);
+        if (latestLSN != null) {
+            forceWAL(latestLSN);
+        }
     }
 
 
