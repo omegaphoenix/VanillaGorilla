@@ -1081,6 +1081,27 @@ public class WALManager {
                 "Undoing WAL record at %s.  Type = %s, TxnID = %d",
                 lsn, type, transactionID));
 
+            if (type == WALRecordType.START_TXN) {
+                // do something here
+                break;
+            }
+
+            // Set lsn to previous lsn to walk backwards through WAL
+            short prevLSNFileNo = walReader.readShort();
+            int prevLSNFileOffset = walReader.readInt();
+            lsn = new LogSequenceNumber(prevLSNFileNo, prevLSNFileOffset);
+
+            String filename = walReader.readVarString255();
+            short dbPageNo = walReader.readShort();
+
+            DBPage dbPage = new DBPage(bufferManager, walReader.getDBFile(), dbPageNo);
+
+
+            short numSegments = walReader.readShort();
+            byte[] changes = applyUndoAndGenRedoOnlyData(walReader, dbPage, numSegments);
+
+            writeRedoOnlyUpdatePageRecord(dbPage, numSegments, changes);
+
             // TODO:  IMPLEMENT THE REST
             //
             //        Use logging statements liberally to help verify and
@@ -1089,11 +1110,6 @@ public class WALManager {
             //        If you encounter invalid WAL contents, throw a
             //        WALFileException to indicate the problem immediately.
             //
-            // TODO:  SET lsn TO PREVIOUS LSN TO WALK BACKWARD THROUGH WAL.
-
-            // TODO:  This break is just here so the code will compile; when
-            //        you provide your own implementation, get rid of it!
-            break;
         }
 
         // All done rolling back the transaction!  Record that it was aborted
