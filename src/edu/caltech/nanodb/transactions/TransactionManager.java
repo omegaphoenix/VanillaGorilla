@@ -449,15 +449,6 @@ public class TransactionManager implements BufferManagerObserver {
      *         going to be broken.
      */
     public void forceWAL(LogSequenceNumber lsn) throws IOException {
-        // TODO:  IMPLEMENT
-        //
-        // Note that the "next LSN" value must be determined from both the
-        // current LSN *and* its record size; otherwise we lose the last log
-        // record in the WAL file.  You can use this static method:
-        //
-        // int lastPosition = lsn.getFileOffset() + lsn.getRecordSize();
-        // WALManager.computeNextLSN(lsn.getLogFileNo(), lastPosition);
-
         // Check if any valid LSNs in range, [lsn, txnStateNextLSN).
         if (txnStateNextLSN.compareTo(lsn) >= 0) {
             // Force operation does not need to be performed.
@@ -466,14 +457,33 @@ public class TransactionManager implements BufferManagerObserver {
 
         BufferManager buffManager = storageManager.getBufferManager();
 
+        // Write pages of WAL;
         int start = txnStateNextLSN.getLogFileNo();
         int end = lsn.getLogFileNo();
-        for (int i = start; i < end; i++) {
+        for (int i = start + 1; i < end; i++) {
             String WALFileName = WALManager.getWALFileName(i);
             DBFile file = buffManager.getFile(WALFileName);
-            if (file != NULL) {
+            if (file != null) {
+                buffManager.writeDBFile(file, true);
             }
         }
+
+        // Write last page.
+        String WALFileName = WALManager.getWALFileName(end);
+        DBFile file = buffManager.getFile(WALFileName);
+
+        int minPageNo = 0;
+        int maxPageNo = lsn.getFileOffset() + lsn.getRecordSize();
+        buffManager.writeDBFile(file, minPageNo, maxPageNo, true);
+
+        // Note that the "next LSN" value must be determined from both the
+        // current LSN *and* its record size; otherwise we lose the last log
+        // record in the WAL file.
+        int lastPosition = lsn.getFileOffset() + lsn.getRecordSize();
+        WALManager.computeNextLSN(lsn.getLogFileNo(), lastPosition);
+
+        // Sync txnstate.dat to disk.
+        storeTxnStateToFile();
     }
 
 
