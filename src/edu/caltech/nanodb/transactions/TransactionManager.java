@@ -457,23 +457,27 @@ public class TransactionManager implements BufferManagerObserver {
 
         BufferManager buffManager = storageManager.getBufferManager();
 
-        // Write pages of WAL;
+        // Initialize variables for loop.
         int start = txnStateNextLSN.getLogFileNo();
         int end = lsn.getLogFileNo();
+        String WALFileName = WALManager.getWALFileName(start);
+        DBFile file = buffManager.getFile(WALFileName);
+
+        // Write pages of WAL;
         for (int i = start + 1; i < end; i++) {
-            String WALFileName = WALManager.getWALFileName(i);
-            DBFile file = buffManager.getFile(WALFileName);
             if (file != null) {
                 buffManager.writeDBFile(file, true);
             }
+
+            // Get file for next iteration.
+            WALFileName = WALManager.getWALFileName(i + 1);
+            file = buffManager.getFile(WALFileName);
         }
 
-        // Write last page.
-        String WALFileName = WALManager.getWALFileName(end);
-        DBFile file = buffManager.getFile(WALFileName);
-
         int minPageNo = 0;
-        int maxPageNo = lsn.getFileOffset() + lsn.getRecordSize();
+        int maxPageNo = lsn.getFileOffset();
+
+        // Write last page.
         buffManager.writeDBFile(file, minPageNo, maxPageNo, true);
 
         // Note that the "next LSN" value must be determined from both the
