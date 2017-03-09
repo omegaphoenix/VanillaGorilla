@@ -432,7 +432,7 @@ public class TransactionManager implements BufferManagerObserver {
         // force the WAL to be written out to the specified LSN.
 
         LogSequenceNumber latestLSN = null;
-        for(DBPage page : pages) {
+        for (DBPage page : pages) {
             DBFileType dbFileType = page.getDBFile().getType();
             if (dbFileType == DBFileType.WRITE_AHEAD_LOG_FILE || dbFileType == DBFileType.TXNSTATE_FILE) {
                 continue;
