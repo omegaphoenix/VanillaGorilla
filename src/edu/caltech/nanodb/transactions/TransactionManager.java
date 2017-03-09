@@ -457,6 +457,23 @@ public class TransactionManager implements BufferManagerObserver {
         //
         // int lastPosition = lsn.getFileOffset() + lsn.getRecordSize();
         // WALManager.computeNextLSN(lsn.getLogFileNo(), lastPosition);
+
+        // Check if any valid LSNs in range, [lsn, txnStateNextLSN).
+        if (txnStateNextLSN.compareTo(lsn) >= 0) {
+            // Force operation does not need to be performed.
+            return;
+        }
+
+        BufferManager buffManager = storageManager.getBufferManager();
+
+        int start = txnStateNextLSN.getLogFileNo();
+        int end = lsn.getLogFileNo();
+        for (int i = start; i < end; i++) {
+            String WALFileName = WALManager.getWALFileName(i);
+            DBFile file = buffManager.getFile(WALFileName);
+            if (file != NULL) {
+            }
+        }
     }
 
 
