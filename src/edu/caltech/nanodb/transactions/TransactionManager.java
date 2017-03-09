@@ -409,8 +409,6 @@ public class TransactionManager implements BufferManagerObserver {
      */
     @Override
     public void beforeWriteDirtyPages(List<DBPage> pages) throws IOException {
-        // TODO:  IMPLEMENT
-        //
         // This implementation must enforce the write-ahead logging rule (aka
         // the WAL rule) by ensuring that the write-ahead log reflects all
         // changes to all of the specified pages, on disk, before any of these
@@ -432,6 +430,22 @@ public class TransactionManager implements BufferManagerObserver {
         //
         // Finally, you can use the forceWAL(LogSequenceNumber) function to
         // force the WAL to be written out to the specified LSN.
+
+        LogSequenceNumber latestLSN = null;
+        for(DBPage page : pages) {
+            DBFileType dbFileType = page.getDBFile().getType();
+            if (dbFileType == DBFileType.WRITE_AHEAD_LOG_FILE || dbFileType == DBFileType.TXNSTATE_FILE) {
+                continue;
+            }
+            LogSequenceNumber tmpLSN = page.getPageLSN();
+            if (tmpLSN == null) {
+                throw new IOException(String.format("DBPage %s has null LSN", page.toString()));
+            }
+            if (latestLSN == null || tmpLSN.compareTo(latestLSN) > 0) {
+                latestLSN = tmpLSN;
+            }
+        }
+        forceWAL(latestLSN);
     }
 
 
