@@ -1070,6 +1070,9 @@ public class WALManager {
             DBFileReader walReader = getWALFileReader(lsn);
 
             WALRecordType type = WALRecordType.valueOf(walReader.readByte());
+            if (type == null) {
+                throw new WALFileException("WAL reader read byte that does not match any type");
+            }
             int recordTxnID = walReader.readInt();
             if (recordTxnID != transactionID) {
                 throw new WALFileException(String.format("Sent to WAL record " +
@@ -1104,14 +1107,6 @@ public class WALManager {
 
             writeRedoOnlyUpdatePageRecord(dbPage, numSegments, changes);
 
-            // TODO:  IMPLEMENT THE REST
-            //
-            //        Use logging statements liberally to help verify and
-            //        debug your work.
-            //
-            //        If you encounter invalid WAL contents, throw a
-            //        WALFileException to indicate the problem immediately.
-            //
         }
 
         // All done rolling back the transaction!  Record that it was aborted
