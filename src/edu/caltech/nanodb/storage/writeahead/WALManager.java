@@ -1082,7 +1082,6 @@ public class WALManager {
                 lsn, type, transactionID));
 
             if (type == WALRecordType.START_TXN) {
-                // do something here
                 break;
             }
 
