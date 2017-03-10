@@ -1087,25 +1087,31 @@ public class WALManager {
             if (type == WALRecordType.START_TXN) {
                 break;
             }
+            else if (type == WALRecordType.UPDATE_PAGE) {
 
-            // Set lsn to previous lsn to walk backwards through WAL
-            short prevLSNFileNo = walReader.readShort();
-            int prevLSNFileOffset = walReader.readInt();
-            lsn = new LogSequenceNumber(prevLSNFileNo, prevLSNFileOffset);
+                // Set lsn to previous lsn to walk backwards through WAL
+                short prevLSNFileNo = walReader.readShort();
+                int prevLSNFileOffset = walReader.readInt();
+                lsn = new LogSequenceNumber(prevLSNFileNo, prevLSNFileOffset);
 
-            logger.debug(String.format("Previous lsn is %s", lsn));
+                logger.debug(String.format("Previous lsn is %s", lsn));
 
-            String filename = walReader.readVarString255();
-            short dbPageNo = walReader.readShort();
+                String filename = walReader.readVarString255();
+                short dbPageNo = walReader.readShort();
 
-            DBFile dbFile = storageManager.openDBFile(filename);
-            DBPage dbPage = storageManager.loadDBPage(dbFile, dbPageNo);
+                DBFile dbFile = storageManager.openDBFile(filename);
+                DBPage dbPage = storageManager.loadDBPage(dbFile, dbPageNo);
 
-            short numSegments = walReader.readShort();
+                short numSegments = walReader.readShort();
 
-            byte[] changes = applyUndoAndGenRedoOnlyData(walReader, dbPage, numSegments);
+                byte[] changes = applyUndoAndGenRedoOnlyData(walReader, dbPage, numSegments);
 
-            writeRedoOnlyUpdatePageRecord(dbPage, numSegments, changes);
+                writeRedoOnlyUpdatePageRecord(dbPage, numSegments, changes);
+            }
+            else {
+                throw new WALFileException(String.format("Expected update or " +
+                    "start txn record type, but found %s", type));
+            }
 
         }
 
