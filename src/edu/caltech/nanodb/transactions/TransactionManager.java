@@ -476,13 +476,13 @@ public class TransactionManager implements BufferManagerObserver {
         BufferManager buffManager = storageManager.getBufferManager();
 
         // Initialize variables for loop.
-        int start = txnStateNextLSN.getLogFileNo();
+        int start = txnStateNextLSN.getLogFileNo() + 1;
         int end = lsn.getLogFileNo();
         String walFileName = WALManager.getWALFileName(start);
         DBFile file = buffManager.getFile(walFileName);
 
         // Write pages of WAL;
-        for (int i = start + 1; i < end; i++) {
+        for (int i = start; i < end; i++) {
             if (file != null) {
                 buffManager.writeDBFile(file, true);
             }
