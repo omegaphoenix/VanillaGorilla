@@ -434,13 +434,14 @@ public class TransactionManager implements BufferManagerObserver {
         LogSequenceNumber latestLSN = null;
         for (DBPage page : pages) {
             DBFileType dbFileType = page.getDBFile().getType();
-            if (dbFileType == DBFileType.WRITE_AHEAD_LOG_FILE ||
-                dbFileType == DBFileType.TXNSTATE_FILE) {
+            if (dbFileType == DBFileType.WRITE_AHEAD_LOG_FILE
+                    || dbFileType == DBFileType.TXNSTATE_FILE) {
                 continue;
             }
             LogSequenceNumber tmpLSN = page.getPageLSN();
             if (tmpLSN == null) {
-                throw new IOException(String.format("DBPage %s has null LSN", page.toString()));
+                throw new IOException(String.format("DBPage %s has null LSN",
+                        page.toString()));
             }
             if (latestLSN == null || tmpLSN.compareTo(latestLSN) > 0) {
                 latestLSN = tmpLSN;
@@ -477,8 +478,8 @@ public class TransactionManager implements BufferManagerObserver {
         // Initialize variables for loop.
         int start = txnStateNextLSN.getLogFileNo();
         int end = lsn.getLogFileNo();
-        String WALFileName = WALManager.getWALFileName(start);
-        DBFile file = buffManager.getFile(WALFileName);
+        String walFileName = WALManager.getWALFileName(start);
+        DBFile file = buffManager.getFile(walFileName);
 
         // Write pages of WAL;
         for (int i = start + 1; i < end; i++) {
@@ -487,8 +488,8 @@ public class TransactionManager implements BufferManagerObserver {
             }
 
             // Get file for next iteration.
-            WALFileName = WALManager.getWALFileName(i + 1);
-            file = buffManager.getFile(WALFileName);
+            walFileName = WALManager.getWALFileName(i + 1);
+            file = buffManager.getFile(walFileName);
         }
 
         int minPageNo = 0;
