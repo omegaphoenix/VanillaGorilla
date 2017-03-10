@@ -1091,13 +1091,16 @@ public class WALManager {
             int prevLSNFileOffset = walReader.readInt();
             lsn = new LogSequenceNumber(prevLSNFileNo, prevLSNFileOffset);
 
+            logger.debug(String.format("Previous lsn is %s", lsn));
+
             String filename = walReader.readVarString255();
             short dbPageNo = walReader.readShort();
 
-            DBPage dbPage = new DBPage(bufferManager, walReader.getDBFile(), dbPageNo);
-
+            DBFile dbFile = storageManager.openDBFile(filename);
+            DBPage dbPage = storageManager.loadDBPage(dbFile, dbPageNo);
 
             short numSegments = walReader.readShort();
+
             byte[] changes = applyUndoAndGenRedoOnlyData(walReader, dbPage, numSegments);
 
             writeRedoOnlyUpdatePageRecord(dbPage, numSegments, changes);
