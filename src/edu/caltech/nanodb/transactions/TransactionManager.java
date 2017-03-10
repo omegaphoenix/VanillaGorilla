@@ -434,7 +434,8 @@ public class TransactionManager implements BufferManagerObserver {
         LogSequenceNumber latestLSN = null;
         for (DBPage page : pages) {
             DBFileType dbFileType = page.getDBFile().getType();
-            if (dbFileType == DBFileType.WRITE_AHEAD_LOG_FILE || dbFileType == DBFileType.TXNSTATE_FILE) {
+            if (dbFileType == DBFileType.WRITE_AHEAD_LOG_FILE ||
+                dbFileType == DBFileType.TXNSTATE_FILE) {
                 continue;
             }
             LogSequenceNumber tmpLSN = page.getPageLSN();
