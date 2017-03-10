@@ -502,7 +502,8 @@ public class TransactionManager implements BufferManagerObserver {
         // current LSN *and* its record size; otherwise we lose the last log
         // record in the WAL file.
         int lastPosition = lsn.getFileOffset() + lsn.getRecordSize();
-        WALManager.computeNextLSN(lsn.getLogFileNo(), lastPosition);
+        txnStateNextLSN = WALManager.computeNextLSN(lsn.getLogFileNo(),
+                lastPosition);
 
         // Sync txnstate.dat to disk.
         storeTxnStateToFile();
