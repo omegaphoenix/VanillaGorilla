@@ -453,10 +453,20 @@ public class TransactionManager implements BufferManagerObserver {
     }
 
 
+
     /**
      * This method forces the write-ahead log out to at least the specified
      * log sequence number, syncing the log to ensure that all essential
      * records have reached the disk itself.
+     * This operation is atomic and durable because we don't sync the
+     * txnstate.dat to disk until the end of the transaction. That way,
+     * in case the database crashes in the middle of the operation, all the
+     * critical values related to transaction management will be restored
+     * to their state before forceWAL was called.
+     * The transaction can be rolled back if aborted because the
+     * txnStateNextLSN has not been written to disk until the end of the
+     * transaction, the files that were written to can be undone by looking
+     * at the Buffer Manager's log.
      *
      * @param lsn All WAL data up to this value must be forced to disk and
      *        sync'd.  This value may be one past the end of the current WAL
@@ -492,10 +502,9 @@ public class TransactionManager implements BufferManagerObserver {
             file = buffManager.getFile(walFileName);
         }
 
+        // Write last page.
         int minPageNo = 0;
         int maxPageNo = lsn.getFileOffset();
-
-        // Write last page.
         buffManager.writeDBFile(file, minPageNo, maxPageNo, true);
 
         // Note that the "next LSN" value must be determined from both the
