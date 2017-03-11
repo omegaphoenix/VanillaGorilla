@@ -478,7 +478,7 @@ public class TransactionManager implements BufferManagerObserver {
      */
     public void forceWAL(LogSequenceNumber lsn) throws IOException {
         // Check if any valid LSNs in range, [lsn, txnStateNextLSN).
-        if (txnStateNextLSN.compareTo(lsn) >= 0) {
+        if (txnStateNextLSN.compareTo(lsn) <= 0) {
             // Force operation does not need to be performed.
             return;
         }
