@@ -434,13 +434,14 @@ public class TransactionManager implements BufferManagerObserver {
         LogSequenceNumber latestLSN = null;
         for (DBPage page : pages) {
             DBFileType dbFileType = page.getDBFile().getType();
-            if (dbFileType == DBFileType.WRITE_AHEAD_LOG_FILE ||
-                dbFileType == DBFileType.TXNSTATE_FILE) {
+            if (dbFileType == DBFileType.WRITE_AHEAD_LOG_FILE
+                    || dbFileType == DBFileType.TXNSTATE_FILE) {
                 continue;
             }
             LogSequenceNumber tmpLSN = page.getPageLSN();
             if (tmpLSN == null) {
-                throw new IOException(String.format("DBPage %s has null LSN", page.toString()));
+                throw new IOException(String.format("DBPage %s has null LSN",
+                        page.toString()));
             }
             if (latestLSN == null || tmpLSN.compareTo(latestLSN) > 0) {
                 latestLSN = tmpLSN;
@@ -452,10 +453,20 @@ public class TransactionManager implements BufferManagerObserver {
     }
 
 
+
     /**
      * This method forces the write-ahead log out to at least the specified
      * log sequence number, syncing the log to ensure that all essential
      * records have reached the disk itself.
+     * This operation is atomic and durable because we don't sync the
+     * txnstate.dat to disk until the end of the transaction. That way,
+     * in case the database crashes in the middle of the operation, all the
+     * critical values related to transaction management will be restored
+     * to their state before forceWAL was called.
+     * The transaction can be rolled back if aborted because the
+     * txnStateNextLSN has not been written to disk until the end of the
+     * transaction, the files that were written to can be undone by looking
+     * at the Buffer Manager's log.
      *
      * @param lsn All WAL data up to this value must be forced to disk and
      *        sync'd.  This value may be one past the end of the current WAL
@@ -466,14 +477,46 @@ public class TransactionManager implements BufferManagerObserver {
      *         going to be broken.
      */
     public void forceWAL(LogSequenceNumber lsn) throws IOException {
-        // TODO:  IMPLEMENT
-        //
+        // Check if any valid LSNs in range, [lsn, txnStateNextLSN).
+        if (txnStateNextLSN.compareTo(lsn) <= 0) {
+            // Force operation does not need to be performed.
+            return;
+        }
+
+        BufferManager buffManager = storageManager.getBufferManager();
+
+        // Initialize variables for loop.
+        int start = txnStateNextLSN.getLogFileNo() + 1;
+        int end = lsn.getLogFileNo();
+        String walFileName = WALManager.getWALFileName(start);
+        DBFile file = buffManager.getFile(walFileName);
+
+        // Write pages of WAL;
+        for (int i = start; i < end; i++) {
+            if (file != null) {
+                buffManager.writeDBFile(file, true);
+            }
+
+            // Get file for next iteration.
+            walFileName = WALManager.getWALFileName(i + 1);
+            file = buffManager.getFile(walFileName);
+        }
+
+        // Write last page.
+        int minPageNo = 0;
+        int maxPageNo = lsn.getFileOffset();
+        if (file != null) {
+            buffManager.writeDBFile(file, minPageNo, maxPageNo, true);
+        }
+
         // Note that the "next LSN" value must be determined from both the
         // current LSN *and* its record size; otherwise we lose the last log
-        // record in the WAL file.  You can use this static method:
-        //
-        // int lastPosition = lsn.getFileOffset() + lsn.getRecordSize();
-        // WALManager.computeNextLSN(lsn.getLogFileNo(), lastPosition);
+        // record in the WAL file.
+        int lastPosition = lsn.getFileOffset() + lsn.getRecordSize();
+        txnStateNextLSN = WALManager.computeNextLSN(end, lastPosition);
+
+        // Sync txnstate.dat to disk.
+        storeTxnStateToFile();
     }
 
 
