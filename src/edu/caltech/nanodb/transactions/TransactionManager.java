@@ -505,14 +505,15 @@ public class TransactionManager implements BufferManagerObserver {
         // Write last page.
         int minPageNo = 0;
         int maxPageNo = lsn.getFileOffset();
-        buffManager.writeDBFile(file, minPageNo, maxPageNo, true);
+        if (file != null) {
+            buffManager.writeDBFile(file, minPageNo, maxPageNo, true);
+        }
 
         // Note that the "next LSN" value must be determined from both the
         // current LSN *and* its record size; otherwise we lose the last log
         // record in the WAL file.
         int lastPosition = lsn.getFileOffset() + lsn.getRecordSize();
-        txnStateNextLSN = WALManager.computeNextLSN(lsn.getLogFileNo(),
-                lastPosition);
+        txnStateNextLSN = WALManager.computeNextLSN(end, lastPosition);
 
         // Sync txnstate.dat to disk.
         storeTxnStateToFile();
