@@ -1070,6 +1070,9 @@ public class WALManager {
             DBFileReader walReader = getWALFileReader(lsn);
 
             WALRecordType type = WALRecordType.valueOf(walReader.readByte());
+            if (type == null) {
+                throw new WALFileException("WAL reader read byte that does not match any type");
+            }
             int recordTxnID = walReader.readInt();
             if (recordTxnID != transactionID) {
                 throw new WALFileException(String.format("Sent to WAL record " +
@@ -1081,19 +1084,35 @@ public class WALManager {
                 "Undoing WAL record at %s.  Type = %s, TxnID = %d",
                 lsn, type, transactionID));
 
-            // TODO:  IMPLEMENT THE REST
-            //
-            //        Use logging statements liberally to help verify and
-            //        debug your work.
-            //
-            //        If you encounter invalid WAL contents, throw a
-            //        WALFileException to indicate the problem immediately.
-            //
-            // TODO:  SET lsn TO PREVIOUS LSN TO WALK BACKWARD THROUGH WAL.
+            if (type == WALRecordType.START_TXN) {
+                break;
+            }
+            else if (type == WALRecordType.UPDATE_PAGE) {
 
-            // TODO:  This break is just here so the code will compile; when
-            //        you provide your own implementation, get rid of it!
-            break;
+                // Set lsn to previous lsn to walk backwards through WAL
+                short prevLSNFileNo = walReader.readShort();
+                int prevLSNFileOffset = walReader.readInt();
+                lsn = new LogSequenceNumber(prevLSNFileNo, prevLSNFileOffset);
+
+                logger.debug(String.format("Previous lsn is %s", lsn));
+
+                String filename = walReader.readVarString255();
+                short dbPageNo = walReader.readShort();
+
+                DBFile dbFile = storageManager.openDBFile(filename);
+                DBPage dbPage = storageManager.loadDBPage(dbFile, dbPageNo);
+
+                short numSegments = walReader.readShort();
+
+                byte[] changes = applyUndoAndGenRedoOnlyData(walReader, dbPage, numSegments);
+
+                writeRedoOnlyUpdatePageRecord(dbPage, numSegments, changes);
+            }
+            else {
+                throw new WALFileException(String.format("Expected update or " +
+                    "start txn record type, but found %s", type));
+            }
+
         }
 
         // All done rolling back the transaction!  Record that it was aborted
