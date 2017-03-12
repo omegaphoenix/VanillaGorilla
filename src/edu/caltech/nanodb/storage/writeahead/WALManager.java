@@ -282,6 +282,22 @@ public class WALManager {
             //                    " during redo processing!");
             //            }
 
+            switch (type) {
+            case START_TXN:
+                break;
+            case UPDATE_PAGE:
+            case UPDATE_PAGE_REDO_ONLY:
+            case COMMIT_TXN:
+                break;
+            case ABORT_TXN:
+                break;
+            default:
+                throw new WALFileException(
+                    "Encountered unrecognized WAL record type " +
+                    type + " at LSN " + currLSN +
+                    " during redo processing!");
+            }
+
             oldLSN = currLSN;
             currLSN = computeNextLSN(currLSN.getLogFileNo(), walReader.getPosition());
         }
