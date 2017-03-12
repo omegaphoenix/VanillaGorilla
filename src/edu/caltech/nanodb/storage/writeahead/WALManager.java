@@ -284,12 +284,12 @@ public class WALManager {
 
             switch (type) {
             case START_TXN:
-                break;
             case UPDATE_PAGE:
-                break;
             case UPDATE_PAGE_REDO_ONLY:
+                recoveryInfo.updateInfo(transactionID, currLSN);
                 break;
             case COMMIT_TXN:
+                recoveryInfo.recordTxnCompleted(transactionID);
                 break;
             case ABORT_TXN:
                 break;
