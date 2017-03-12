@@ -286,7 +286,9 @@ public class WALManager {
             case START_TXN:
                 break;
             case UPDATE_PAGE:
+                break;
             case UPDATE_PAGE_REDO_ONLY:
+                break;
             case COMMIT_TXN:
                 break;
             case ABORT_TXN:
