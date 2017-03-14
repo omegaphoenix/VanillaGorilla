@@ -228,6 +228,29 @@ public class WALManager {
         return recoveryInfo;
     }
 
+    /**
+     * This helper function reads in the fileNo and offset of the previous
+     * LSN and generates a new LogSequenceNumber object.
+     *
+     * @param walReader file being read.
+     *
+     * @return a new LogSequenceNumber object representing the fileNo and offset.
+     *
+     * @throws IOException if an IO error occurs reading from walReader.
+     */
+    private LogSequenceNumber readPrevLSN(DBFileReader walReader) throws IOException {
+        // Read file number and file-offset for previous LSN.
+        // We use int for fileNo because it represents an unsigned short.
+        int fileNo = walReader.readShort();
+        int offset = walReader.readInt();
+
+        // Log debug output.
+        logger.debug(String.format("Previous LSN FileNo: %d, Offset: %d.",
+                fileNo, offset));
+
+        return new LogSequenceNumber(fileNo, offset);
+    }
+
 
     /**
      * This helper function performs redo processing using the write-ahead
