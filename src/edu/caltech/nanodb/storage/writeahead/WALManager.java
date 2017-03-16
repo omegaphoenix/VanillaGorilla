@@ -507,6 +507,21 @@ public class WALManager {
             //                    " during undo processing!");
             //            }
 
+            switch (type) {
+            case UPDATE_PAGE:
+                break;
+            case UPDATE_PAGE_REDO_ONLY:
+            case ABORT_TXN:
+            case START_TXN:
+            case COMMIT_TXN:
+                break;
+            default:
+                throw new WALFileException(
+                    "Encountered unrecognized WAL record type " +
+                    type + " at LSN " + currLSN +
+                    " during undo processing!");
+            }
+
             oldLSN = currLSN;
         }
 
