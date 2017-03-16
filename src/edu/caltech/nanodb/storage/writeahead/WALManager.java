@@ -534,7 +534,11 @@ public class WALManager {
                 checkFooter(walReader, type);
                 break;
             case START_TXN:
-                checkFooter(walReader, type);
+                checkFooter(walReader, type); // TODO: Not sure if we need this.
+                // Done undo-ing transaction
+                prevLSN = recoveryInfo.getLastLSN(transactionID);
+                writeTxnRecord(WALRecordType.ABORT_TXN, transactionID, prevLSN);
+                recoveryInfo.recordTxnCompleted(transactionID);
                 break;
             default:
                 throw new WALFileException(
