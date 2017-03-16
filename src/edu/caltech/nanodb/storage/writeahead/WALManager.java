@@ -506,14 +506,60 @@ public class WALManager {
             //                    type + " at LSN " + currLSN +
             //                    " during undo processing!");
             //            }
+            LogSequenceNumber prevLSN;
 
+            // See nanodb.storage.writeahead package documentation for details
+            // about the byte breakdown of these file types.
             switch (type) {
+            // Only undo for the UPDATE_PAGE case.
             case UPDATE_PAGE:
+                prevLSN = readPrevLSN(walReader);
+                String fileName = walReader.readVarString255();
+                // We use int for pageNo because it represents an unsigned short.
+                int pageNo = walReader.readShort();
+                DBFile dbFile = storageManager.openDBFile(fileName);
+                DBPage dbPage = new DBPage(bufferManager, dbFile, pageNo);
+                int numSegments = walReader.readShort();
+                logger.debug(String.format("File name: " + fileName +
+                        ", PageNo: %d NumSegments: %d", pageNo, numSegments));
+
+                logger.debug("Applying undoes...");
+                prevLSN = recoveryInfo.getLastLSN(transactionID);
+                byte[] changes = applyUndoAndGenRedoOnlyData(walReader, dbPage, numSegments);
+                LogSequenceNumber redoOnlyLSN = writeRedoOnlyUpdatePageRecord(transactionID,
+                                                    prevLSN, dbPage, numSegments, changes);
+                logger.debug(String.format("RedoOnlyLSN: %s", redoOnlyLSN.toString()));
+
+                LogSequenceNumber txnRecordLSN = writeTxnRecord(type, transactionID, redoOnlyLSN);
+                logger.debug(String.format("TxnRecordLSN: %s", txnRecordLSN.toString()));
+                recoveryInfo.updateInfo(transactionID, txnRecordLSN);
+
+                int fileOffset = walReader.readInt();
+                logger.debug(String.format("File offset: %d", fileOffset));
+                checkFooter(walReader, type);
                 break;
+            // For the rest of the cases, read through, just to make sure
+            // everything is aligned.
             case UPDATE_PAGE_REDO_ONLY:
+                prevLSN = readPrevLSN(walReader);
+                String fileName = walReader.readVarString255();
+                // We use int for pageNo because it represents an unsigned short.
+                int pageNo = walReader.readShort();
+                DBFile dbFile = storageManager.openDBFile(fileName);
+                DBPage dbPage = new DBPage(bufferManager, dbFile, pageNo);
+                int numSegments = walReader.readShort();
+                logger.debug(String.format("File name: " + fileName +
+                        ", PageNo: %d NumSegments: %d", pageNo, numSegments));
+                // We can't check the rest of the file without traversing all
+                // the segments, so we will stop checking here.
+                break;
             case ABORT_TXN:
-            case START_TXN:
             case COMMIT_TXN:
+                prevLSN = readPrevLSN(walReader);
+                checkFooter(walReader, type);
+                break;
+            case START_TXN:
+                checkFooter(walReader, type);
                 break;
             default:
                 throw new WALFileException(
