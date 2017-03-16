@@ -77,11 +77,25 @@ C1.  The txnstate.dat file records the next transaction ID that the database
      should use when it is restarted.  Why is it important for this to be
      stored and used by the database when it is restarted?
 
+     This is important because the transaction ID allows us to figure out the
+     order of transactions in case we have to redo and undo transactions. If
+     we have the wrong transaction ID, we wouldn't know what order to redo
+     transactions or we could undo the wrong transactions and we would end up
+     with a non-durable database.
+
 C2:  The txnstate.dat file records a "firstLSN" value, which is where recovery
      processing starts from.  What guarantees are made about this firstLSN
      value?  Given these guarantees, will redo processing need any records
      before the firstLSN value?  Will undo processing need any records before
      the firstLSN value?  Justify your answers.
+
+     The firstLSN value is like a checkpoint so we only have to start from
+     the firstLSN value for redo processing, which does not need any records
+     before the firstLSN value.
+
+     Undo processing does need records before the firstLSN value because it
+     might have to undo steps before the firstLSN value if they are part
+     of a transaction that is at the firstLSN value or afterwards.
 
 C3:  Currently, the "firstLSN" value is only moved forward when recovery
      processing is completed.  Can you describe a strategy for moving forward
