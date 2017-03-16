@@ -57,6 +57,12 @@ B2:  Another task was to implement the beforeWriteDirtyPages() method on the
      logging rule is always followed.  What steps do you take to ensure this
      will always happen?  Describe your method's approach.
 
+     We ensure that the write-ahead logging rule is always folowed by calling
+     the forceWAL function before any of the dirty pages are written. We
+     choose the greatest LSN so that we forceWAL everything up to that LSN
+     which ensures that all the pages included in the list or pages passed
+     as a parameter to this function are written out.
+
 B3:  In your current implementation, some pages may not have corresponding
      LSNs associated with them, because they are not logged in the write-ahead
      log.  Enumerate all file types that will have pages not logged in the
