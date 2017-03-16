@@ -323,19 +323,13 @@ public class WALManager {
             //                    " during redo processing!");
             //            }
 
-            byte footerByte;
             LogSequenceNumber prevLSN;
 
             // See nanodb.storage.writeahead package documentation for details
             // about the byte breakdown of these file types.
             switch (type) {
             case START_TXN:
-                // Make sure remaining byte is the START_TXN signature.
-                footerByte = walReader.readByte();
-                if (WALRecordType.valueOf(footerByte) != WALRecordType.START_TXN) {
-                    throw new WALFileException(
-                        "Missing START_TXN ending byte in START_TXN record.");
-                }
+                checkFooter(walReader, type);
                 break;
             case UPDATE_PAGE:
                 break;
@@ -343,22 +337,13 @@ public class WALManager {
                 break;
             case COMMIT_TXN:
                 prevLSN = readPrevLSN(walReader);
+                checkFooter(walReader, type);
+                // Mark transaction as complete.
                 recoveryInfo.recordTxnCompleted(transactionID);
-                // Make sure remaining byte is the START_TXN signature.
-                footerByte = walReader.readByte();
-                if (WALRecordType.valueOf(footerByte) != WALRecordType.COMMIT_TXN) {
-                    throw new WALFileException(
-                            "Missing COMMIT_TXN ending byte in COMMIT_TXN record.");
-                }
                 break;
             case ABORT_TXN:
                 prevLSN = readPrevLSN(walReader);
-                // Make sure remaining byte is the ABORT_TXN signature.
-                footerByte = walReader.readByte();
-                if (WALRecordType.valueOf(footerByte) != WALRecordType.ABORT_TXN) {
-                    throw new WALFileException(
-                            "Missing ABORT_TXN ending byte in ABORT_TXN record.");
-                }
+                checkFooter(walReader, type);
                 break;
             default:
                 throw new WALFileException(
