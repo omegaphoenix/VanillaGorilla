@@ -68,6 +68,8 @@ B3:  In your current implementation, some pages may not have corresponding
      log.  Enumerate all file types that will have pages not logged in the
      WAL.
 
+     WRITE_AHEAD_LOG_FILE, TXNSTATE_FILE
+
 C:  The txnstate.dat File
 -------------------------
 
