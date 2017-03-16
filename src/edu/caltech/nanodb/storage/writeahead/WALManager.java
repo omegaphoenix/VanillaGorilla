@@ -332,8 +332,21 @@ public class WALManager {
                 checkFooter(walReader, type);
                 break;
             case UPDATE_PAGE:
-                break;
             case UPDATE_PAGE_REDO_ONLY:
+                prevLSN = readPrevLSN(walReader);
+                String fileName = walReader.readVarString255();
+                // We use int for pageNo because it represents an unsigned short.
+                int pageNo = walReader.readShort();
+                DBFile dbFile = storageManager.openDBFile(fileName);
+                DBPage dbPage = new DBPage(bufferManager, dbFile, pageNo);
+                int numSegments = walReader.readShort();
+                logger.debug(String.format("File name: " + fileName +
+                        ", PageNo: %d NumSegments: %d", pageNo, numSegments));
+                logger.debug("Applying redoes...");
+                applyRedo(type, walReader, dbPage, numSegments);
+                int fileOffset = walReader.readInt();
+                logger.debug(String.format("File offset: %d", fileOffset));
+                checkFooter(walReader, type);
                 break;
             case COMMIT_TXN:
                 prevLSN = readPrevLSN(walReader);
