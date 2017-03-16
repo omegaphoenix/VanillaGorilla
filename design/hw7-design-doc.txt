@@ -102,6 +102,14 @@ C3:  Currently, the "firstLSN" value is only moved forward when recovery
      firstLSN during normal operation?  What constraints must be enforced to
      ensure the database continues working properly?  Explain your answers.
 
+     We could have a checkpoint at the firstLSN value so that at that moment
+     all table files are brought into sync with the write-ahead log. The
+     constraints must be that when the checkpoint is being performed, no other
+     update operations are allowed. All the log files and modified table-pages
+     in memory would need to be written to disk and the log and table-files
+     would need to be synchronized. The log would also include the checkpoint
+     and all active transactions at the time of the checkpoint.
+
 C4:  The txnstate.dat file's "firstLSN" value is somewhat similar to a
      checkpoint / fuzzy-checkpoint, but it is not quite the same.  Describe
      the differences between what NanoDB provides, and how checkpoints
