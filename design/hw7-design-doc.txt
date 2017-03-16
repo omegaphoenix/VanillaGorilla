@@ -26,6 +26,9 @@ A3.  Specify any late tokens you are applying to this assignment, or
      none
 
 A4.  Briefly describe what parts of the assignment each teammate focused on.
+     Justin focused on steps 1-3(logging and atomic forceWAL) and the design doc.
+     Matthew focused on steps 4-5(enforcing WAL rule and transaction rollback).
+     David focused on step 6(undo and redo processing) and testing.
 
 B:  Write-Ahead Logging
 -----------------------
@@ -40,15 +43,34 @@ B1.  One of your tasks this week was to implement the TransactionManager's
      also be atomic with the obvious caveat that the written sector may still
      be buffered until a sync occurs.)
 
+     We ensured that forceWAL is atomic and durable by not syncing the
+     txnstate.dat to disk until the end of the transaction. That way, in case
+     the database crashes in the middle of the operation, all the critical
+     values related to transaction management will be restored to their state
+     before forceWAL was called.
+
+     The transaction can be rolled back if aborted because the txnStateNextLSN
+     has not been written to disk until the end of the transaction, the files
+     that were written to can be undone by looking at the Buffer Manager's
+     log.
+
 B2:  Another task was to implement the beforeWriteDirtyPages() method on the
      TransactionManager.  Your implementation must ensure that the write-ahead
      logging rule is always followed.  What steps do you take to ensure this
      will always happen?  Describe your method's approach.
 
+     We ensure that the write-ahead logging rule is always folowed by calling
+     the forceWAL function before any of the dirty pages are written. We
+     choose the greatest LSN so that we forceWAL everything up to that LSN
+     which ensures that all the pages included in the list or pages passed
+     as a parameter to this function are written out.
+
 B3:  In your current implementation, some pages may not have corresponding
      LSNs associated with them, because they are not logged in the write-ahead
      log.  Enumerate all file types that will have pages not logged in the
      WAL.
+
+     WRITE_AHEAD_LOG_FILE, TXNSTATE_FILE
 
 C:  The txnstate.dat File
 -------------------------
@@ -57,16 +79,48 @@ C1.  The txnstate.dat file records the next transaction ID that the database
      should use when it is restarted.  Why is it important for this to be
      stored and used by the database when it is restarted?
 
+     This is important because the transaction ID allows us to figure out the
+     order of transactions in case we have to redo and undo transactions. If
+     we have the wrong transaction ID, we wouldn't know what order to redo
+     transactions or we could undo the wrong transactions and we would end up
+     with a non-durable database.
+
 C2:  The txnstate.dat file records a "firstLSN" value, which is where recovery
      processing starts from.  What guarantees are made about this firstLSN
      value?  Given these guarantees, will redo processing need any records
      before the firstLSN value?  Will undo processing need any records before
      the firstLSN value?  Justify your answers.
 
+     The guarantees are that
+     (1) all data files reflect all changes that are recoreded in the
+         write-ahead log before the LSN and
+     (2) there are no incomplete transactions at this point
+
+     The firstLSN value is like a checkpoint so we only have to start from
+     the firstLSN value for redo processing, which does not need any records
+     before the firstLSN value.
+
+     Undo processing however also does not need any records before the
+     firstLSN value because we are guaranteed that there are no incomplete
+     transactions. (This is different than a checkpoint for which undo does
+     need values before the checkpoint.)
+
+
 C3:  Currently, the "firstLSN" value is only moved forward when recovery
      processing is completed.  Can you describe a strategy for moving forward
      firstLSN during normal operation?  What constraints must be enforced to
      ensure the database continues working properly?  Explain your answers.
+
+     When all transactions are completed (which can be kept track of using
+     either a periodic check or a condition variable which unblocks a process
+     that updates firstLSN when the current transaction count reaches 0), the
+     firstLSN value can be updated. The constraints must be that no
+     transaction can occur during the time that firstLSN is updated. In
+     addition, no other update operations are allowed and log files and
+     modified table-files in memory would need to be written to disk before
+     firstLSN is updated. This is because firstLSN value has more strict
+     constraints than a checkpoint.
+
 
 C4:  The txnstate.dat file's "firstLSN" value is somewhat similar to a
      checkpoint / fuzzy-checkpoint, but it is not quite the same.  Describe
@@ -75,12 +129,34 @@ C4:  The txnstate.dat file's "firstLSN" value is somewhat similar to a
      checkpointing operation, vs. the constraints that NanoDB must enforce
      with firstLSN.
 
+     A checkpoint has the guarantee that at that moment all table files are
+     brought into sync with the write-ahead log. The constraints are that when
+     the checkpoint is being performed, no other update operations are
+     allowed. All the log files and modified table-pages in memory would need
+     to be written to disk and the log and table-files would need to be
+     synchronized. The log would also include the checkpoint and all active
+     transactions at the time of the checkpoint.
+
+     The biggest difference is that NanoDB enforces that there are no
+     incomplete transactions at the firstLSN point. As a result, undo
+     processing does not need records before the firstLSN value.
+
+     Undo processing does need records before the checkpoint because it
+     might have to undo steps before the checkpoint if they are part
+     of a transaction that is at the checkpoint.
+
 D:  Testing
 -----------
 
 D1:  Did you run into any fun, surprising or crazy bugs while you were
      debugging your transaction-processing code?  (It's OK if your answer
      is "no," although Donnie will be dubious...)
+
+     When testing redo capabilities, we eventually began reading typeID = 0,
+     which could mean 1. the value of recoveryInfo.nextLSN was being set
+     incorrectly beyond where it should, 2. we were traversing incorrectly
+     (though we were reading 'T.tbl' correctly in debug output), or 3. we
+     were trampling over the type of the WAL file at some point.
 
 E:  Extra Credit [OPTIONAL]
 ---------------------------
