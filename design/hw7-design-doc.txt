@@ -26,7 +26,7 @@ A3.  Specify any late tokens you are applying to this assignment, or
      none
 
 A4.  Briefly describe what parts of the assignment each teammate focused on.
-     Justin focused on steps 1-3.
+     Justin focused on steps 1-3 and the design doc.
 
 B:  Write-Ahead Logging
 -----------------------
@@ -89,26 +89,36 @@ C2:  The txnstate.dat file records a "firstLSN" value, which is where recovery
      before the firstLSN value?  Will undo processing need any records before
      the firstLSN value?  Justify your answers.
 
+     The guarantees are that
+     (1) all data files reflect all changes that are recoreded in the
+         write-ahead log before the LSN and
+     (2) there are no incomplete transactions at this point
+
      The firstLSN value is like a checkpoint so we only have to start from
      the firstLSN value for redo processing, which does not need any records
      before the firstLSN value.
 
-     Undo processing does need records before the firstLSN value because it
-     might have to undo steps before the firstLSN value if they are part
-     of a transaction that is at the firstLSN value or afterwards.
+     Undo processing however also does not need any records before the
+     firstLSN value because we are guaranteed that there are no incomplete
+     transactions. (This is different than a checkpoint for which undo does
+     need values before the checkpoint.)
+
 
 C3:  Currently, the "firstLSN" value is only moved forward when recovery
      processing is completed.  Can you describe a strategy for moving forward
      firstLSN during normal operation?  What constraints must be enforced to
      ensure the database continues working properly?  Explain your answers.
 
-     We could have a checkpoint at the firstLSN value so that at that moment
-     all table files are brought into sync with the write-ahead log. The
-     constraints must be that when the checkpoint is being performed, no other
-     update operations are allowed. All the log files and modified table-pages
-     in memory would need to be written to disk and the log and table-files
-     would need to be synchronized. The log would also include the checkpoint
-     and all active transactions at the time of the checkpoint.
+     When all transactions are completed (which can be kept track of using
+     either a periodic check or a condition variable which unblocks a process
+     that updates firstLSN when the current transaction count reaches 0), the
+     firstLSN value can be updated. The constraints must be that no
+     transaction can occur during the time that firstLSN is updated. In
+     addition, no other update operations are allowed and log files and
+     modified table-files in memory would need to be written to disk before
+     firstLSN is updated. This is because firstLSN value has more strict
+     constraints than a checkpoint.
+
 
 C4:  The txnstate.dat file's "firstLSN" value is somewhat similar to a
      checkpoint / fuzzy-checkpoint, but it is not quite the same.  Describe
@@ -116,6 +126,22 @@ C4:  The txnstate.dat file's "firstLSN" value is somewhat similar to a
      generally work, focusing on what constraints must be enforced during the
      checkpointing operation, vs. the constraints that NanoDB must enforce
      with firstLSN.
+
+     A checkpoint has the guarantee that at that moment all table files are
+     brought into sync with the write-ahead log. The constraints are that when
+     the checkpoint is being performed, no other update operations are
+     allowed. All the log files and modified table-pages in memory would need
+     to be written to disk and the log and table-files would need to be
+     synchronized. The log would also include the checkpoint and all active
+     transactions at the time of the checkpoint.
+
+     The biggest difference is that NanoDB enforces that there are no
+     incomplete transactions at the firstLSN point. As a result, undo
+     processing does not need records before the firstLSN value.
+
+     Undo processing does need records before the checkpoint because it
+     might have to undo steps before the checkpoint if they are part
+     of a transaction that is at the checkpoint.
 
 D:  Testing
 -----------
