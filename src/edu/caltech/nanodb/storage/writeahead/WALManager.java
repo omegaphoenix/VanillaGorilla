@@ -228,11 +228,29 @@ public class WALManager {
         return recoveryInfo;
     }
 
+
+    /**
+     * This helper function checks the footer byte in
+     * @param walReader reads current WAL file.
+     * @param type type of the WALRecord we are reading.
+     *
+     * @throws IOException if an IO error occurs reading from walReader.
+     */
+    private void checkFooter(DBFileReader walReader, WALRecordType type) throws IOException {
+        // Make sure remaining byte has the correct footer.
+        byte footerByte = walReader.readByte();
+        if (WALRecordType.valueOf(footerByte) != type) {
+            throw new WALFileException(
+                  String.format("Missing %1$s ending byte in %1$s record.",
+                                type.toString()));
+        }
+    }
+
     /**
      * This helper function reads in the fileNo and offset of the previous
      * LSN and generates a new LogSequenceNumber object.
      *
-     * @param walReader file being read.
+     * @param walReader reads current WAL file.
      *
      * @return a new LogSequenceNumber object representing the fileNo and offset.
      *
