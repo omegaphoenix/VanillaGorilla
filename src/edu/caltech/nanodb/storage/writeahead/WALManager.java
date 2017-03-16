@@ -325,14 +325,11 @@ public class WALManager {
                 checkFooter(walReader, type);
                 break;
             case COMMIT_TXN:
+            case ABORT_TXN:
                 prevLSN = readPrevLSN(walReader);
                 checkFooter(walReader, type);
                 // Mark transaction as complete.
                 recoveryInfo.recordTxnCompleted(transactionID);
-                break;
-            case ABORT_TXN:
-                prevLSN = readPrevLSN(walReader);
-                checkFooter(walReader, type);
                 break;
             default:
                 throw new WALFileException(
