@@ -152,6 +152,12 @@ D1:  Did you run into any fun, surprising or crazy bugs while you were
      debugging your transaction-processing code?  (It's OK if your answer
      is "no," although Donnie will be dubious...)
 
+     When testing redo capabilities, we eventually began reading typeID = 0,
+     which could mean 1. the value of recoveryInfo.nextLSN was being set
+     incorrectly beyond where it should, 2. we were traversing incorrectly
+     (though we were reading 'T.tbl' correctly in debug output), or 3. we
+     were trampling over the type of the WAL file at some point.
+
 E:  Extra Credit [OPTIONAL]
 ---------------------------
 
