@@ -511,20 +511,18 @@ public class WALManager {
                 logger.debug(String.format("TxnRecordLSN: %s", txnRecordLSN.toString()));
                 recoveryInfo.updateInfo(transactionID, txnRecordLSN);
 
-                int fileOffset = walReader.readInt();
-                logger.debug(String.format("File offset: %d", fileOffset));
+                int curFileOffset = walReader.readInt();
+                logger.debug(String.format("File offset: %d", curFileOffset));
                 checkFooter(walReader, type);
                 break;
             // For the rest of the cases, read through, just to make sure
             // everything is aligned.
             case UPDATE_PAGE_REDO_ONLY:
                 prevLSN = readPrevLSN(walReader);
-                String fileName = walReader.readVarString255();
+                fileName = walReader.readVarString255();
                 // We use int for pageNo because it represents an unsigned short.
-                int pageNo = walReader.readShort();
-                DBFile dbFile = storageManager.openDBFile(fileName);
-                DBPage dbPage = new DBPage(bufferManager, dbFile, pageNo);
-                int numSegments = walReader.readShort();
+                pageNo = walReader.readShort();
+                numSegments = walReader.readShort();
                 logger.debug(String.format("File name: " + fileName +
                         ", PageNo: %d NumSegments: %d", pageNo, numSegments));
                 // We can't check the rest of the file without traversing all
