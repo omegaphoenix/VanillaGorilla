@@ -26,6 +26,7 @@ A3.  Specify any late tokens you are applying to this assignment, or
      none
 
 A4.  Briefly describe what parts of the assignment each teammate focused on.
+     Justin focused on steps 1-3.
 
 B:  Write-Ahead Logging
 -----------------------
@@ -39,6 +40,17 @@ B1.  One of your tasks this week was to implement the TransactionManager's
      an atomic file-sync operation, and that writing a single sector will
      also be atomic with the obvious caveat that the written sector may still
      be buffered until a sync occurs.)
+
+     We ensured that forceWAL is atomic and durable by not syncing the
+     txnstate.dat to disk until the end of the transaction. That way, in case
+     the database crashes in the middle of the operation, all the critical
+     values related to transaction management will be restored to their state
+     before forceWAL was called.
+
+     The transaction can be rolled back if aborted because the txnStateNextLSN
+     has not been written to disk until the end of the transaction, the files
+     that were written to can be undone by looking at the Buffer Manager's
+     log.
 
 B2:  Another task was to implement the beforeWriteDirtyPages() method on the
      TransactionManager.  Your implementation must ensure that the write-ahead
