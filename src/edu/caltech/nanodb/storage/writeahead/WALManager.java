@@ -230,6 +230,47 @@ public class WALManager {
 
 
     /**
+     * This helper function checks the footer byte in
+     * @param walReader reads current WAL file.
+     * @param type type of the WALRecord we are reading.
+     *
+     * @throws IOException if an IO error occurs reading from walReader.
+     */
+    private void checkFooter(DBFileReader walReader, WALRecordType type) throws IOException {
+        // Make sure remaining byte has the correct footer.
+        byte footerByte = walReader.readByte();
+        if (WALRecordType.valueOf(footerByte) != type) {
+            throw new WALFileException(
+                  String.format("Missing %1$s ending byte in %1$s record.",
+                                type.toString()));
+        }
+    }
+
+    /**
+     * This helper function reads in the fileNo and offset of the previous
+     * LSN and generates a new LogSequenceNumber object.
+     *
+     * @param walReader reads current WAL file.
+     *
+     * @return a new LogSequenceNumber object representing the fileNo and offset.
+     *
+     * @throws IOException if an IO error occurs reading from walReader.
+     */
+    private LogSequenceNumber readPrevLSN(DBFileReader walReader) throws IOException {
+        // Read file number and file-offset for previous LSN.
+        // We use int for fileNo because it represents an unsigned short.
+        int fileNo = walReader.readShort();
+        int offset = walReader.readInt();
+
+        // Log debug output.
+        logger.debug(String.format("Previous LSN FileNo: %d, Offset: %d.",
+                fileNo, offset));
+
+        return new LogSequenceNumber(fileNo, offset);
+    }
+
+
+    /**
      * This helper function performs redo processing using the write-ahead
      * log.  As the log is traversed, the <tt>RecoveryInfo</tt> object is also
      * updated with important redo/undo information.
@@ -258,29 +299,47 @@ public class WALManager {
                 "Redo:  examining WAL record at %s.  Type = %s, TxnID = %d",
                 currLSN, type, transactionID));
 
-            // TODO:  IMPLEMENT THE REST
-            //
-            //        Use logging statements liberally to help verify and
-            //        debug your work.
-            //
-            //        If you encounter invalid WAL contents, throw a
-            //        WALFileException to indicate the problem immediately.
-            //
-            //        You can use Java enums in a switch statement, like this:
-            //
-            //            switch (type) {
-            //            case START_TXN:
-            //                ...
-            //
-            //            case COMMIT_TXN:
-            //                ...
-            //
-            //            default:
-            //                throw new WALFileException(
-            //                    "Encountered unrecognized WAL record type " +
-            //                    type + " at LSN " + currLSN +
-            //                    " during redo processing!");
-            //            }
+            LogSequenceNumber prevLSN;
+
+            // See nanodb.storage.writeahead package documentation for details
+            // about the byte breakdown of these file types.
+            switch (type) {
+            case START_TXN:
+                checkFooter(walReader, type);
+                break;
+            case UPDATE_PAGE:
+            case UPDATE_PAGE_REDO_ONLY:
+                prevLSN = readPrevLSN(walReader);
+                String fileName = walReader.readVarString255();
+                // We use int for pageNo because it represents an unsigned short.
+                int pageNo = walReader.readShort();
+                DBFile dbFile = storageManager.openDBFile(fileName);
+                DBPage dbPage = new DBPage(bufferManager, dbFile, pageNo);
+                int numSegments = walReader.readShort();
+                logger.debug(String.format("File name: " + fileName +
+                        ", PageNo: %d NumSegments: %d", pageNo, numSegments));
+                logger.debug("Applying redoes...");
+                applyRedo(type, walReader, dbPage, numSegments);
+                int fileOffset = walReader.readInt();
+                logger.debug(String.format("File offset: %d", fileOffset));
+                checkFooter(walReader, type);
+                break;
+            case COMMIT_TXN:
+            case ABORT_TXN:
+                prevLSN = readPrevLSN(walReader);
+                checkFooter(walReader, type);
+                // Mark transaction as complete.
+                recoveryInfo.recordTxnCompleted(transactionID);
+                break;
+            default:
+                throw new WALFileException(
+                    "Encountered unrecognized WAL record type " +
+                    type + " at LSN " + currLSN +
+                    " during redo processing!");
+            }
+
+            // Track last LSN seen for each transaction.
+            recoveryInfo.updateInfo(transactionID, currLSN);
 
             oldLSN = currLSN;
             currLSN = computeNextLSN(currLSN.getLogFileNo(), walReader.getPosition());
