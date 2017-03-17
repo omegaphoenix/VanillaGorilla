@@ -299,8 +299,10 @@ public class WALManager {
                 "Redo:  examining WAL record at %s.  Type = %s, TxnID = %d",
                 currLSN, type, transactionID));
 
-            LogSequenceNumber prevLSN;
+            // Track last LSN seen for each transaction.
+            recoveryInfo.updateInfo(transactionID, currLSN);
 
+            LogSequenceNumber prevLSN;
             // See nanodb.storage.writeahead package documentation for details
             // about the byte breakdown of these file types.
             switch (type) {
@@ -329,6 +331,7 @@ public class WALManager {
                 prevLSN = readPrevLSN(walReader);
                 checkFooter(walReader, type);
                 // Mark transaction as complete.
+                logger.debug("Marking transaction complete...");
                 recoveryInfo.recordTxnCompleted(transactionID);
                 break;
             default:
@@ -338,8 +341,7 @@ public class WALManager {
                     " during redo processing!");
             }
 
-            // Track last LSN seen for each transaction.
-            recoveryInfo.updateInfo(transactionID, currLSN);
+
 
             oldLSN = currLSN;
             currLSN = computeNextLSN(currLSN.getLogFileNo(), walReader.getPosition());
