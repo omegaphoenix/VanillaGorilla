@@ -478,22 +478,23 @@ public class TransactionManager implements BufferManagerObserver {
      */
     public void forceWAL(LogSequenceNumber lsn) throws IOException {
         // Check if any valid LSNs in range, [lsn, txnStateNextLSN).
-        logger.debug(String.format("txnStateNextLSN is %s, lsn is %s", txnStateNextLSN, lsn));
+        logger.debug(String.format("Begin forceWAL, txnStateNextLSN is %s, lsn is %s", txnStateNextLSN, lsn));
         if (txnStateNextLSN.compareTo(lsn) >= 0) {
             // Force operation does not need to be performed.
+            logger.debug("forceWAL does not need to be performed");
             return;
         }
 
         BufferManager buffManager = storageManager.getBufferManager();
 
         // Initialize variables for loop.
-        int start = txnStateNextLSN.getLogFileNo() + 1;
+        int start = txnStateNextLSN.getLogFileNo();
         int end = lsn.getLogFileNo();
         String walFileName = WALManager.getWALFileName(start);
         DBFile file = buffManager.getFile(walFileName);
 
         // Write pages of WAL;
-        for (int i = start; i < end; i++) {
+        for (int i = start; i <= end; i++) {
             if (file != null) {
                 buffManager.writeDBFile(file, true);
             }
