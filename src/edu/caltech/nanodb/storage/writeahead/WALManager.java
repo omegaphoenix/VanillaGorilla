@@ -508,10 +508,7 @@ public class WALManager {
                 LogSequenceNumber redoOnlyLSN = writeRedoOnlyUpdatePageRecord(transactionID,
                                                     prevLSN, dbPage, numSegments, changes);
                 logger.debug(String.format("RedoOnlyLSN: %s", redoOnlyLSN.toString()));
-
-                LogSequenceNumber txnRecordLSN = writeTxnRecord(type, transactionID, redoOnlyLSN);
-                logger.debug(String.format("TxnRecordLSN: %s", txnRecordLSN.toString()));
-                recoveryInfo.updateInfo(transactionID, txnRecordLSN);
+                recoveryInfo.updateInfo(transactionID, redoOnlyLSN);
 
                 int curFileOffset = walReader.readInt();
                 logger.debug(String.format("File offset: %d", curFileOffset));
