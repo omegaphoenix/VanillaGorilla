@@ -1,16 +1,16 @@
 #!/bin/bash
-RECORDA="| 1 | abc    |  1.2 |"
-RECORDA_ALT="| 1 | abc         |  1.2 |"
-RECORDB="| 2 | defghi | -3.6 |"
-RECORDB_ALT="| 2 | defghi      | -3.6 |"
-RECORDC="| 3 | jklmnopqrst |  5.5 |"
-RECORDC_ALT="| 3 | jklmnopqrst |  5.5 |"
 OUTPUTFILE="scripts/output/output.temp"
 ant compile
 
 # TEST 1
 echo "DELETING datafiles DIRECTORY"
 rm -R datafiles
+RECORDA="| 1 | abc    |  1.2 |"
+RECORDA_ALT="| 1 | abc         |  1.2 |"
+RECORDB="| 2 | defghi | -3.6 |"
+RECORDB_ALT="| 2 | defghi      | -3.6 |"
+RECORDC="| 3 | jklmnopqrst |  5.5 |"
+RECORDC_ALT="| 3 | jklmnopqrst |  5.5 |"
 ./nanodb < schemas/writeahead/test1a.sql > $OUTPUTFILE
 if grep -Fq "$RECORDA" "$OUTPUTFILE"
 then
@@ -85,8 +85,15 @@ fi
 ./nanodb < schemas/writeahead/test2a2.sql > $OUTPUTFILE
 if grep -Fq "$RECORD" "$OUTPUTFILE"
 then
-    echo "FAIL - Test1c Extra Record $RECORD"
+    echo "FAIL - Test2a Extra Record $RECORD"
 else
     echo "PASS"
 fi
-#./nanodb < schemas/writeahead/test2a3.sql > $OUTPUTFILE
+./nanodb < schemas/writeahead/test2a3.sql > $OUTPUTFILE
+RECORD="| 4 | hmm hmm | 261.32 |"
+if grep -Fq "$RECORD" "$OUTPUTFILE"
+then
+    echo "PASS"
+else
+    echo "FAIL - Test2a Missing Record $RECORD"
+fi
