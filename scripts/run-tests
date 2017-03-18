@@ -1,0 +1,4 @@
+#!/bin/bash
+ant compile
+./scripts/undo 
+./scripts/undo-parallel 
