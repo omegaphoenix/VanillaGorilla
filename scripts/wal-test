@@ -5,7 +5,7 @@ RECORDB="| 2 | defghi | -3.6 |"
 RECORDB_ALT="| 2 | defghi      | -3.6 |"
 RECORDC="| 3 | jklmnopqrst |  5.5 |"
 RECORDC_ALT="| 3 | jklmnopqrst |  5.5 |"
-OUTPUTFILE="output.temp"
+OUTPUTFILE="scripts/output/output.temp"
 ant compile
 
 # TEST 1
@@ -75,4 +75,18 @@ fi
 echo "DELETING datafiles DIRECTORY"
 rm -R datafiles
 ./nanodb < schemas/writeahead/test2a1.sql > $OUTPUTFILE
-rm $OUTPUTFILE
+RECORD="| -1 | zxywvu | 78.2 |"
+if grep -Fq "$RECORD" "$OUTPUTFILE"
+then
+    echo "PASS"
+else
+    echo "FAIL - Test2a Missing Record $RECORD"
+fi
+./nanodb < schemas/writeahead/test2a2.sql > $OUTPUTFILE
+if grep -Fq "$RECORD" "$OUTPUTFILE"
+then
+    echo "FAIL - Test1c Extra Record $RECORD"
+else
+    echo "PASS"
+fi
+#./nanodb < schemas/writeahead/test2a3.sql > $OUTPUTFILE
