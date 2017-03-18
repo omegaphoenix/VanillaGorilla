@@ -513,6 +513,7 @@ public class WALManager {
                 recoveryInfo.updateInfo(transactionID, redoOnlyLSN);
 
                 int curFileOffset = walReader.readInt();
+
                 logger.debug(String.format("File offset: %d", curFileOffset));
                 checkFooter(walReader, type);
                 break;
