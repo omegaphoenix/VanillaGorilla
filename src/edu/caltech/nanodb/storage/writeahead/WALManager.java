@@ -316,7 +316,7 @@ public class WALManager {
                 // We use int for pageNo because it represents an unsigned short.
                 int pageNo = walReader.readShort();
                 DBFile dbFile = storageManager.openDBFile(fileName);
-                DBPage dbPage = new DBPage(bufferManager, dbFile, pageNo);
+                DBPage dbPage = storageManager.loadDBPage(dbFile, pageNo);
                 int numSegments = walReader.readShort();
                 logger.debug(String.format("File name: " + fileName +
                         ", PageNo: %d NumSegments: %d", pageNo, numSegments));
@@ -497,7 +497,7 @@ public class WALManager {
                 // We use int for pageNo because it represents an unsigned short.
                 int pageNo = walReader.readShort();
                 DBFile dbFile = storageManager.openDBFile(fileName);
-                DBPage dbPage = new DBPage(bufferManager, dbFile, pageNo);
+                DBPage dbPage = storageManager.loadDBPage(dbFile, pageNo);
                 int numSegments = walReader.readShort();
                 logger.debug(String.format("File name: " + fileName +
                         ", PageNo: %d NumSegments: %d", pageNo, numSegments));
