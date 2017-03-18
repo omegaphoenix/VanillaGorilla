@@ -71,17 +71,19 @@ else
     echo "FAIL - Test1c Extra Record $RECORDC"
 fi
 
-# TEST 2
+# TEST 2A
 echo "DELETING datafiles DIRECTORY"
 rm -R datafiles
 ./nanodb < schemas/writeahead/test2a1.sql > $OUTPUTFILE
 RECORD="| -1 | zxywvu | 78.2 |"
+# Add record without committing
 if grep -Fq "$RECORD" "$OUTPUTFILE"
 then
     echo "PASS"
 else
     echo "FAIL - Test2a Missing Record $RECORD"
 fi
+# Record should be gone after crash
 ./nanodb < schemas/writeahead/test2a2.sql > $OUTPUTFILE
 if grep -Fq "$RECORD" "$OUTPUTFILE"
 then
@@ -89,6 +91,7 @@ then
 else
     echo "PASS"
 fi
+# Make sure new record was added
 ./nanodb < schemas/writeahead/test2a3.sql > $OUTPUTFILE
 RECORD="| 4 | hmm hmm | 261.32 |"
 if grep -Fq "$RECORD" "$OUTPUTFILE"
@@ -96,4 +99,91 @@ then
     echo "PASS"
 else
     echo "FAIL - Test2a Missing Record $RECORD"
+fi
+# Crash to check if autocommitted record still present
+./nanodb < schemas/writeahead/test2a4.sql > $OUTPUTFILE
+RECORD="| 4 | hmm hmm | 261.32 |"
+if grep -Fq "$RECORD" "$OUTPUTFILE"
+then
+    echo "PASS"
+else
+    echo "FAIL - Test2a Missing Record $RECORD"
+fi
+
+# TEST 2B
+echo "DELETING datafiles DIRECTORY"
+rm -R datafiles
+./nanodb < schemas/writeahead/test2b1.sql > $OUTPUTFILE
+RECORD="| -1 | zxywvu | 78.2 |"
+# Add record without committing
+if grep -Fq "$RECORD" "$OUTPUTFILE"
+then
+    echo "PASS"
+else
+    echo "FAIL - Test2b Missing Record $RECORD"
+fi
+# Record should be gone after rollback
+./nanodb < schemas/writeahead/test2b2.sql > $OUTPUTFILE
+if grep -Fq "$RECORD" "$OUTPUTFILE"
+then
+    echo "FAIL - Test2b Extra Record $RECORD"
+else
+    echo "PASS"
+fi
+# Make sure new record was added
+./nanodb < schemas/writeahead/test2b3.sql > $OUTPUTFILE
+RECORD="| 4 | hmm hmm | 261.32 |"
+if grep -Fq "$RECORD" "$OUTPUTFILE"
+then
+    echo "PASS"
+else
+    echo "FAIL - Test2b Missing Record $RECORD"
+fi
+# Flush and crash to check if autocommitted record still present
+./nanodb < schemas/writeahead/test2b4.sql > $OUTPUTFILE
+RECORD="| 4 | hmm hmm | 261.32 |"
+if grep -Fq "$RECORD" "$OUTPUTFILE"
+then
+    echo "PASS"
+else
+    echo "FAIL - Test2b Missing Record $RECORD"
+fi
+
+# TEST 2C
+echo "DELETING datafiles DIRECTORY"
+rm -R datafiles
+./nanodb < schemas/writeahead/test2c1.sql > $OUTPUTFILE
+RECORD="| -1 | zxywvu | 78.2 |"
+# Add record without committing
+if grep -Fq "$RECORD" "$OUTPUTFILE"
+then
+    echo "PASS"
+else
+    echo "FAIL - Test2c Missing Record $RECORD"
+fi
+# Record should be gone after rollback
+./nanodb < schemas/writeahead/test2c2.sql > $OUTPUTFILE
+if grep -Fq "$RECORD" "$OUTPUTFILE"
+then
+    echo "FAIL - Test2c Extra Record $RECORD"
+else
+    echo "PASS"
+fi
+# Make sure new record was added
+./nanodb < schemas/writeahead/test2c3.sql > $OUTPUTFILE
+RECORD="| 4 | hmm hmm | 261.32 |"
+if grep -Fq "$RECORD" "$OUTPUTFILE"
+then
+    echo "PASS"
+else
+    echo "FAIL - Test2c Missing Record $RECORD"
+fi
+# Flush and crash to check if autocommitted record still present
+./nanodb < schemas/writeahead/test2c4.sql > $OUTPUTFILE
+RECORD="| 4 | hmm hmm | 261.32 |"
+if grep -Fq "$RECORD" "$OUTPUTFILE"
+then
+    echo "PASS"
+else
+    echo "FAIL - Test2c Missing Record $RECORD"
 fi
