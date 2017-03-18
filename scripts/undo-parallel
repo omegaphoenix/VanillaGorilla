@@ -1,0 +1,8 @@
+#!/bin/bash
+
+rm -r datafiles/
+./nanodb < schemas/writeahead/create_t.sql
+
+./nanodb < schemas/writeahead/transaction1.sql > scripts/output/t1.out &
+./nanodb < schemas/writeahead/transaction2.sql > scripts/output/t2.out
+./nanodb
