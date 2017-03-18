@@ -169,7 +169,8 @@ INSERT INTO testwal VALUES (-1, 'zxywvu', 78.2);
 
 SELECT * FROM testwal;  -- Should list all three records
 
-ROLLBACK;
+FLUSH;
+CRASH;
 
 -- SELECT * FROM testwal;  -- Should only list original two records
 
