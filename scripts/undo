@@ -1,5 +1,4 @@
 #!/bin/bash
-
 rm -r datafiles/
 ./nanodb < schemas/writeahead/create_t.sql > /dev/null
 
@@ -7,7 +6,7 @@ rm -r datafiles/
 ./nanodb < schemas/writeahead/transaction2.sql > scripts/output/t2.out
 ./nanodb < schemas/writeahead/read_t.sql | grep -v "main" | grep '+\||' > scripts/output/undo.out
 
-if [ -z $(diff scripts/output/undo.out scripts/output/undo.expected)] 
+if [ -z $(diff scripts/output/undo.out scripts/output/undo.expected) ]  
 then
     echo "Test undo passed!"
 else

@@ -1,4 +1,4 @@
 #!/bin/bash
-
-./scripts/undo | grep -v 'line'
-./scripts/undo-parallel | grep -v 'line'
+ant compile
+./scripts/undo 
+./scripts/undo-parallel 
