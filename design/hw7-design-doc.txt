@@ -192,6 +192,18 @@ E1: Test scripts
         are some issues, so this test fails. However, synchronization was not
         the main focus of the assignment.
 
+    We also implemented some test scripts to run the writeahead tests provided
+    to us.
+
+    ./scripts/wal-test
+        This script runs the tests by following the instructions in
+        schemas/writeahead/basic-tests.sql. It deletes the datafiles directory
+        between tests and verifies that entries were properly added or deleted
+        between crashes, etc. These tests could be improved by adding a match
+        to variable whitespace. We tried grep regex expressions for variable
+        whitespace such as "\s\+" or "\\s\\+" or "\s*" but couldn't get that
+        to work properly.
+
 F:  Feedback [OPTIONAL]
 -----------------------
 
