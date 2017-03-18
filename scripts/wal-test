@@ -7,6 +7,8 @@ RECORDC="| 3 | jklmnopqrst |  5.5 |"
 RECORDC_ALT="| 3 | jklmnopqrst |  5.5 |"
 OUTPUTFILE="output.temp"
 ant compile
+
+# TEST 1
 echo "DELETING datafiles DIRECTORY"
 rm -R datafiles
 ./nanodb < schemas/writeahead/test1a.sql > $OUTPUTFILE
@@ -68,4 +70,9 @@ then
 else
     echo "FAIL - Test1c Extra Record $RECORDC"
 fi
+
+# TEST 2
+echo "DELETING datafiles DIRECTORY"
+rm -R datafiles
+./nanodb < schemas/writeahead/test2a1.sql > $OUTPUTFILE
 rm $OUTPUTFILE
