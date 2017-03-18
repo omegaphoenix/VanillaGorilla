@@ -499,6 +499,7 @@ public class WALManager {
                 int pageNo = walReader.readShort();
                 DBFile dbFile = storageManager.openDBFile(fileName);
                 DBPage dbPage = storageManager.loadDBPage(dbFile, pageNo);
+                dbPage.setPageLSN(currLSN);
                 int numSegments = walReader.readShort();
                 logger.debug(String.format("File name: " + fileName +
                         ", PageNo: %d NumSegments: %d", pageNo, numSegments));
