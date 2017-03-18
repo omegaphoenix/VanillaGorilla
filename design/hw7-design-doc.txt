@@ -17,13 +17,13 @@ A2.  Specify the repository URL, tag name and commit-hash of the Git version
      of your repository tags with this command:  git show-ref --tags)
 
      Repository URL:  https://github.com/omegaphoenix/VanillaGorilla
-     Tag name:        <tag>
+     Tag name:        hw7
      Commit hash:     <hash>
 
 A3.  Specify any late tokens you are applying to this assignment, or
      "none" if no late tokens.
 
-     none
+     We are using 2 late tokens.
 
 A4.  Briefly describe what parts of the assignment each teammate focused on.
      Justin focused on steps 1-3(logging and atomic forceWAL) and the design doc.
@@ -171,6 +171,26 @@ E<i>:  <one-line description>
      we should look at for your implementation>
 
      <brief summary of test-cases that demonstrate/exercise your extra work>
+
+E1: Test scripts
+
+    We implemented some test scripts for integration tests under the scripts/
+    directory. These can be run by running ./scripts/run-tests
+
+    undo: ./scripts/undo
+        This script tests undo and redo by commiting a transaction, then
+        crashing in the middle of one, reloading the database, then commiting
+        another transaction and crashing in the middle of a fourth
+        transaction. The debug output can be found in scripts/output/t1.out
+        and scripts/output/t2.out while the resulting table can be found in
+        scripts/output/undo.out. The expected output is found in
+        scripts/output/undo.expected.
+
+    undo-parallel: ./scripts/undo-parallel
+        This script performs a similar test to the previous one, but runs two
+        servers simultaneously to check for race conditions. Currently there
+        are some issues, so this test fails. However, synchronization was not
+        the main focus of the assignment.
 
 F:  Feedback [OPTIONAL]
 -----------------------
