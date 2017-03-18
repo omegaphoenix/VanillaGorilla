@@ -262,11 +262,11 @@ public class WALManager {
         int fileNo = walReader.readShort();
         int offset = walReader.readInt();
 
+        LogSequenceNumber prevLSN = new LogSequenceNumber(fileNo, offset);
         // Log debug output.
-        logger.debug(String.format("Previous LSN FileNo: %d, Offset: %d.",
-                fileNo, offset));
+        logger.debug(String.format("Previous LSN: %s", prevLSN));
 
-        return new LogSequenceNumber(fileNo, offset);
+        return prevLSN;
     }
 
 
